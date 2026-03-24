@@ -10,6 +10,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { AITutorPage } from './pages/AITutorPage';
+import { TestPage } from './pages/TestPage';
+import { ExamPage } from './pages/ExamPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -65,6 +67,18 @@ export default function App() {
           <Route path="/ai-tutor" element={
             <PrivateRoute>
               <AITutorPage />
+            </PrivateRoute>
+          } />
+
+          <Route path="/test/:testId" element={
+            <PrivateRoute>
+              <TestPage />
+            </PrivateRoute>
+          } />
+
+          <Route path="/exam/:examId" element={
+            <PrivateRoute>
+              <ExamPage />
             </PrivateRoute>
           } />
 

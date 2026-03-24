@@ -15,6 +15,8 @@ import { auth } from '../lib/firebase';
 import { MentorChat } from '../components/MentorChat';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { CURRICULUM } from '../constants/curriculum';
+import { STAGE_TESTS } from '../constants/tests';
+import { FINAL_EXAMS } from '../constants/exams';
 import { CareerPath } from '../types';
 
 export const DashboardPage: React.FC = () => {
@@ -31,8 +33,29 @@ export const DashboardPage: React.FC = () => {
 
   const nextLesson = useMemo(() => {
     if (!progress) return null;
-    return currentPathCurriculum.find(step => !progress.completedLessons?.includes(step.title)) || currentPathCurriculum[0];
-  }, [currentPathCurriculum, progress?.completedLessons]);
+    
+    // Check for next lesson
+    const lesson = currentPathCurriculum.find(step => !progress.completedLessons?.includes(step.title));
+    if (lesson) return lesson;
+
+    // If all lessons are done, check for final exam
+    const exam = FINAL_EXAMS.find(e => e.path === progress.selectedPath && !progress.completedExams?.includes(e.id));
+    if (exam) return { ...exam, isExam: true };
+
+    return currentPathCurriculum[0];
+  }, [currentPathCurriculum, progress?.completedLessons, progress?.completedExams, progress?.selectedPath]);
+
+  const nextTest = useMemo(() => {
+    if (!progress) return null;
+    // Suggest a test if stage progress is high
+    const stageLessons = currentPathCurriculum.filter(s => s.stage === progress.currentStage);
+    const completedInStage = stageLessons.filter(l => progress.completedLessons?.includes(l.title)).length;
+    
+    if (completedInStage >= stageLessons.length * 0.8) {
+      return STAGE_TESTS.find(t => t.path === progress.selectedPath && t.stage === progress.currentStage && !progress.completedTests?.includes(t.id));
+    }
+    return null;
+  }, [currentPathCurriculum, progress?.completedLessons, progress?.currentStage, progress?.selectedPath, progress?.completedTests]);
 
   if (loading || !progress) return <LoadingScreen />;
 
@@ -224,7 +247,7 @@ export const DashboardPage: React.FC = () => {
               <div className="space-y-2 max-w-md">
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/20">
                   <span>Path Progress</span>
-                  <span>{Math.round((progress.completedLessons?.length / currentPathCurriculum.length) * 100)}%</span>
+                  <span>{currentPathCurriculum.length > 0 ? Math.round((progress.completedLessons.length / currentPathCurriculum.length) * 100) : 0}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <motion.div 
@@ -288,28 +311,32 @@ export const DashboardPage: React.FC = () => {
             <div className="relative z-10 space-y-10 max-w-lg">
               <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-emerald-500/10">
                 <Sparkles size={14} fill="currentColor" />
-                Recommended Next
+                {nextTest ? 'Stage Test Available' : (nextLesson as any)?.isExam ? 'Final Exam Ready' : 'Recommended Next'}
               </div>
               <div className="space-y-4">
                 <h2 className="text-5xl md:text-6xl font-black tracking-tighter leading-none">
-                  {nextLesson?.title || 'Start Learning'}
+                  {nextTest ? nextTest.title : nextLesson?.title || 'Start Learning'}
                 </h2>
                 <p className="text-white/40 text-xl leading-relaxed font-medium">
-                  {nextLesson?.description || 'Begin your journey into the world of technology with our guided curriculum.'}
+                  {nextTest ? nextTest.description : (nextLesson as any)?.isExam ? (nextLesson as any).description : nextLesson?.description || 'Begin your journey into the world of technology with our guided curriculum.'}
                 </p>
               </div>
               <Button 
-                onClick={() => navigate(`/lesson/${nextLesson?.title.toLowerCase().replace(/ /g, '-')}`)}
+                onClick={() => {
+                  if (nextTest) navigate(`/test/${nextTest.id}`);
+                  else if ((nextLesson as any)?.isExam) navigate(`/exam/${(nextLesson as any).id}`);
+                  else navigate(`/lesson/${nextLesson?.title.toLowerCase().replace(/ /g, '-')}`);
+                }}
                 className="group h-20 px-12 text-lg font-black tracking-tight shadow-2xl shadow-emerald-500/40 rounded-[2rem]"
               >
-                {progress.completedLessons?.length ? 'Continue Learning' : 'Start First Lesson'}
+                {nextTest ? 'Start Stage Test' : (nextLesson as any)?.isExam ? 'Take Final Exam' : progress.completedLessons?.length ? 'Continue Learning' : 'Start First Lesson'}
                 <ChevronRight size={24} className="group-hover:translate-x-2 transition-transform duration-300 ml-3" />
               </Button>
             </div>
             
             {/* Decorative Elements */}
             <div className="absolute -right-20 -bottom-20 p-10 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-1000 pointer-events-none">
-              <BookOpen size={600} />
+              {nextTest || (nextLesson as any)?.isExam ? <Trophy size={600} /> : <BookOpen size={600} />}
             </div>
             <div className="absolute top-1/2 right-24 -translate-y-1/2 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000" />
           </Card>

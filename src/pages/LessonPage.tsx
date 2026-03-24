@@ -205,7 +205,7 @@ export const LessonPage: React.FC = () => {
                 <h4 className="font-black uppercase text-xs tracking-[0.2em]">Common Mistakes</h4>
               </div>
               <div className="space-y-3">
-                {lesson.commonMistakes.map((mistake, i) => (
+                {(lesson.commonMistakes || []).map((mistake, i) => (
                   <div key={i} className="flex gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 shrink-0" />
                     <p className="text-white/70 leading-relaxed">{mistake}</p>
@@ -239,11 +239,11 @@ export const LessonPage: React.FC = () => {
               <h3 className="font-black uppercase text-xs tracking-[0.2em]">Test Your Knowledge</h3>
             </div>
             <div className="space-y-4">
-              {lesson.quiz.map((q, qIdx) => (
+              {(lesson.quiz || []).map((q, qIdx) => (
                 <Card key={qIdx} className="p-8 border-white/5 bg-white/[0.02] space-y-6">
                   <p className="text-xl font-bold leading-tight">{q.question}</p>
                   <div className="grid grid-cols-1 gap-3">
-                    {q.options.map((option, oIdx) => (
+                    {(q.options || []).map((option, oIdx) => (
                       <button 
                         key={oIdx}
                         onClick={() => {

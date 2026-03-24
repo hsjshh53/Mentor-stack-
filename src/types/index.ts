@@ -70,3 +70,37 @@ export interface Achievement {
   icon: string;
   unlockedAt: string | null;
 }
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface StageTest {
+  id: string;
+  title: string;
+  stage: Stage;
+  path: CareerPath;
+  description: string;
+  questions: QuizQuestion[];
+  minScoreToPass: number;
+  xpReward: number;
+}
+
+export interface FinalExam {
+  id: string;
+  title: string;
+  path: CareerPath;
+  description: string;
+  theoryQuestions: QuizQuestion[];
+  practicalQuestions: QuizQuestion[];
+  debuggingQuestions: QuizQuestion[];
+  codingTask: {
+    prompt: string;
+    starterCode: string;
+    solution: string;
+  };
+  xpReward: number;
+}

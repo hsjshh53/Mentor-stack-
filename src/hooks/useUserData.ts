@@ -34,7 +34,17 @@ export const useUserData = () => {
     const userRef = ref(db, `users/${user.uid}/progress`);
     const unsubscribe = onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        setProgress(snapshot.val());
+        const data = snapshot.val();
+        setProgress({
+          ...defaultProgress,
+          ...data,
+          // Ensure arrays exist even if they were missing in the database
+          completedLessons: data.completedLessons || [],
+          completedTests: data.completedTests || [],
+          completedExams: data.completedExams || [],
+          weakAreas: data.weakAreas || [],
+          unlockedPaths: data.unlockedPaths || defaultProgress.unlockedPaths
+        });
       } else {
         // Initialize new user progress
         set(userRef, defaultProgress);
