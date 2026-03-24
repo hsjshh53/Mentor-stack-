@@ -1,9 +1,10 @@
+import { GoogleGenAI } from "@google/genai";
 import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
 
 // 1. GEMINI SERVICE SETUP
-// Replace this with your actual API key from Google AI Studio
-const apiKey = "AIzaSyBWK0GrWU7tlL-SqPrUpfhrWE_PRsbsITM";
+// The API key is automatically provided by the platform via process.env.GEMINI_API_KEY
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_INSTRUCTION = `
 You are MentorStack, a global coding academy and personal AI mentor. Your goal is to guide users from zero coding knowledge to job-ready software engineering level across all tech fields.
@@ -15,6 +16,7 @@ TEACHING PRINCIPLES:
 3. ADAPT TO BEGINNER: Use simple explanations and real-world analogies.
 4. GIVE HINTS BEFORE ANSWERS: Always try to lead the user to the answer themselves.
 5. THINK LIKE A DEVELOPER: Focus on problem solving, debugging, and clean code.
+6. PERSONALIZED GUIDANCE: Use the provided User Context (progress, completed lessons, weak areas) to tailor your advice. If a user has weak areas, focus on reinforcing those concepts.
 
 EVERY LESSON MUST FOLLOW THIS 11-STEP STRUCTURE:
 1. Today you are learning: Clear objective.
@@ -345,32 +347,18 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
   `;
 
   try {
-    // 6. ADD STRONG DEBUGGING
-    console.log("Sending Gemini request (generateLesson)");
-    console.log("API Key configured:", !!apiKey && apiKey.length > 10);
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
-        generationConfig: { responseMimeType: "application/json" }
-      })
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
+      config: {
+        responseMimeType: "application/json"
+      }
     });
 
-    console.log("Response status:", response.status);
-    const data = await response.json();
-    console.log("Full response JSON:", data);
-
-    if (!response.ok) {
-      throw new Error(data.error?.message || "API Error");
-    }
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = response.text;
     if (!text) throw new Error("Empty response");
 
     const lesson = JSON.parse(text);
-    // Ensure arrays exist
     return {
       ...lesson,
       commonMistakes: lesson.commonMistakes || [],
@@ -384,61 +372,31 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
 
 export async function getMentorAdvice(message: string, history: any[], userContext: any) {
   try {
-    // 6. ADD STRONG DEBUGGING
-    console.log("Sending Gemini request (getMentorAdvice)");
-    console.log("API Key configured:", !!apiKey && apiKey.length > 10);
-
     const prompt = `
-      You are MentorStack, the world's most advanced AI coding mentor. 
-      Your tone is premium, encouraging, and highly technical yet accessible. 
-      Always refer to yourself as MentorStack when appropriate.
       User Context: ${JSON.stringify(userContext)}
       
       User Message: ${message}
+
+      If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
     `;
 
-    // 2. USE THE EXACT GEMINI MODEL
-    // 3. USE THE EXACT GEMINI ENDPOINT
-    // 5. USE THE EXACT FETCH FORMAT
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // 4. USE THE EXACT REQUEST BODY FORMAT
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
-          }
-        ]
-      })
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: [
+        {
+          parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
+        }
+      ]
     });
 
-    console.log("Response status:", response.status);
-    const data = await response.json();
-    console.log("Full response JSON:", data);
-
-    if (!response.ok) {
-      // 7. DO NOT HIDE THE REAL ERROR
-      let errorMsg = "Unknown Error";
-      if (data.error) {
-        errorMsg = data.error.message || data.error.status || "API Error";
-      }
-      throw new Error(errorMsg);
-    }
-
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
-      return data.candidates[0].content.parts[0].text;
-    }
+    const text = response.text;
+    if (!text) throw new Error("Empty response from Gemini");
     
-    throw new Error("Empty response from Gemini");
+    return text;
 
   } catch (error: any) {
-    // 6. ADD STRONG DEBUGGING
     console.error("Exact error message:", error.message);
     
-    // 8. SMART FALLBACK TUTOR
     const fallback = getFallbackResponse(message);
     const errorPrefix = `⚠️ MentorStack is in Offline Mode (${error.message})\n\n`;
     return errorPrefix + fallback;

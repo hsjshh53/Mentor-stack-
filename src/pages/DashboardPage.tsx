@@ -99,9 +99,27 @@ export const DashboardPage: React.FC = () => {
   ];
 
   const featuredLessons = [
-    { tag: 'CORE SKILLS', title: currentPathCurriculum.find(s => s.category === 'Core Skills')?.title || 'Problem Solving', desc: 'Master the fundamental logic of programming.', duration: '10 mins' },
-    { tag: 'LANGUAGES', title: currentPathCurriculum.find(s => s.category === 'Web Languages' || s.category === 'Mobile')?.title || 'HTML Structure', desc: 'The building blocks of your career path.', duration: '10 mins' },
-    { tag: 'TOOLS', title: currentPathCurriculum.find(s => s.category === 'Tools')?.title || 'Git / GitHub', desc: 'Essential tools for modern development.', duration: '15 mins' }
+    { 
+      tag: 'CORE SKILLS', 
+      id: currentPathCurriculum.find(s => s.category === 'Core Skills')?.id || 'what-is-coding',
+      title: currentPathCurriculum.find(s => s.category === 'Core Skills')?.title || 'Problem Solving', 
+      desc: 'Master the fundamental logic of programming.', 
+      duration: '10 mins' 
+    },
+    { 
+      tag: 'LANGUAGES', 
+      id: currentPathCurriculum.find(s => s.category === 'Web Languages' || s.category === 'Mobile')?.id || 'html-basics',
+      title: currentPathCurriculum.find(s => s.category === 'Web Languages' || s.category === 'Mobile')?.title || 'HTML Structure', 
+      desc: 'The building blocks of your career path.', 
+      duration: '10 mins' 
+    },
+    { 
+      tag: 'TOOLS', 
+      id: currentPathCurriculum.find(s => s.category === 'Tools')?.id || 'git-basics',
+      title: currentPathCurriculum.find(s => s.category === 'Tools')?.title || 'Git / GitHub', 
+      desc: 'Essential tools for modern development.', 
+      duration: '15 mins' 
+    }
   ];
 
   return (
@@ -325,7 +343,7 @@ export const DashboardPage: React.FC = () => {
                 onClick={() => {
                   if (nextTest) navigate(`/test/${nextTest.id}`);
                   else if ((nextLesson as any)?.isExam) navigate(`/exam/${(nextLesson as any).id}`);
-                  else navigate(`/lesson/${nextLesson?.title.toLowerCase().replace(/ /g, '-')}`);
+                  else navigate(`/lesson/${nextLesson?.id}`);
                 }}
                 className="group h-20 px-12 text-lg font-black tracking-tight shadow-2xl shadow-emerald-500/40 rounded-[2rem]"
               >
@@ -512,7 +530,7 @@ export const DashboardPage: React.FC = () => {
               {featuredLessons.map((lesson, i) => (
                 <Card 
                   key={i}
-                  onClick={() => navigate(`/lesson/${lesson.title.toLowerCase().replace(/ /g, '-')}`)}
+                  onClick={() => navigate(`/lesson/${lesson.id}`)}
                   className="p-8 flex items-center justify-between group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20"
                 >
                   <div className="flex gap-10 items-center">

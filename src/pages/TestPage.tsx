@@ -22,6 +22,9 @@ export const TestPage: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
 
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [wrongQuestions, setWrongQuestions] = useState<string[]>([]);
+
   useEffect(() => {
     const foundTest = STAGE_TESTS.find(t => t.id === testId);
     if (foundTest) {
@@ -32,16 +35,23 @@ export const TestPage: React.FC = () => {
   if (userLoading || !test) return <LoadingScreen message="PREPARING TEST..." />;
 
   const handleAnswer = (optionIdx: number) => {
+    if (showFeedback) return;
     const newAnswers = [...selectedAnswers];
     newAnswers[currentQuestion] = optionIdx;
     setSelectedAnswers(newAnswers);
+    setShowFeedback(true);
+
+    if (optionIdx !== test.questions[currentQuestion].correctIndex) {
+      setWrongQuestions(prev => [...prev, test.questions[currentQuestion].question]);
+    }
   };
 
   const nextQuestion = () => {
+    setShowFeedback(false);
     if (currentQuestion < test.questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      setIsFinished(true);
+      handleFinish();
     }
   };
 
@@ -53,13 +63,15 @@ export const TestPage: React.FC = () => {
 
   const handleFinish = async () => {
     const score = calculateScore();
-    const passed = score >= test.minScoreToPass;
+    const passed = (score / test.questions.length) * 100 >= test.minScoreToPass;
 
-    if (passed && progress) {
-      await addXP(test.xpReward);
+    if (progress) {
+      const newWeakAreas = [...new Set([...progress.weakAreas, ...wrongQuestions])];
       await updateProgress({
-        completedTests: [...progress.completedTests, test.id]
+        completedTests: passed ? [...progress.completedTests, test.id] : progress.completedTests,
+        weakAreas: newWeakAreas.slice(0, 10) // Keep top 10 weak areas
       });
+      if (passed) await addXP(test.xpReward);
     }
     setShowResults(true);
   };
@@ -159,29 +171,56 @@ export const TestPage: React.FC = () => {
               {question.options.map((option, idx) => (
                 <button
                   key={idx}
+                  disabled={showFeedback}
                   onClick={() => handleAnswer(idx)}
                   className={`w-full p-6 rounded-2xl border text-left transition-all flex items-center justify-between group ${
                     selectedAnswers[currentQuestion] === idx
-                      ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
-                      : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
+                      ? idx === question.correctIndex 
+                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                        : 'bg-red-500/10 border-red-500 text-red-400'
+                      : showFeedback && idx === question.correctIndex
+                        ? 'bg-emerald-500/5 border-emerald-500/50 text-emerald-400'
+                        : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
                   }`}
                 >
                   <span className="font-medium">{option}</span>
                   {selectedAnswers[currentQuestion] === idx && (
-                    <CheckCircle2 size={20} className="text-emerald-500" />
+                    idx === question.correctIndex 
+                      ? <CheckCircle2 size={20} className="text-emerald-500" />
+                      : <AlertCircle size={20} className="text-red-500" />
                   )}
                 </button>
               ))}
             </div>
+
+            {showFeedback && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-6 rounded-2xl border ${
+                  selectedAnswers[currentQuestion] === question.correctIndex 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {selectedAnswers[currentQuestion] === question.correctIndex ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  <span className="font-black uppercase tracking-widest text-[10px]">
+                    {selectedAnswers[currentQuestion] === question.correctIndex ? 'Correct' : 'Incorrect'}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed">{question.explanation}</p>
+              </motion.div>
+            )}
           </motion.div>
 
           <div className="pt-8 flex justify-end">
             <Button 
               disabled={selectedAnswers[currentQuestion] === undefined}
-              onClick={isFinished ? handleFinish : nextQuestion}
+              onClick={nextQuestion}
               className="h-14 px-12 rounded-2xl shadow-xl shadow-emerald-500/20"
             >
-              {isFinished ? 'Finish Test' : 'Next Question'}
+              {currentQuestion === test.questions.length - 1 ? 'Finish Test' : 'Next Question'}
               <ChevronRight size={18} className="ml-2" />
             </Button>
           </div>
