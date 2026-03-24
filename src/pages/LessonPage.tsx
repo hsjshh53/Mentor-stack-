@@ -24,6 +24,7 @@ export const LessonPage: React.FC = () => {
   const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isCodingOpen, setIsCodingOpen] = useState(false);
   const [quizScore, setQuizScore] = useState<{ correct: number, total: number } | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
@@ -31,21 +32,79 @@ export const LessonPage: React.FC = () => {
 
   useEffect(() => {
     const fetchLesson = async () => {
-      if (!progress?.selectedPath || !topic) return;
+      console.log("LessonPage: topic =", topic);
+      console.log("LessonPage: userLoading =", userLoading);
+      console.log("LessonPage: progress =", progress);
+
+      if (userLoading) return;
+
+      if (!topic) {
+        console.warn("LessonPage: Missing topic parameter");
+        setError("Lesson topic is missing.");
+        setLoading(false);
+        return;
+      }
+
+      if (!progress?.selectedPath) {
+        console.warn("LessonPage: Missing selectedPath, redirecting to onboarding if needed");
+        if (progress && !progress.selectedPath) {
+          setLoading(false);
+          navigate('/onboarding');
+        } else if (!progress) {
+          // This case shouldn't happen if userLoading is false, but just in case
+          setError("User progress not found.");
+          setLoading(false);
+        }
+        return;
+      }
+
       setLoading(true);
+      setError(null);
       try {
+        console.log("LessonPage: Fetching lesson content for", topic, "in path", progress.selectedPath);
         const content = await generateLesson(progress.selectedPath, progress.currentStage, topic);
-        setLesson(content);
-      } catch (error) {
-        console.error("Error fetching lesson:", error);
+        console.log("LessonPage: Lesson content received:", content);
+        
+        if (content) {
+          setLesson(content);
+        } else {
+          console.error("LessonPage: No content returned for", topic);
+          setError("Could not load lesson content.");
+        }
+      } catch (error: any) {
+        console.error("LessonPage: Error fetching lesson:", error);
+        setError(error.message || "An unexpected error occurred.");
       } finally {
         setLoading(false);
       }
     };
     fetchLesson();
-  }, [progress?.selectedPath, topic]);
+  }, [progress, topic, userLoading, navigate]);
 
-  if (loading || userLoading || !lesson) return <LoadingScreen message="PREPARING LESSON..." />;
+  if (userLoading || loading) return <LoadingScreen message="PREPARING LESSON..." />;
+
+  if (error || !lesson) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <div className="w-20 h-20 rounded-3xl bg-red-500/10 flex items-center justify-center text-red-500">
+          <AlertCircle size={40} />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black tracking-tight">Lesson Not Found</h1>
+          <p className="text-white/40 max-w-md mx-auto">
+            {error || "We couldn't find the lesson you're looking for. It might be unavailable or the link could be broken."}
+          </p>
+        </div>
+        <Button 
+          onClick={() => navigate('/dashboard')}
+          className="h-14 px-8 rounded-2xl"
+        >
+          <ArrowLeft size={20} className="mr-2" />
+          Back to Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   const handleComplete = async () => {
     if (!lesson || !progress) return;
@@ -120,7 +179,7 @@ export const LessonPage: React.FC = () => {
 
             <div className="space-y-4">
               <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-                {lesson.title}
+                {lesson?.title || 'Untitled Lesson'}
               </h1>
               <Card className="p-6 border-emerald-500/20 bg-emerald-500/5">
                 <div className="flex items-start gap-4">
@@ -129,7 +188,7 @@ export const LessonPage: React.FC = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Today you are learning:</p>
-                    <p className="text-lg text-white/80 font-medium leading-relaxed">{lesson.todayYouAreLearning}</p>
+                    <p className="text-lg text-white/80 font-medium leading-relaxed">{lesson?.todayYouAreLearning || 'Loading objective...'}</p>
                   </div>
                 </div>
               </Card>
@@ -143,7 +202,7 @@ export const LessonPage: React.FC = () => {
               <h3 className="font-black uppercase text-xs tracking-[0.2em]">Why it matters</h3>
             </div>
             <p className="text-lg text-white/60 leading-relaxed">
-              {lesson.whyItMatters}
+              {lesson?.whyItMatters || 'This topic is essential for your career growth.'}
             </p>
           </section>
 
@@ -155,7 +214,7 @@ export const LessonPage: React.FC = () => {
             </div>
             <div className="prose prose-invert max-w-none">
               <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
-                {lesson.explanation}
+                {lesson?.explanation || 'Loading explanation...'}
               </p>
             </div>
           </section>
@@ -166,7 +225,7 @@ export const LessonPage: React.FC = () => {
               <Lightbulb size={20} />
               <h4 className="font-black uppercase text-xs tracking-[0.2em]">Real-World Analogy</h4>
             </div>
-            <p className="text-white/70 leading-relaxed italic">"{lesson.analogy}"</p>
+            <p className="text-white/70 leading-relaxed italic">"{lesson?.analogy || 'Think of it like learning a new language.'}"</p>
           </Card>
 
           {/* Code Block Section */}
@@ -179,7 +238,7 @@ export const LessonPage: React.FC = () => {
               <div className="absolute -inset-1 bg-emerald-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative bg-[#050505] border border-white/5 rounded-3xl p-8 font-mono text-sm leading-relaxed overflow-x-auto">
                 <pre className="text-emerald-300/90">
-                  {lesson.codeExample}
+                  {lesson?.codeExample || '// Code example loading...'}
                 </pre>
               </div>
             </div>
@@ -192,7 +251,7 @@ export const LessonPage: React.FC = () => {
               <h3 className="font-black uppercase text-xs tracking-[0.2em]">Line-by-Line Explanation</h3>
             </div>
             <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
-              {lesson.lineByLine}
+              {lesson?.lineByLine || 'Loading breakdown...'}
             </p>
           </section>
 
@@ -220,7 +279,7 @@ export const LessonPage: React.FC = () => {
                 <Target size={20} />
                 <h4 className="font-black uppercase text-xs tracking-[0.2em]">Practice Exercise</h4>
               </div>
-              <p className="text-white/70 leading-relaxed">{lesson.practice}</p>
+              <p className="text-white/70 leading-relaxed">{lesson?.practice || 'Try to implement the code above in your own editor.'}</p>
             </Card>
 
             {/* Mini Challenge */}
@@ -229,7 +288,7 @@ export const LessonPage: React.FC = () => {
                 <Zap size={20} />
                 <h4 className="font-black uppercase text-xs tracking-[0.2em]">Mini Challenge</h4>
               </div>
-              <p className="text-white/70 leading-relaxed">{lesson.challenge}</p>
+              <p className="text-white/70 leading-relaxed">{lesson?.challenge || 'Can you modify the code to do something slightly different?'}</p>
             </Card>
 
           {/* Test (Quiz) Section */}
@@ -294,7 +353,7 @@ export const LessonPage: React.FC = () => {
               <RefreshCcw size={20} />
               <h4 className="font-black uppercase text-xs tracking-[0.2em]">Recap</h4>
             </div>
-            <p className="text-white/70 leading-relaxed">{lesson.recap}</p>
+            <p className="text-white/70 leading-relaxed">{lesson?.recap || 'Great job completing this lesson!'}</p>
           </Card>
           </div>
         </div>

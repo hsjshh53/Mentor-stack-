@@ -4,7 +4,11 @@ import { LESSON_CONTENT } from '../constants/lessons';
 
 // 1. GEMINI SERVICE SETUP
 // The API key is automatically provided by the platform via process.env.GEMINI_API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn("GEMINI_API_KEY is not defined. MentorStack will run in Offline Mode.");
+}
+const ai = new GoogleGenAI({ apiKey: apiKey || "dummy-key" });
 
 const SYSTEM_INSTRUCTION = `
 You are MentorStack, a global coding academy and personal AI mentor. Your goal is to guide users from zero coding knowledge to job-ready software engineering level across all tech fields.
@@ -347,7 +351,12 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    // Add a timeout to the API call
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Gemini API request timed out")), 15000)
+    );
+
+    const apiCallPromise = ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
       config: {
@@ -355,6 +364,7 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
       }
     });
 
+    const response = (await Promise.race([apiCallPromise, timeoutPromise])) as any;
     const text = response.text;
     if (!text) throw new Error("Empty response");
 
