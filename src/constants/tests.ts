@@ -253,5 +253,550 @@ export const STAGE_TESTS: StageTest[] = [
         explanation: 'Full-stack development involves working on all layers of an application, from the user interface to the database.'
       }
     ]
+  },
+  {
+    id: 'html-css-test',
+    title: 'HTML & CSS Mastery Test',
+    stage: 'Beginner',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of web structure and styling.',
+    minScoreToPass: 80,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'Which HTML tag is used for the main heading of a page?',
+        options: ['<head>', '<h6>', '<h1>', '<header>'],
+        correctIndex: 2,
+        explanation: '<h1> is the top-level heading and should be used for the main title of a page.'
+      },
+      {
+        question: 'What does CSS stand for?',
+        options: ['Creative Style Sheets', 'Cascading Style Sheets', 'Computer Style Sheets', 'Colorful Style Sheets'],
+        correctIndex: 1,
+        explanation: 'CSS stands for Cascading Style Sheets, which describes how HTML elements are to be displayed on screen.'
+      },
+      {
+        question: 'Which CSS property is used to change the text color of an element?',
+        options: ['font-color', 'text-style', 'color', 'background-color'],
+        correctIndex: 2,
+        explanation: 'The color property is used to set the color of the text.'
+      },
+      {
+        question: 'What is the "Box Model" in CSS?',
+        options: [
+          'A way to draw boxes on the screen',
+          'A layout model that consists of margins, borders, padding, and content',
+          'A type of JavaScript function',
+          'A way to store data in a database'
+        ],
+        correctIndex: 1,
+        explanation: 'The CSS box model is essentially a box that wraps around every HTML element.'
+      },
+      {
+        question: 'Which CSS layout module is best for one-dimensional layouts (rows or columns)?',
+        options: ['Grid', 'Flexbox', 'Tables', 'Floats'],
+        correctIndex: 1,
+        explanation: 'Flexbox is designed for one-dimensional layouts, while Grid is for two-dimensional layouts.'
+      }
+    ]
+  },
+  {
+    id: 'javascript-basics-test',
+    title: 'JavaScript Basics Test',
+    stage: 'Intermediate',
+    path: 'Frontend Developer',
+    description: 'Test your understanding of JavaScript variables, functions, and the DOM.',
+    minScoreToPass: 80,
+    xpReward: 350,
+    questions: [
+      {
+        question: 'Which keyword is used to declare a variable that can be reassigned?',
+        options: ['const', 'let', 'fixed', 'var (deprecated)'],
+        correctIndex: 1,
+        explanation: 'let allows for reassignment, while const is for values that stay the same.'
+      },
+      {
+        question: 'What is the correct way to write a function in JavaScript?',
+        options: [
+          'function:myFunction() {}',
+          'function myFunction() {}',
+          'myFunction = function() {}',
+          'Both B and C'
+        ],
+        correctIndex: 3,
+        explanation: 'JavaScript supports both function declarations and function expressions.'
+      },
+      {
+        question: 'How do you select an element with the class "btn" using querySelector?',
+        options: [
+          'document.querySelector("btn")',
+          'document.querySelector(".btn")',
+          'document.querySelector("#btn")',
+          'document.querySelector("<btn>")'
+        ],
+        correctIndex: 1,
+        explanation: 'querySelector uses CSS selector syntax, so classes are prefixed with a dot (.).'
+      },
+      {
+        question: 'What does "async/await" help with in JavaScript?',
+        options: [
+          'Making the code run faster',
+          'Handling asynchronous operations like API calls',
+          'Styling the page',
+          'Creating new HTML elements'
+        ],
+        correctIndex: 1,
+        explanation: 'Async/await provides a cleaner way to work with Promises and asynchronous code.'
+      },
+      {
+        question: 'What is an array in JavaScript?',
+        options: [
+          'A single value',
+          'An ordered list of values',
+          'A type of function',
+          'A styling rule'
+        ],
+        correctIndex: 1,
+        explanation: 'Arrays are used to store multiple values in a single variable.'
+      }
+    ]
+  },
+  {
+    id: 'react-advanced-test',
+    title: 'Advanced Frontend (React) Test',
+    stage: 'Advanced',
+    path: 'Frontend Developer',
+    description: 'Verify your knowledge of React components, props, state, and hooks.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is a React Hook?',
+        options: [
+          'A way to style components',
+          'A special function that lets you "hook into" React features',
+          'A type of HTML tag',
+          'A database connection'
+        ],
+        correctIndex: 1,
+        explanation: 'Hooks like useState and useEffect allow functional components to use state and other React features.'
+      },
+      {
+        question: 'How do you pass data from a parent component to a child component?',
+        options: ['Using state', 'Using props', 'Using the DOM', 'Using CSS'],
+        correctIndex: 1,
+        explanation: 'Props are the standard way to pass data down the component tree.'
+      },
+      {
+        question: 'What is the purpose of the "key" prop in a list of elements?',
+        options: [
+          'To style the elements',
+          'To help React identify which items have changed, been added, or removed',
+          'To set the ID of the element',
+          'To make the list searchable'
+        ],
+        correctIndex: 1,
+        explanation: 'Keys help React optimize rendering by tracking individual elements in a list.'
+      },
+      {
+        question: 'What does the useEffect hook do?',
+        options: [
+          'It manages component state',
+          'It handles side effects like data fetching or manual DOM updates',
+          'It creates new components',
+          'It routes the user to a new page'
+        ],
+        correctIndex: 1,
+        explanation: 'useEffect is used for operations that happen outside the normal render flow.'
+      },
+      {
+        question: 'What is JSX?',
+        options: [
+          'A new type of JavaScript engine',
+          'A syntax extension for JavaScript that looks like HTML',
+          'A CSS preprocessor',
+          'A database query language'
+        ],
+        correctIndex: 1,
+        explanation: 'JSX allows you to write HTML-like structures directly in your JavaScript code.'
+      }
+    ]
+  },
+  {
+    id: 'backend-intermediate-test',
+    title: 'Backend Intermediate Test',
+    stage: 'Intermediate',
+    path: 'Backend Developer',
+    description: 'Test your knowledge of Express.js, REST APIs, and SQL databases.',
+    minScoreToPass: 80,
+    xpReward: 400,
+    questions: [
+      {
+        question: 'Which HTTP method is used to update an existing resource?',
+        options: ['GET', 'POST', 'PUT', 'DELETE'],
+        correctIndex: 2,
+        explanation: 'PUT (or PATCH) is used to update resources, while POST is for creating them.'
+      },
+      {
+        question: 'What is a "Primary Key" in a database?',
+        options: [
+          'A key that opens the server room',
+          'A unique identifier for each record in a table',
+          'The most important field in a table',
+          'A type of encryption key'
+        ],
+        correctIndex: 1,
+        explanation: 'A Primary Key uniquely identifies each row in a relational database table.'
+      },
+      {
+        question: 'What is the purpose of "Middleware" in Express?',
+        options: [
+          'To style the page',
+          'To handle logic before it reaches the final route',
+          'To connect to the database',
+          'To compress images'
+        ],
+        correctIndex: 1,
+        explanation: 'Middleware functions process requests before they reach the route handler.'
+      }
+    ]
+  },
+  {
+    id: 'fullstack-intermediate-test',
+    title: 'Full-Stack Intermediate Test',
+    stage: 'Intermediate',
+    path: 'Full-Stack Developer',
+    description: 'Verify your understanding of React and Node.js integration.',
+    minScoreToPass: 80,
+    xpReward: 450,
+    questions: [
+      {
+        question: 'What is the purpose of the "useEffect" hook in React?',
+        options: [
+          'To style elements',
+          'To handle side effects like data fetching',
+          'To create new components',
+          'To manage global state'
+        ],
+        correctIndex: 1,
+        explanation: 'useEffect is used for operations that happen outside the normal render flow.'
+      },
+      {
+        question: 'How do you send data from a React frontend to an Express backend?',
+        options: [
+          'Using CSS',
+          'Using fetch() or axios',
+          'Using HTML tags',
+          'Using SQL'
+        ],
+        correctIndex: 1,
+        explanation: 'fetch() and axios are common tools for making HTTP requests from the browser.'
+      }
+    ]
+  },
+  {
+    id: 'data-analyst-intermediate-test',
+    title: 'Data Analyst Intermediate Test',
+    stage: 'Intermediate',
+    path: 'Data Analyst',
+    description: 'Test your knowledge of SQL for data and Python basics.',
+    minScoreToPass: 80,
+    xpReward: 400,
+    questions: [
+      {
+        question: 'Which SQL clause is used to filter results?',
+        options: ['SELECT', 'FROM', 'WHERE', 'ORDER BY'],
+        correctIndex: 2,
+        explanation: 'The WHERE clause filters records based on specific conditions.'
+      },
+      {
+        question: 'What is "Pandas" in Python used for?',
+        options: [
+          'Creating 3D games',
+          'Data manipulation and analysis',
+          'Building web servers',
+          'Managing computer hardware'
+        ],
+        correctIndex: 1,
+        explanation: 'Pandas is the most popular Python library for data manipulation.'
+      }
+    ]
+  },
+  {
+    id: 'data-analyst-beginner-test',
+    title: 'Data Analyst Beginner Test',
+    stage: 'Beginner',
+    path: 'Data Analyst',
+    description: 'Test your understanding of the core concepts of data analysis and Excel.',
+    minScoreToPass: 75,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'What is the primary goal of data analysis?',
+        options: [
+          'To collect as much data as possible',
+          'To find meaningful patterns and insights in data',
+          'To write complex code',
+          'To create pretty charts'
+        ],
+        correctIndex: 1,
+        explanation: 'Data analysis is about turning raw data into actionable information.'
+      },
+      {
+        question: 'What is "Data Cleaning"?',
+        options: [
+          'Washing the server hardware',
+          'Removing or correcting inaccurate records from a dataset',
+          'Deleting all the data',
+          'Encrypting the data'
+        ],
+        correctIndex: 1,
+        explanation: 'Data cleaning is a crucial step in preparing data for analysis.'
+      },
+      {
+        question: 'Which Excel function is used to add together a range of cells?',
+        options: ['AVERAGE', 'COUNT', 'SUM', 'MAX'],
+        correctIndex: 2,
+        explanation: 'The SUM function adds all the numbers in a range of cells.'
+      }
+    ]
+  },
+  {
+    id: 'backend-advanced-test',
+    title: 'Backend Advanced Test',
+    stage: 'Advanced',
+    path: 'Backend Developer',
+    description: 'Test your knowledge of backend security, authentication, and advanced server concepts.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is a "JWT" (JSON Web Token)?',
+        options: [
+          'A type of database',
+          'A secure way to transmit information between parties as a JSON object',
+          'A new JavaScript framework',
+          'A styling language'
+        ],
+        correctIndex: 1,
+        explanation: 'JWTs are commonly used for authentication and information exchange in web applications.'
+      },
+      {
+        question: 'What is the purpose of "Hashing" a password?',
+        options: [
+          'To make it easier to remember',
+          'To store it in a way that is unreadable even if the database is compromised',
+          'To speed up the login process',
+          'To share it with other users'
+        ],
+        correctIndex: 1,
+        explanation: 'Hashing is a one-way process that transforms a password into a unique string of characters for security.'
+      },
+      {
+        question: 'What does "CORS" stand for?',
+        options: [
+          'Cross-Origin Resource Sharing',
+          'Computer-Oriented Resource System',
+          'Centralized Online Resource Server',
+          'Client-Only Resource Security'
+        ],
+        correctIndex: 0,
+        explanation: 'CORS is a security feature that controls which origins can access resources on a server.'
+      }
+    ]
+  },
+  {
+    id: 'fullstack-advanced-test',
+    title: 'Full-Stack Advanced Test',
+    stage: 'Advanced',
+    path: 'Full-Stack Developer',
+    description: 'Verify your knowledge of advanced full-stack concepts, including API design and deployment.',
+    minScoreToPass: 85,
+    xpReward: 550,
+    questions: [
+      {
+        question: 'What is "Deployment" in web development?',
+        options: [
+          'Writing the code',
+          'The process of making your application accessible on the internet',
+          'Designing the UI',
+          'Testing the code'
+        ],
+        correctIndex: 1,
+        explanation: 'Deployment involves moving your code from a local environment to a live server.'
+      },
+      {
+        question: 'What is a "RESTful API"?',
+        options: [
+          'An API that only works on weekends',
+          'An API that follows the REST architectural style',
+          'An API that uses only SQL',
+          'An API that is written in Python'
+        ],
+        correctIndex: 1,
+        explanation: 'RESTful APIs use standard HTTP methods and follow specific design principles.'
+      }
+    ]
+  },
+  {
+    id: 'data-analyst-advanced-test',
+    title: 'Data Analyst Advanced Test',
+    stage: 'Advanced',
+    path: 'Data Analyst',
+    description: 'Test your knowledge of statistics and advanced data analysis concepts.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is "Probability" in statistics?',
+        options: [
+          'The study of numbers',
+          'The likelihood of an event occurring',
+          'A type of chart',
+          'A way to clean data'
+        ],
+        correctIndex: 1,
+        explanation: 'Probability is a measure of how likely it is that an event will happen.'
+      },
+      {
+        question: 'What is the "Mean" of a dataset?',
+        options: [
+          'The middle value',
+          'The most frequent value',
+          'The average value',
+          'The difference between the max and min'
+        ],
+        correctIndex: 2,
+        explanation: 'The mean is calculated by adding all values and dividing by the number of values.'
+      }
+    ]
+  },
+  {
+    id: 'ai-python-test',
+    title: 'AI Python Basics Test',
+    stage: 'Beginner',
+    path: 'AI Engineer',
+    description: 'Test your Python skills for AI development.',
+    minScoreToPass: 75,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'Which Python library is essential for numerical computing in AI?',
+        options: ['Pandas', 'NumPy', 'Matplotlib', 'Requests'],
+        correctIndex: 1,
+        explanation: 'NumPy provides support for large, multi-dimensional arrays and matrices, along with a collection of mathematical functions.'
+      },
+      {
+        question: 'What is a list comprehension in Python?',
+        options: ['A way to compress files', 'A concise way to create lists', 'A type of database', 'A debugging tool'],
+        correctIndex: 1,
+        explanation: 'List comprehensions provide a concise way to create lists based on existing lists or other iterables.'
+      }
+    ]
+  },
+  {
+    id: 'ai-math-test',
+    title: 'Math for AI Test',
+    stage: 'Beginner',
+    path: 'AI Engineer',
+    description: 'Test your understanding of the mathematical foundations of AI.',
+    minScoreToPass: 70,
+    xpReward: 350,
+    questions: [
+      {
+        question: 'What is a "Scalar" in linear algebra?',
+        options: ['A vector with multiple values', 'A single number', 'A matrix of numbers', 'A type of function'],
+        correctIndex: 1,
+        explanation: 'A scalar is a single numerical value, as opposed to a vector or matrix.'
+      }
+    ]
+  },
+  {
+    id: 'cyber-fundamentals-test',
+    title: 'Cybersecurity Fundamentals Test',
+    stage: 'Beginner',
+    path: 'Cybersecurity',
+    description: 'Test your knowledge of core security principles.',
+    minScoreToPass: 80,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'What does the "CIA Triad" stand for?',
+        options: [
+          'Central Intelligence Agency',
+          'Confidentiality, Integrity, Availability',
+          'Computer Internet Access',
+          'Control, Information, Authentication'
+        ],
+        correctIndex: 1,
+        explanation: 'The CIA triad is a model designed to guide policies for information security within an organization.'
+      }
+    ]
+  },
+  {
+    id: 'devops-basics-test',
+    title: 'DevOps Basics Test',
+    stage: 'Beginner',
+    path: 'DevOps Engineer',
+    description: 'Test your understanding of DevOps culture and practices.',
+    minScoreToPass: 75,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'What is the primary goal of DevOps?',
+        options: [
+          'To replace developers with operations staff',
+          'To shorten the systems development life cycle and provide continuous delivery',
+          'To write more code',
+          'To increase the number of servers'
+        ],
+        correctIndex: 1,
+        explanation: 'DevOps aims to improve collaboration between development and operations teams to deliver software faster and more reliably.'
+      }
+    ]
+  },
+  {
+    id: 'cloud-basics-test',
+    title: 'Cloud Basics Test',
+    stage: 'Beginner',
+    path: 'Cloud Engineer',
+    description: 'Test your knowledge of cloud computing fundamentals.',
+    minScoreToPass: 75,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'What is "SaaS" in cloud computing?',
+        options: [
+          'Storage as a Service',
+          'Software as a Service',
+          'Security as a Service',
+          'System as a Service'
+        ],
+        correctIndex: 1,
+        explanation: 'SaaS allows users to connect to and use cloud-based apps over the Internet.'
+      }
+    ]
+  },
+  {
+    id: 'game-basics-test',
+    title: 'Game Development Basics Test',
+    stage: 'Beginner',
+    path: 'Game Developer',
+    description: 'Test your understanding of game development fundamentals.',
+    minScoreToPass: 75,
+    xpReward: 300,
+    questions: [
+      {
+        question: 'What is a "Game Engine"?',
+        options: [
+          'The physical hardware that runs the game',
+          'A software framework designed for the creation and development of video games',
+          'The story of the game',
+          'The marketing team for the game'
+        ],
+        correctIndex: 1,
+        explanation: 'Game engines provide the core functionality needed to build games, such as rendering, physics, and sound.'
+      }
+    ]
   }
 ];

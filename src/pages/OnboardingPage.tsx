@@ -1,31 +1,28 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, Button, Badge } from '../components/ui';
-import { CareerPath } from '../types/index';
+import { CareerPath, CareerCategory } from '../types/index';
 import { useUserData } from '../hooks/useUserData';
 import { useNavigate } from 'react-router-dom';
-import { Code2, Database, Layout, Smartphone, Terminal, BarChart, Palette, Globe, ChevronRight, Shield, Cpu, Layers, Server, Activity, Lock } from 'lucide-react';
+import * as Icons from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { CURRICULUM } from '../constants/curriculum';
 
-const paths: { id: CareerPath; icon: React.ReactNode; desc: string; skills: string[]; recommended?: boolean }[] = [
-  { id: 'Frontend Developer', icon: <Layout size={24} />, desc: 'Master the art of building beautiful, interactive user interfaces.', skills: ['HTML', 'CSS', 'JavaScript', 'React'] },
-  { id: 'Full-Stack Developer', icon: <Globe size={24} />, desc: 'Become a versatile developer who can build complete applications.', skills: ['Frontend', 'Backend', 'DevOps'], recommended: true },
-  { id: 'Backend Developer', icon: <Database size={24} />, desc: 'Build the logic and infrastructure that powers modern applications.', skills: ['Node.js', 'Express', 'Firebase', 'SQL'] },
-  { id: 'Mobile App Developer', icon: <Smartphone size={24} />, desc: 'Build native mobile applications for iOS and Android.', skills: ['React Native', 'APIs', 'Mobile UI'] },
-  { id: 'Software Engineer', icon: <Terminal size={24} />, desc: 'Master the core principles of software development and architecture.', skills: ['Algorithms', 'Data Structures', 'System Design'] },
-  { id: 'Game Developer', icon: <Cpu size={24} />, desc: 'Create immersive 2D and 3D gaming experiences.', skills: ['Unity', 'C#', 'Physics', 'Graphics'] },
-  { id: 'DevOps Engineer', icon: <Server size={24} />, desc: 'Automate and optimize the software development lifecycle.', skills: ['Docker', 'K8s', 'CI/CD', 'AWS'] },
-  { id: 'Cloud Engineer', icon: <Layers size={24} />, desc: 'Design and manage scalable cloud infrastructure.', skills: ['AWS', 'Azure', 'GCP', 'Terraform'] },
-  { id: 'Data Analyst', icon: <BarChart size={24} />, desc: 'Extract insights from data and help businesses make better decisions.', skills: ['Python', 'SQL', 'Excel', 'Pandas'] },
-  { id: 'Data Scientist', icon: <Activity size={24} />, desc: 'Build predictive models and advanced data visualizations.', skills: ['ML', 'Statistics', 'R', 'Python'] },
-  { id: 'AI Engineer', icon: <Cpu size={24} />, desc: 'Develop intelligent systems using neural networks and LLMs.', skills: ['PyTorch', 'NLP', 'Computer Vision'] },
-  { id: 'Cybersecurity Engineer', icon: <Shield size={24} />, desc: 'Protect systems and networks from digital attacks.', skills: ['Ethical Hacking', 'Network Security'] },
-  { id: 'Blockchain Developer', icon: <Globe size={24} />, desc: 'Build decentralized applications and smart contracts.', skills: ['Solidity', 'Ethereum', 'Web3'] },
-  { id: 'UI/UX Designer', icon: <Palette size={24} />, desc: 'Design intuitive and engaging user experiences.', skills: ['Figma', 'Prototyping', 'User Research'] },
-  { id: 'QA Engineer', icon: <Code2 size={24} />, desc: 'Ensure software quality through automated and manual testing.', skills: ['Selenium', 'Jest', 'Cypress'] },
-  { id: 'API Developer', icon: <Code2 size={24} />, desc: 'Specialize in building robust and scalable APIs.', skills: ['REST', 'GraphQL', 'gRPC'] },
-  { id: 'Systems Architect', icon: <Layers size={24} />, desc: 'Design high-level structures of complex software systems.', skills: ['Scalability', 'Microservices'] }
+const categories: CareerCategory[] = [
+  'Core Software Development',
+  'Data & AI',
+  'Security',
+  'Infrastructure & Systems',
+  'Specialized Development',
+  'Product & Design',
+  'Emerging High-Income Skills'
 ];
+
+const IconComponent = ({ name }: { name?: string }) => {
+  const Icon = (Icons as any)[name || 'HelpCircle'] || Icons.HelpCircle;
+  return <Icon size={24} />;
+};
 
 export const OnboardingPage: React.FC = () => {
   const [selected, setSelected] = useState<CareerPath | null>(null);
@@ -42,6 +39,8 @@ export const OnboardingPage: React.FC = () => {
   };
 
   if (loading) return <LoadingScreen />;
+
+  const allPaths = Object.values(CURRICULUM);
 
   return (
     <div className="min-h-screen bg-[#050506] text-white px-6 py-24 flex flex-col items-center relative overflow-hidden">
@@ -64,63 +63,86 @@ export const OnboardingPage: React.FC = () => {
         </p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-7xl relative z-10 mb-32">
-        {paths.map((path, i) => (
-          <motion.div
-            key={path.id}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Card 
-              onClick={() => setSelected(path.id)}
-              className={`h-full flex flex-col p-10 relative group transition-all duration-500 ${
-                selected === path.id 
-                  ? 'bg-emerald-500/[0.08] border-emerald-500/40 ring-1 ring-emerald-500/20' 
-                  : path.recommended 
-                    ? 'border-white/[0.12] bg-white/[0.04]' 
-                    : 'border-white/[0.08]'
-              }`}
-            >
-              {path.recommended && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-emerald-500 text-black border-none font-black shadow-lg shadow-emerald-500/20">Recommended</Badge>
-                </div>
-              )}
-              
-              <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-10 transition-all duration-500 ${
-                selected === path.id 
-                  ? 'bg-emerald-500 text-black shadow-2xl shadow-emerald-500/40 scale-110' 
-                  : 'bg-white/[0.05] text-white/40 group-hover:bg-white/[0.08] group-hover:text-white/60'
-              }`}>
-                {path.icon}
-              </div>
-              
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className={`text-2xl font-bold transition-colors duration-500 ${selected === path.id ? 'text-emerald-400' : 'text-white'}`}>
-                  {path.id}
-                </h3>
-              </div>
-              <p className="text-base text-white/30 leading-relaxed mb-10 flex-grow font-medium">
-                {path.desc}
-              </p>
-              
-              <div className="flex flex-wrap gap-2.5">
-                {path.skills.map(skill => (
-                  <Badge 
-                    key={skill} 
-                    className={`transition-colors duration-500 ${
-                      selected === path.id 
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                        : 'bg-white/[0.03] text-white/30'
+      <div className="w-full max-w-7xl relative z-10 mb-32 space-y-24">
+        {categories.map((category) => (
+          <div key={category} className="space-y-10">
+            <div className="flex items-center gap-4">
+              <h2 className="text-3xl font-black tracking-tight text-white/90">{category}</h2>
+              <div className="h-px flex-grow bg-white/10" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {allPaths.filter(p => p.category === category).map((path, i) => (
+                <motion.div
+                  key={path.title}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <Card 
+                    onClick={() => path.status !== 'locked' && setSelected(path.title as CareerPath)}
+                    className={`h-full flex flex-col p-10 relative group transition-all duration-500 ${
+                      path.status === 'locked' ? 'opacity-50 cursor-not-allowed grayscale' : 'cursor-pointer'
+                    } ${
+                      selected === path.title 
+                        ? 'bg-emerald-500/[0.08] border-emerald-500/40 ring-1 ring-emerald-500/20' 
+                        : path.recommended 
+                          ? 'border-white/[0.12] bg-white/[0.04]' 
+                          : 'border-white/[0.08]'
                     }`}
                   >
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            </Card>
-          </motion.div>
+                    {path.recommended && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-emerald-500 text-black border-none font-black shadow-lg shadow-emerald-500/20">Recommended</Badge>
+                      </div>
+                    )}
+                    {path.status === 'locked' && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-white/10 text-white/40 border-white/10 font-black">Coming Soon</Badge>
+                      </div>
+                    )}
+                    {path.status === 'partial' && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-black">Partial Content</Badge>
+                      </div>
+                    )}
+                    
+                    <div className={`w-16 h-16 rounded-3xl flex items-center justify-center mb-10 transition-all duration-500 ${
+                      selected === path.title 
+                        ? 'bg-emerald-500 text-black shadow-2xl shadow-emerald-500/40 scale-110' 
+                        : 'bg-white/[0.05] text-white/40 group-hover:bg-white/[0.08] group-hover:text-white/60'
+                    }`}>
+                      <IconComponent name={path.icon} />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 mb-4">
+                      <h3 className={`text-2xl font-bold transition-colors duration-500 ${selected === path.title ? 'text-emerald-400' : 'text-white'}`}>
+                        {path.title}
+                      </h3>
+                    </div>
+                    <p className="text-base text-white/30 leading-relaxed mb-10 flex-grow font-medium">
+                      {path.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2.5">
+                      {path.skills?.map(skill => (
+                        <Badge 
+                          key={skill} 
+                          className={`transition-colors duration-500 ${
+                            selected === path.title 
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                              : 'bg-white/[0.03] text-white/30'
+                          }`}
+                        >
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 

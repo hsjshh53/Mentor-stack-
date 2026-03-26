@@ -1,23 +1,66 @@
+export type PathStatus = 'active' | 'partial' | 'locked';
+
+export type CareerCategory = 
+  | 'Core Software Development'
+  | 'Data & AI'
+  | 'Security'
+  | 'Infrastructure & Systems'
+  | 'Specialized Development'
+  | 'Product & Design'
+  | 'Emerging High-Income Skills';
+
 export type CareerPath = 
   | 'Frontend Developer'
   | 'Backend Developer'
   | 'Full-Stack Developer'
   | 'Mobile App Developer'
-  | 'Software Engineer'
-  | 'Game Developer'
+  | 'Data Analyst'
+  | 'AI Engineer'
+  | 'Machine Learning'
+  | 'Data Scientist'
+  | 'Data Engineer'
+  | 'Cybersecurity'
+  | 'Ethical Hacking'
+  | 'Network Security'
+  | 'Application Security'
   | 'DevOps Engineer'
   | 'Cloud Engineer'
-  | 'Data Analyst'
-  | 'Data Scientist'
-  | 'AI Engineer'
-  | 'Cybersecurity Engineer'
-  | 'Blockchain Developer'
-  | 'UI/UX Designer'
-  | 'QA Engineer'
-  | 'API Developer'
-  | 'Systems Architect';
+  | 'SRE'
+  | 'System Admin'
+  | 'Game Developer'
+  | 'AR/VR'
+  | 'IoT'
+  | 'Blockchain'
+  | 'UI/UX'
+  | 'Product Design'
+  | 'AI Automation'
+  | 'Prompt Engineering'
+  | 'Web3'
+  | 'Robotics';
 
 export type Stage = 'Beginner' | 'Intermediate' | 'Advanced' | 'Projects' | 'Final Exam';
+
+export interface Module {
+  id: string;
+  title: string;
+  description: string;
+  lessons: string[]; // Lesson IDs
+  testId?: string;
+  projectId?: string;
+}
+
+export interface PathCurriculum {
+  id: string;
+  title: string;
+  description: string;
+  category: CareerCategory;
+  status: PathStatus;
+  icon?: string;
+  skills?: string[];
+  recommended?: boolean;
+  modules: Module[];
+  finalExamId: string;
+}
 
 export interface UserProgress {
   selectedPath: CareerPath | null;
@@ -102,5 +145,16 @@ export interface FinalExam {
     starterCode: string;
     solution: string;
   };
+  xpReward: number;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  path: CareerPath;
+  description: string;
+  objective: string;
+  steps: string[];
+  output: string;
   xpReward: number;
 }

@@ -17,6 +17,7 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { CURRICULUM } from '../constants/curriculum';
 import { STAGE_TESTS } from '../constants/tests';
 import { FINAL_EXAMS } from '../constants/exams';
+import { LESSON_CONTENT } from '../constants/lessons';
 import { CareerPath } from '../types';
 
 export const DashboardPage: React.FC = () => {
@@ -26,36 +27,73 @@ export const DashboardPage: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPathSwitcherOpen, setIsPathSwitcherOpen] = useState(false);
 
-  const currentPathCurriculum = useMemo(() => {
-    if (!progress?.selectedPath) return [];
-    return CURRICULUM[progress.selectedPath as CareerPath] || [];
+  const currentPathData = useMemo(() => {
+    if (!progress?.selectedPath) return null;
+    const path = progress.selectedPath as CareerPath;
+    if (!CURRICULUM[path]) {
+      console.error(`Path ${path} not found in CURRICULUM`);
+      return null;
+    }
+    return CURRICULUM[path];
   }, [progress?.selectedPath]);
 
-  const nextLesson = useMemo(() => {
-    if (!progress) return null;
+  const allLessonsInPath = useMemo(() => {
+    if (!currentPathData) return [];
+    return currentPathData.modules.flatMap(m => m.lessons || []);
+  }, [currentPathData]);
+
+  const nextLessonId = useMemo(() => {
+    if (!progress || !allLessonsInPath.length) return null;
     
     // Check for next lesson
-    const lesson = currentPathCurriculum.find(step => !progress.completedLessons?.includes(step.title));
-    if (lesson) return lesson;
+    const lessonId = allLessonsInPath.find(id => !progress.completedLessons?.includes(id));
+    if (lessonId) return lessonId;
 
+    return allLessonsInPath[0];
+  }, [allLessonsInPath, progress?.completedLessons]);
+
+  const nextExam = useMemo(() => {
+    if (!progress || !currentPathData?.finalExamId) return null;
+    
     // If all lessons are done, check for final exam
-    const exam = FINAL_EXAMS.find(e => e.path === progress.selectedPath && !progress.completedExams?.includes(e.id));
-    if (exam) return { ...exam, isExam: true };
+    const allDone = allLessonsInPath.every(id => progress.completedLessons?.includes(id));
+    if (allDone && !progress.completedExams?.includes(currentPathData.finalExamId)) {
+      return FINAL_EXAMS.find(e => e.id === currentPathData.finalExamId);
+    }
 
-    return currentPathCurriculum[0];
-  }, [currentPathCurriculum, progress?.completedLessons, progress?.completedExams, progress?.selectedPath]);
+    return null;
+  }, [allLessonsInPath, currentPathData, progress?.completedLessons, progress?.completedExams]);
 
   const nextTest = useMemo(() => {
-    if (!progress) return null;
-    // Suggest a test if stage progress is high
-    const stageLessons = currentPathCurriculum.filter(s => s.stage === progress.currentStage);
-    const completedInStage = stageLessons.filter(l => progress.completedLessons?.includes(l.title)).length;
+    if (!progress || !currentPathData) return null;
     
-    if (completedInStage >= stageLessons.length * 0.8) {
-      return STAGE_TESTS.find(t => t.path === progress.selectedPath && t.stage === progress.currentStage && !progress.completedTests?.includes(t.id));
+    for (const module of currentPathData.modules) {
+      if (!module.testId) continue;
+      
+      const allLessonsDone = module.lessons.every(id => progress.completedLessons?.includes(id));
+      const testDone = progress.completedTests?.includes(module.testId);
+      
+      if (allLessonsDone && !testDone) {
+        return STAGE_TESTS.find(t => t.id === module.testId);
+      }
     }
     return null;
-  }, [currentPathCurriculum, progress?.completedLessons, progress?.currentStage, progress?.selectedPath, progress?.completedTests]);
+  }, [currentPathData, progress?.completedLessons, progress?.completedTests]);
+
+  const nextLesson = useMemo(() => {
+    if (!nextLessonId) return null;
+    return LESSON_CONTENT[nextLessonId as keyof typeof LESSON_CONTENT];
+  }, [nextLessonId]);
+
+  const groupedPaths = useMemo(() => {
+    const groups: Record<string, CareerPath[]> = {};
+    Object.entries(CURRICULUM).forEach(([path, data]) => {
+      const category = data.category;
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(path as CareerPath);
+    });
+    return groups;
+  }, []);
 
   if (loading || !progress) return <LoadingScreen />;
 
@@ -64,22 +102,24 @@ export const DashboardPage: React.FC = () => {
   const streak = Number(progress.streak) || 0;
   const currentStage = progress.currentStage || 'Beginner';
 
-  if (!progress.selectedPath) {
+  if (!progress.selectedPath || !CURRICULUM[progress.selectedPath as CareerPath]) {
     navigate('/onboarding');
     return null;
   }
 
-  const getCategoryProgress = (category: string) => {
-    if (!progress) return 0;
-    const categoryLessons = currentPathCurriculum.filter(step => step.category === category);
-    if (categoryLessons.length === 0) return 0;
+  const getModuleProgress = (moduleId: string) => {
+    if (!progress || !currentPathData) return 0;
+    const module = currentPathData.modules.find(m => m.id === moduleId);
+    if (!module || module.lessons.length === 0) return 0;
     
-    const completed = categoryLessons.filter(l => progress.completedLessons?.includes(l.title)).length;
-    const rawProgress = (completed / categoryLessons.length) * 100;
-    return Math.round(rawProgress);
+    const completed = module.lessons.filter(id => progress.completedLessons?.includes(id)).length;
+    return Math.round((completed / module.lessons.length) * 100);
   };
 
   const handlePathSwitch = async (path: CareerPath) => {
+    const pathData = CURRICULUM[path];
+    if (pathData.status === 'locked') return;
+    
     await updateProgress({ selectedPath: path });
     setIsPathSwitcherOpen(false);
   };
@@ -100,25 +140,25 @@ export const DashboardPage: React.FC = () => {
 
   const featuredLessons = [
     { 
-      tag: 'CORE SKILLS', 
-      id: currentPathCurriculum.find(s => s.category === 'Core Skills')?.id || 'what-is-coding',
-      title: currentPathCurriculum.find(s => s.category === 'Core Skills')?.title || 'Problem Solving', 
-      desc: 'Master the fundamental logic of programming.', 
+      tag: 'RECOMMENDED', 
+      id: allLessonsInPath[0] || 'what-is-coding',
+      title: 'Getting Started', 
+      desc: 'Begin your journey with the fundamentals.', 
       duration: '10 mins' 
     },
     { 
-      tag: 'LANGUAGES', 
-      id: currentPathCurriculum.find(s => s.category === 'Web Languages' || s.category === 'Mobile')?.id || 'html-basics',
-      title: currentPathCurriculum.find(s => s.category === 'Web Languages' || s.category === 'Mobile')?.title || 'HTML Structure', 
-      desc: 'The building blocks of your career path.', 
-      duration: '10 mins' 
-    },
-    { 
-      tag: 'TOOLS', 
-      id: currentPathCurriculum.find(s => s.category === 'Tools')?.id || 'git-basics',
-      title: currentPathCurriculum.find(s => s.category === 'Tools')?.title || 'Git / GitHub', 
-      desc: 'Essential tools for modern development.', 
+      tag: 'ESSENTIAL', 
+      id: allLessonsInPath[5] || 'html-structure',
+      title: 'Core Concepts', 
+      desc: 'Master the building blocks of your path.', 
       duration: '15 mins' 
+    },
+    { 
+      tag: 'ADVANCED', 
+      id: allLessonsInPath[15] || 'js-intro',
+      title: 'Deep Dive', 
+      desc: 'Take your skills to the next level.', 
+      duration: '20 mins' 
     }
   ];
 
@@ -265,18 +305,18 @@ export const DashboardPage: React.FC = () => {
               <div className="space-y-2 max-w-md">
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/20">
                   <span>Path Progress</span>
-                  <span>{currentPathCurriculum.length > 0 ? Math.round((progress.completedLessons.length / currentPathCurriculum.length) * 100) : 0}%</span>
+                  <span>{allLessonsInPath.length > 0 ? Math.round((progress.completedLessons.length / allLessonsInPath.length) * 100) : 0}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${(progress.completedLessons?.length / currentPathCurriculum.length) * 100}%` }}
+                    animate={{ width: `${(progress.completedLessons?.length / allLessonsInPath.length) * 100}%` }}
                     className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                   />
                 </div>
               </div>
               <p className="text-white/30 font-medium text-lg md:text-xl max-w-md leading-relaxed">
-                Welcome back, {user?.displayName?.split(' ')[0] || 'Developer'}. You're on step <span className="text-emerald-400/60">{currentPathCurriculum.findIndex(s => s.id === nextLesson?.id) + 1}</span> of your journey.
+                Welcome back, {user?.displayName?.split(' ')[0] || 'Developer'}. You're on step <span className="text-emerald-400/60">{allLessonsInPath.indexOf(nextLessonId || '') + 1}</span> of your journey.
               </p>
             </div>
 
@@ -329,25 +369,25 @@ export const DashboardPage: React.FC = () => {
             <div className="relative z-10 space-y-10 max-w-lg">
               <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-emerald-500/10">
                 <Sparkles size={14} fill="currentColor" />
-                {nextTest ? 'Stage Test Available' : (nextLesson as any)?.isExam ? 'Final Exam Ready' : 'Recommended Next'}
+                {nextTest ? 'Stage Test Available' : nextExam ? 'Final Exam Ready' : 'Recommended Next'}
               </div>
               <div className="space-y-4">
                 <h2 className="text-5xl md:text-6xl font-black tracking-tighter leading-none">
-                  {nextTest ? nextTest.title : nextLesson?.title || 'Start Learning'}
+                  {nextTest ? nextTest.title : nextExam ? nextExam.title : nextLesson?.title || 'Start Learning'}
                 </h2>
                 <p className="text-white/40 text-xl leading-relaxed font-medium">
-                  {nextTest ? nextTest.description : (nextLesson as any)?.isExam ? (nextLesson as any).description : nextLesson?.description || 'Begin your journey into the world of technology with our guided curriculum.'}
+                  {nextTest ? nextTest.description : nextExam ? nextExam.description : nextLesson?.todayYouAreLearning || 'Begin your journey into the world of technology with our guided curriculum.'}
                 </p>
               </div>
               <Button 
                 onClick={() => {
                   if (nextTest) navigate(`/test/${nextTest.id}`);
-                  else if ((nextLesson as any)?.isExam) navigate(`/exam/${(nextLesson as any).id}`);
-                  else navigate(`/lesson/${nextLesson?.id}`);
+                  else if (nextExam) navigate(`/exam/${nextExam.id}`);
+                  else navigate(`/lesson/${nextLessonId}`);
                 }}
                 className="group h-20 px-12 text-lg font-black tracking-tight shadow-2xl shadow-emerald-500/40 rounded-[2rem]"
               >
-                {nextTest ? 'Start Stage Test' : (nextLesson as any)?.isExam ? 'Take Final Exam' : progress.completedLessons?.length ? 'Continue Learning' : 'Start First Lesson'}
+                {nextTest ? 'Start Stage Test' : nextExam ? 'Take Final Exam' : progress.completedLessons?.length ? 'Continue Learning' : 'Start First Lesson'}
                 <ChevronRight size={24} className="group-hover:translate-x-2 transition-transform duration-300 ml-3" />
               </Button>
             </div>
@@ -374,27 +414,20 @@ export const DashboardPage: React.FC = () => {
               </div>
               
               <div className="space-y-10">
-                {[
-                  { label: 'Core Skills', progress: getCategoryProgress('Core Skills'), color: 'bg-emerald-500' },
-                  { label: 'Web Languages', progress: getCategoryProgress('Web Languages'), color: 'bg-emerald-500' },
-                  { label: 'Tools', progress: getCategoryProgress('Tools'), color: 'bg-emerald-500' },
-                  { label: 'Advanced', progress: getCategoryProgress('Advanced'), color: 'bg-indigo-500', locked: true },
-                  { label: 'Specialized', progress: getCategoryProgress('Specialized'), color: 'bg-purple-500', locked: true }
-                ].map((item, i) => (
-                  <div key={i} className={`space-y-4 ${item.locked ? 'opacity-40' : ''}`}>
+                {currentPathData?.modules.slice(0, 5).map((module, i) => (
+                  <div key={module.id} className="space-y-4">
                     <div className="flex justify-between items-end">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-white/60 tracking-tight">{item.label}</span>
-                        {item.locked && <Lock size={12} className="text-white/20" />}
+                        <span className="text-sm font-black text-white/60 tracking-tight">{module.title}</span>
                       </div>
-                      <span className="text-xl font-black text-white tracking-tighter">{item.progress}%</span>
+                      <span className="text-xl font-black text-white tracking-tighter">{getModuleProgress(module.id)}%</span>
                     </div>
                     <div className="w-full h-2.5 bg-white/[0.03] rounded-full overflow-hidden border border-white/[0.05] p-0.5">
                       <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: `${item.progress}%` }}
+                        animate={{ width: `${getModuleProgress(module.id)}%` }}
                         transition={{ duration: 1, delay: i * 0.1 }}
-                        className={`h-full ${item.color} rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]`} 
+                        className="h-full bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
                       />
                     </div>
                   </div>
@@ -467,48 +500,48 @@ export const DashboardPage: React.FC = () => {
             <div className="relative flex flex-col items-center gap-20 py-16 z-10">
               <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center relative">
                 <SkillNode 
-                  label="Core Skills" 
-                  completed={getCategoryProgress('Core Skills') === 100} 
-                  progress={getCategoryProgress('Core Skills')}
+                  label={currentPathData?.modules[0]?.title || 'Module 1'} 
+                  completed={getModuleProgress(currentPathData?.modules[0]?.id || '') === 100} 
+                  progress={getModuleProgress(currentPathData?.modules[0]?.id || '')}
                 />
                 <div className="hidden md:block w-24 h-1 bg-gradient-to-r from-emerald-500 to-white/5" />
                 <SkillNode 
-                  label="Languages" 
-                  locked={getCategoryProgress('Core Skills') < 50}
-                  completed={getCategoryProgress('Web Languages') === 100 || getCategoryProgress('Mobile') === 100}
-                  progress={getCategoryProgress('Web Languages') || getCategoryProgress('Mobile')}
+                  label={currentPathData?.modules[1]?.title || 'Module 2'} 
+                  locked={getModuleProgress(currentPathData?.modules[0]?.id || '') < 50}
+                  completed={getModuleProgress(currentPathData?.modules[1]?.id || '') === 100}
+                  progress={getModuleProgress(currentPathData?.modules[1]?.id || '')}
                 />
               </div>
               <div className="w-1 h-20 bg-white/5" />
               <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center relative">
                 <SkillNode 
-                  label="Tools & Tech" 
-                  locked={getCategoryProgress('Web Languages') < 50 && getCategoryProgress('Mobile') < 50}
-                  completed={getCategoryProgress('Tools') === 100}
-                  progress={getCategoryProgress('Tools')}
+                  label={currentPathData?.modules[2]?.title || 'Module 3'} 
+                  locked={getModuleProgress(currentPathData?.modules[1]?.id || '') < 50}
+                  completed={getModuleProgress(currentPathData?.modules[2]?.id || '') === 100}
+                  progress={getModuleProgress(currentPathData?.modules[2]?.id || '')}
                 />
                 <div className="hidden md:block w-24 h-1 bg-white/5" />
                 <SkillNode 
-                  label="Advanced" 
-                  locked={getCategoryProgress('Tools') < 50}
-                  completed={getCategoryProgress('Advanced') === 100}
-                  progress={getCategoryProgress('Advanced')}
+                  label={currentPathData?.modules[3]?.title || 'Module 4'} 
+                  locked={getModuleProgress(currentPathData?.modules[2]?.id || '') < 50}
+                  completed={getModuleProgress(currentPathData?.modules[3]?.id || '') === 100}
+                  progress={getModuleProgress(currentPathData?.modules[3]?.id || '')}
                 />
               </div>
               <div className="w-1 h-20 bg-white/5" />
               <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center relative">
                 <SkillNode 
-                  label="Specialized" 
-                  locked={getCategoryProgress('Advanced') < 50}
-                  completed={getCategoryProgress('Specialized') === 100}
-                  progress={getCategoryProgress('Specialized')}
+                  label={currentPathData?.modules[4]?.title || 'Module 5'} 
+                  locked={getModuleProgress(currentPathData?.modules[3]?.id || '') < 50}
+                  completed={getModuleProgress(currentPathData?.modules[4]?.id || '') === 100}
+                  progress={getModuleProgress(currentPathData?.modules[4]?.id || '')}
                 />
                 <div className="hidden md:block w-24 h-1 bg-white/5" />
                 <SkillNode 
-                  label="Career Ready" 
-                  locked={getCategoryProgress('Specialized') < 50}
-                  completed={getCategoryProgress('General') === 100}
-                  progress={getCategoryProgress('General')}
+                  label="Final Exam" 
+                  locked={getModuleProgress(currentPathData?.modules[4]?.id || '') < 50}
+                  completed={progress.completedExams?.includes(currentPathData?.finalExamId || '')}
+                  progress={progress.completedExams?.includes(currentPathData?.finalExamId || '') ? 100 : 0}
                 />
               </div>
             </div>
@@ -587,24 +620,50 @@ export const DashboardPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-                    {Object.keys(CURRICULUM).map((path) => (
-                      <button
-                        key={path}
-                        onClick={() => handlePathSwitch(path as CareerPath)}
-                        className={`p-6 rounded-2xl border transition-all text-left group ${
-                          progress.selectedPath === path 
-                            ? 'bg-emerald-500 border-emerald-500 text-black' 
-                            : 'bg-white/[0.02] border-white/[0.05] hover:border-emerald-500/30'
-                        }`}
-                      >
-                        <h4 className="font-black tracking-tight mb-1">{path}</h4>
-                        <p className={`text-[10px] font-bold uppercase tracking-widest ${
-                          progress.selectedPath === path ? 'text-black/60' : 'text-white/20'
-                        }`}>
-                          {progress.selectedPath === path ? 'Currently Active' : 'Switch to Path'}
-                        </p>
-                      </button>
+                  <div className="space-y-12 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+                    {Object.entries(groupedPaths).map(([category, paths]) => (
+                      <div key={category} className="space-y-6">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-500/60">{category}</h3>
+                          <div className="flex-grow h-px bg-white/[0.05]" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {paths.map((path) => {
+                            const pathData = CURRICULUM[path];
+                            const isLocked = pathData.status === 'locked';
+                            const isPartial = pathData.status === 'partial';
+                            const isActive = progress.selectedPath === path;
+
+                            return (
+                              <button
+                                key={path}
+                                onClick={() => handlePathSwitch(path)}
+                                disabled={isLocked}
+                                className={`p-6 rounded-2xl border transition-all text-left group relative overflow-hidden ${
+                                  isActive 
+                                    ? 'bg-emerald-500 border-emerald-500 text-black' 
+                                    : isLocked
+                                      ? 'bg-white/[0.01] border-white/[0.03] opacity-40 cursor-not-allowed'
+                                      : 'bg-white/[0.02] border-white/[0.05] hover:border-emerald-500/30'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <h4 className="font-black tracking-tight">{path}</h4>
+                                  {isLocked && <Lock size={14} className="text-white/40" />}
+                                  {isPartial && !isActive && (
+                                    <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 text-[8px] px-2 py-0">PARTIAL</Badge>
+                                  )}
+                                </div>
+                                <p className={`text-[10px] font-bold uppercase tracking-widest ${
+                                  isActive ? 'text-black/60' : 'text-white/20'
+                                }`}>
+                                  {isActive ? 'Currently Active' : isLocked ? 'Coming Soon' : 'Switch to Path'}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </motion.div>
