@@ -138,15 +138,21 @@ export const LessonPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40">
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
+            className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40 active:scale-90"
+          >
             <Bell size={20} />
           </button>
-          <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+          <div 
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer group active:scale-95"
+          >
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold truncate max-w-[120px]">{user?.displayName || 'AJIA Abdulrasak'}</p>
+              <p className="text-xs font-bold truncate max-w-[120px] group-hover:text-emerald-400 transition-colors">{user?.displayName || 'AJIA Abdulrasak'}</p>
               <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Beginner</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-emerald-500/50 transition-colors">
               {user?.photoURL ? (
                 <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
               ) : (

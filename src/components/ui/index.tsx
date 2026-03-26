@@ -4,11 +4,15 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  role?: string;
+  tabIndex?: number;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', onClick }) => (
+export const Card: React.FC<CardProps> = ({ children, className = '', onClick, role, tabIndex }) => (
   <div 
     onClick={onClick}
+    role={role}
+    tabIndex={tabIndex}
     className={`glass-premium rounded-[2.5rem] p-8 transition-all duration-500 ${className} ${onClick ? 'cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.12] hover:-translate-y-1 active:scale-[0.98]' : ''}`}
   >
     {children}

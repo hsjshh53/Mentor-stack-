@@ -14,6 +14,8 @@ const defaultProgress: UserProgress = {
   completedLessons: [],
   completedTests: [],
   completedExams: [],
+  completedProjects: [],
+  certificates: [],
   weakAreas: [],
   skills: {},
   unlockedPaths: ['Frontend Developer', 'Full-Stack Developer']
@@ -42,6 +44,8 @@ export const useUserData = () => {
           completedLessons: data.completedLessons || [],
           completedTests: data.completedTests || [],
           completedExams: data.completedExams || [],
+          completedProjects: data.completedProjects || [],
+          certificates: data.certificates || [],
           weakAreas: data.weakAreas || [],
           unlockedPaths: data.unlockedPaths || defaultProgress.unlockedPaths
         });

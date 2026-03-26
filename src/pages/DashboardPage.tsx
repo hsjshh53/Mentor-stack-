@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, Button, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
@@ -9,7 +9,8 @@ import {
   Menu, Bell, User, Zap, Clock, BrainCircuit, 
   Network, X, LogOut, BookOpen, Terminal, 
   Target, LayoutDashboard, MessageSquare, Search,
-  Sparkles, CheckCircle2, Lock, Compass, ArrowRightLeft
+  Sparkles, CheckCircle2, Lock, Compass, ArrowRightLeft,
+  Award, ShieldCheck, ExternalLink
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { MentorChat } from '../components/MentorChat';
@@ -18,7 +19,8 @@ import { CURRICULUM } from '../constants/curriculum';
 import { STAGE_TESTS } from '../constants/tests';
 import { FINAL_EXAMS } from '../constants/exams';
 import { LESSON_CONTENT } from '../constants/lessons';
-import { CareerPath } from '../types';
+import { CareerPath, Certificate } from '../types';
+import { getUserCertificates } from '../services/certificateService';
 
 export const DashboardPage: React.FC = () => {
   const { progress, loading, updateProgress } = useUserData();
@@ -26,6 +28,13 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPathSwitcherOpen, setIsPathSwitcherOpen] = useState(false);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      getUserCertificates(user.uid).then(setCertificates);
+    }
+  }, [user]);
 
   const currentPathData = useMemo(() => {
     if (!progress?.selectedPath) return null;
@@ -182,13 +191,16 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-6">
-          <button className="p-3 hover:bg-white/[0.05] rounded-2xl transition-all text-white/30 hover:text-white/60 relative">
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
+            className="p-3 hover:bg-white/[0.05] rounded-2xl transition-all text-white/30 hover:text-white/60 relative active:scale-90"
+          >
             <Bell size={22} />
             <span className="absolute top-3 right-3 w-2 h-2 bg-emerald-500 rounded-full border-2 border-[#050506]" />
           </button>
           <div 
             onClick={() => navigate('/profile')}
-            className="flex items-center gap-4 pl-6 border-l border-white/[0.08] cursor-pointer group"
+            className="flex items-center gap-4 pl-6 border-l border-white/[0.08] cursor-pointer group active:scale-95"
           >
             <div className="text-right hidden sm:block">
               <p className="text-sm font-black tracking-tight group-hover:text-emerald-400 transition-colors">{user?.displayName || 'AJIA Abdulrasak'}</p>
@@ -321,13 +333,19 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Stats Row */}
-            <div className="flex flex-wrap gap-4 w-full lg:w-auto">
+              <div className="flex flex-wrap gap-4 w-full lg:w-auto">
               {[
                 { label: 'Streak', value: `${streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
                 { label: 'XP', value: xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
                 { label: 'Level', value: currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
               ].map((stat, i) => (
-                <Card key={i} className="flex-grow md:flex-none flex items-center gap-5 px-8 py-6 bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] transition-all duration-500">
+                <Card 
+                  key={i} 
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate('/profile')}
+                  className="flex-grow md:flex-none flex items-center gap-5 px-8 py-6 bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all duration-500 cursor-pointer active:scale-[0.98]"
+                >
                   <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color} shadow-lg`}>
                     {stat.icon}
                   </div>
@@ -554,7 +572,10 @@ export const DashboardPage: React.FC = () => {
                 <h3 className="font-black text-4xl tracking-tighter">Featured Lessons</h3>
                 <p className="text-white/30 font-medium">Hand-picked curriculum for your current level.</p>
               </div>
-              <button className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group active:scale-95"
+              >
                 Explore All <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><ChevronRight size={18} /></div>
               </button>
             </div>
@@ -590,6 +611,54 @@ export const DashboardPage: React.FC = () => {
               ))}
             </div>
           </div>
+
+          {/* Certificates Section */}
+          {certificates.length > 0 && (
+            <div className="space-y-10 pt-12">
+              <div className="flex justify-between items-end">
+                <div className="space-y-2">
+                  <h3 className="font-black text-4xl tracking-tighter">Your Credentials</h3>
+                  <p className="text-white/30 font-medium">Verified proof of your professional skills.</p>
+                </div>
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
+                >
+                  View All <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Award size={18} /></div>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {certificates.slice(0, 2).map((cert) => (
+                  <Card 
+                    key={cert.id}
+                    onClick={() => navigate(`/certificate/${cert.id}`)}
+                    className="p-8 border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.03] to-transparent group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 relative overflow-hidden"
+                  >
+                    <div className="flex gap-8 items-center relative z-10">
+                      <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform duration-500">
+                        <ShieldCheck size={40} />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Badge className="bg-emerald-500 text-black border-none text-[8px] font-black tracking-widest">{cert.tier}</Badge>
+                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{new Date(cert.issueDate).toLocaleDateString()}</span>
+                        </div>
+                        <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{cert.pathName}</h4>
+                        <div className="flex items-center gap-2 text-emerald-500/60 text-[10px] font-black uppercase tracking-widest">
+                          <CheckCircle2 size={12} />
+                          Verified Credential
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                      <Award size={160} />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Path Switcher Modal */}
           <AnimatePresence>
             {isPathSwitcherOpen && (
@@ -691,22 +760,22 @@ export const DashboardPage: React.FC = () => {
                 .filter(p => p !== progress.selectedPath)
                 .slice(0, 3)
                 .map((path, i) => (
-                <Card 
-                  key={i}
-                  onClick={() => handlePathSwitch(path as CareerPath)}
-                  className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
-                    <Compass size={24} />
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{path}</h4>
-                    <p className="text-xs text-white/30 font-medium line-clamp-2">Master the skills required for a career as a {path}.</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
-                    Explore Path <ChevronRight size={12} />
-                  </div>
-                </Card>
+                  <Card 
+                    key={i}
+                    onClick={() => handlePathSwitch(path as CareerPath)}
+                    className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98]"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
+                      <Compass size={24} />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{path}</h4>
+                      <p className="text-xs text-white/30 font-medium line-clamp-2">Master the skills required for a career as a {path}.</p>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
+                      Explore Path <ChevronRight size={12} />
+                    </div>
+                  </Card>
               ))}
             </div>
           </div>

@@ -1,4 +1,58 @@
-import { CareerPath, PathCurriculum } from '../types';
+import { CareerPath, PathCurriculum, Project } from '../types';
+
+export const PROJECTS: Project[] = [
+  {
+    id: 'fe-projects-module',
+    title: 'Personal Portfolio',
+    path: 'Frontend Developer',
+    description: 'Build a stunning portfolio to showcase your work and skills.',
+    objective: 'Create a responsive React portfolio with multiple sections.',
+    steps: [
+      'Set up a new React project with Tailwind CSS',
+      'Create a Hero section with a professional introduction',
+      'Implement a Projects section with cards for your work',
+      'Add a Skills section with visual progress bars',
+      'Create a Contact form with validation',
+      'Deploy your portfolio to Vercel or Netlify'
+    ],
+    output: 'A live URL to your personal portfolio website.',
+    xpReward: 500
+  },
+  {
+    id: 'be-projects-module',
+    title: 'Task Manager API',
+    path: 'Backend Developer',
+    description: 'Create a robust REST API for managing tasks and user auth.',
+    objective: 'Build a Node.js/Express API with Firebase integration.',
+    steps: [
+      'Initialize a Node.js project with Express',
+      'Set up Firebase Admin SDK for database and auth',
+      'Implement JWT-based authentication middleware',
+      'Create CRUD endpoints for tasks',
+      'Add data validation using Joi or Zod',
+      'Document your API using Swagger or a README'
+    ],
+    output: 'A GitHub repository with a fully functional REST API.',
+    xpReward: 600
+  },
+  {
+    id: 'fs-projects-module',
+    title: 'E-commerce App',
+    path: 'Full-Stack Developer',
+    description: 'A full-stack shopping experience with cart and checkout.',
+    objective: 'Build a complete e-commerce platform with React and Node.js.',
+    steps: [
+      'Design the database schema for products and orders',
+      'Build the frontend product catalog and cart',
+      'Implement user authentication and profile management',
+      'Create the backend order processing logic',
+      'Integrate Stripe for secure payments',
+      'Implement an admin dashboard for product management'
+    ],
+    output: 'A full-stack web application with payment integration.',
+    xpReward: 1000
+  }
+];
 
 export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
   'Frontend Developer': {

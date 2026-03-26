@@ -1,12 +1,13 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, Settings, Shield, Bell, 
   CreditCard, HelpCircle, LogOut, 
   ChevronRight, Camera, Zap, Trophy, 
   Flame, BookOpen, Terminal, Target,
   ArrowLeft, Mail, MapPin, Link as LinkIcon,
-  Twitter, Github
+  Twitter, Github, Award, ExternalLink, ShieldCheck,
+  CheckCircle2, X
 } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -14,11 +15,22 @@ import { useUserData } from '../hooks/useUserData';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { getUserCertificates } from '../services/certificateService';
+import { Certificate } from '../types';
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { progress, loading } = useUserData();
   const navigate = useNavigate();
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      getUserCertificates(user.uid).then(setCertificates);
+    }
+  }, [user]);
+
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   if (loading || !progress) return <LoadingScreen />;
 
@@ -37,24 +49,24 @@ export const ProfilePage: React.FC = () => {
     {
       title: 'Account Settings',
       items: [
-        { icon: <User size={20} />, label: 'Personal Information', desc: 'Update your name and profile photo' },
-        { icon: <Mail size={20} />, label: 'Email & Password', desc: 'Manage your login credentials' },
-        { icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your data and account safety' }
+        { id: 'personal', icon: <User size={20} />, label: 'Personal Information', desc: 'Update your name and profile photo' },
+        { id: 'email', icon: <Mail size={20} />, label: 'Email & Password', desc: 'Manage your login credentials' },
+        { id: 'privacy', icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your data and account safety' }
       ]
     },
     {
       title: 'Preferences',
       items: [
-        { icon: <Bell size={20} />, label: 'Notifications', desc: 'Manage your alerts and reminders' },
-        { icon: <Target size={20} />, label: 'Learning Goals', desc: 'Set your daily study targets' },
-        { icon: <Terminal size={20} />, label: 'IDE Settings', desc: 'Customize your coding environment' }
+        { id: 'notifications', icon: <Bell size={20} />, label: 'Notifications', desc: 'Manage your alerts and reminders' },
+        { id: 'goals', icon: <Target size={20} />, label: 'Learning Goals', desc: 'Set your daily study targets' },
+        { id: 'ide', icon: <Terminal size={20} />, label: 'IDE Settings', desc: 'Customize your coding environment' }
       ]
     },
     {
       title: 'Support',
       items: [
-        { icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
-        { icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
+        { id: 'help', icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
+        { id: 'subscription', icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
       ]
     }
   ];
@@ -72,7 +84,10 @@ export const ProfilePage: React.FC = () => {
           </button>
           <span className="font-bold text-lg tracking-tight">Profile</span>
         </div>
-        <button className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40">
+        <button 
+          onClick={() => setActiveModal('personal')}
+          className="p-2 hover:bg-white/5 rounded-xl transition-colors text-white/40 active:scale-90"
+        >
           <Settings size={20} />
         </button>
       </header>
@@ -90,7 +105,10 @@ export const ProfilePage: React.FC = () => {
                   <User size={48} className="text-white/20" />
                 )}
               </div>
-              <button className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-emerald-500 text-black flex items-center justify-center shadow-lg shadow-emerald-500/20 hover:scale-110 transition-transform">
+              <button 
+                onClick={() => setActiveModal('personal')}
+                className="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-emerald-500 text-black flex items-center justify-center shadow-lg shadow-emerald-500/20 hover:scale-110 transition-transform active:scale-90"
+              >
                 <Camera size={18} />
               </button>
             </div>
@@ -105,7 +123,7 @@ export const ProfilePage: React.FC = () => {
                   {progress.selectedPath || 'Full-Stack Developer'}
                 </Badge>
                 <Badge className="bg-white/5 text-white/40 border-white/10 px-4 py-1.5 rounded-xl font-bold">
-                  Level {progress.level}
+                  Level {Math.floor(progress.xp / 100) + 1}
                 </Badge>
               </div>
             </div>
@@ -126,6 +144,45 @@ export const ProfilePage: React.FC = () => {
             ))}
           </div>
 
+          {/* Certificates Section */}
+          {certificates.length > 0 && (
+            <div className="space-y-6">
+              <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em] px-2">Professional Certifications</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {certificates.map((cert) => (
+                  <Card 
+                    key={cert.id}
+                    onClick={() => navigate(`/certificate/${cert.id}`)}
+                    className="p-8 border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.03] to-transparent group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 relative overflow-hidden"
+                  >
+                    <div className="flex gap-8 items-center relative z-10">
+                      <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform duration-500">
+                        <ShieldCheck size={32} />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <Badge className="bg-emerald-500 text-black border-none text-[8px] font-black tracking-widest">{cert.tier}</Badge>
+                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{new Date(cert.issueDate).toLocaleDateString()}</span>
+                        </div>
+                        <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{cert.pathName}</h4>
+                        <div className="flex items-center gap-2 text-emerald-500/60 text-[10px] font-black uppercase tracking-widest">
+                          <CheckCircle2 size={12} />
+                          Verified Credential
+                        </div>
+                      </div>
+                      <div className="ml-auto">
+                        <ChevronRight size={24} className="text-white/10 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </div>
+                    <div className="absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                      <Award size={140} />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Settings Sections */}
           <div className="space-y-12">
             {sections.map((section, i) => (
@@ -135,7 +192,8 @@ export const ProfilePage: React.FC = () => {
                   {section.items.map((item, j) => (
                     <Card 
                       key={j}
-                      className="p-6 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-all border-white/5"
+                      onClick={() => setActiveModal(item.id)}
+                      className="p-6 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-all border-white/5 active:scale-[0.98]"
                     >
                       <div className="flex gap-6 items-center">
                         <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all">
@@ -158,7 +216,7 @@ export const ProfilePage: React.FC = () => {
           <div className="pt-8 border-t border-white/5">
             <button 
               onClick={handleLogout}
-              className="w-full h-16 rounded-3xl border border-red-500/20 bg-red-500/5 text-red-400 font-bold flex items-center justify-center gap-3 hover:bg-red-500/10 transition-all"
+              className="w-full h-16 rounded-3xl border border-red-500/20 bg-red-500/5 text-red-400 font-bold flex items-center justify-center gap-3 hover:bg-red-500/10 transition-all active:scale-[0.98]"
             >
               <LogOut size={20} />
               Sign Out from MentorStack
@@ -167,6 +225,61 @@ export const ProfilePage: React.FC = () => {
 
         </div>
       </main>
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {activeModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveModal(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-xl bg-[#0A0A0B] border border-white/[0.08] rounded-[3rem] p-10 overflow-hidden shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-black tracking-tight">
+                  {sections.flatMap(s => s.items).find(i => i.id === activeModal)?.label || 'Settings'}
+                </h2>
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="p-2 hover:bg-white/5 rounded-xl transition-all"
+                >
+                  <X size={24} className="text-white/40" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="p-8 rounded-3xl bg-white/[0.02] border border-dashed border-white/10 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto">
+                    <Zap size={32} />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-lg">Feature Coming Soon</h3>
+                    <p className="text-sm text-white/40 leading-relaxed">
+                      We're currently polishing the {sections.flatMap(s => s.items).find(i => i.id === activeModal)?.label.toLowerCase()} settings. This will be available in the next update!
+                    </p>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => setActiveModal(null)}
+                  fullWidth 
+                  className="h-14 rounded-2xl"
+                >
+                  Got it
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -5,17 +5,20 @@ import {
   ArrowLeft, CheckCircle2, AlertCircle, 
   Trophy, Zap, Target, HelpCircle,
   ChevronRight, RefreshCcw, BookOpen,
-  Terminal, Code, Play, Star
+  Terminal, Code, Play, Star, Award, Sparkles
 } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { FINAL_EXAMS } from '../constants/exams';
 import { FinalExam, QuizQuestion } from '../types';
+import { checkCertificateEligibility, generateCertificate } from '../services/certificateService';
+import { useAuth } from '../context/AuthContext';
 
 export const ExamPage: React.FC = () => {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
   const [exam, setExam] = useState<FinalExam | null>(null);
   const [currentSection, setCurrentSection] = useState<'theory' | 'practical' | 'debugging' | 'coding'>('theory');
@@ -27,6 +30,8 @@ export const ExamPage: React.FC = () => {
   });
   const [codingSolution, setCodingSolution] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [earnedCertificate, setEarnedCertificate] = useState<any>(null);
 
   const [showFeedback, setShowFeedback] = useState(false);
   const [wrongQuestions, setWrongQuestions] = useState<string[]>([]);
@@ -98,15 +103,41 @@ export const ExamPage: React.FC = () => {
 
   const handleFinish = async () => {
     const { score, total } = calculateScore();
-    const passed = score / total >= 0.7;
+    const finalScore = Math.round((score / total) * 100);
+    const passed = finalScore >= 70;
 
     if (progress) {
       const newWeakAreas = [...new Set([...progress.weakAreas, ...wrongQuestions])];
+      const newCompletedExams = passed ? [...progress.completedExams, exam.id] : progress.completedExams;
+      
       await updateProgress({
-        completedExams: passed ? [...progress.completedExams, exam.id] : progress.completedExams,
+        completedExams: newCompletedExams,
         weakAreas: newWeakAreas.slice(0, 10)
       });
-      if (passed) await addXP(exam.xpReward);
+      
+      if (passed) {
+        await addXP(exam.xpReward);
+
+        // Check for certificate eligibility
+        if (progress.selectedPath) {
+          const isEligible = checkCertificateEligibility({
+            ...progress,
+            completedExams: newCompletedExams
+          }, progress.selectedPath);
+
+          if (isEligible) {
+            const cert = await generateCertificate(
+              user!.uid,
+              user!.displayName || 'Learner',
+              progress.selectedPath,
+              finalScore,
+              'Capstone Project' // Default project title if not found
+            );
+            setEarnedCertificate(cert);
+            setIsSuccessModalOpen(true);
+          }
+        }
+      }
     }
     setShowResults(true);
   };
@@ -131,7 +162,7 @@ export const ExamPage: React.FC = () => {
               {passed ? 'Congratulations!' : 'Almost There'}
             </h1>
             <p className="text-white/40 text-lg">
-              You\'ve completed the {exam.title}
+              You've completed the {exam.title}
             </p>
           </div>
 
@@ -163,6 +194,62 @@ export const ExamPage: React.FC = () => {
             )}
           </div>
         </motion.div>
+
+        {/* Certificate Success Modal */}
+        <AnimatePresence>
+          {isSuccessModalOpen && earnedCertificate && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
+              />
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="relative w-full max-w-xl text-center space-y-10"
+              >
+                <div className="relative">
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 flex items-center justify-center opacity-20"
+                  >
+                    <Sparkles size={300} className="text-emerald-500" />
+                  </motion.div>
+                  <div className="w-32 h-32 rounded-full bg-emerald-500 flex items-center justify-center text-black mx-auto relative z-10 shadow-[0_0_50px_rgba(16,185,129,0.5)]">
+                    <Trophy size={64} />
+                  </div>
+                </div>
+
+                <div className="space-y-4 relative z-10">
+                  <h2 className="text-5xl font-black tracking-tighter">Congratulations!</h2>
+                  <p className="text-white/60 text-xl font-medium">
+                    You've just unlocked your <span className="text-emerald-400 font-bold">{earnedCertificate.pathName}</span> Professional Certificate.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-4 relative z-10">
+                  <Button 
+                    onClick={() => navigate(`/certificate/${earnedCertificate.id}`)}
+                    className="h-20 rounded-[2rem] text-xl font-black tracking-tight shadow-2xl shadow-emerald-500/40"
+                  >
+                    View Certificate
+                    <Award size={24} className="ml-3" />
+                  </Button>
+                  <button 
+                    onClick={() => setIsSuccessModalOpen(false)}
+                    className="text-white/40 font-black uppercase tracking-[0.2em] text-xs hover:text-white transition-colors"
+                  >
+                    Close and Continue
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }

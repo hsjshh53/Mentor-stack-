@@ -12,6 +12,8 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { AITutorPage } from './pages/AITutorPage';
 import { TestPage } from './pages/TestPage';
 import { ExamPage } from './pages/ExamPage';
+import { VerificationPage } from './pages/VerificationPage';
+import { CertificatePage } from './pages/CertificatePage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -27,6 +29,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/signup" element={<AuthPage mode="signup" />} />
+          <Route path="/verify/:certificateId" element={<VerificationPage />} />
           
           <Route path="/onboarding" element={
             <PrivateRoute>
@@ -79,6 +82,12 @@ export default function App() {
           <Route path="/exam/:examId" element={
             <PrivateRoute>
               <ExamPage />
+            </PrivateRoute>
+          } />
+
+          <Route path="/certificate/:certificateId" element={
+            <PrivateRoute>
+              <CertificatePage />
             </PrivateRoute>
           } />
 

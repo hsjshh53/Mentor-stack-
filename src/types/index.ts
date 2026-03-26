@@ -62,6 +62,24 @@ export interface PathCurriculum {
   finalExamId: string;
 }
 
+export type CertificateTier = 'Foundation' | 'Intermediate' | 'Advanced' | 'Professional';
+
+export interface Certificate {
+  id: string;
+  userId: string;
+  fullName: string;
+  pathName: CareerPath;
+  tier: CertificateTier;
+  issueDate: string;
+  finalScore: number;
+  projectTitle: string;
+  skills: string[];
+  verificationUrl: string;
+  isValid: boolean;
+  portfolioLink?: string;
+  projectLink?: string;
+}
+
 export interface UserProgress {
   selectedPath: CareerPath | null;
   currentStage: Stage;
@@ -72,6 +90,8 @@ export interface UserProgress {
   completedLessons: string[];
   completedTests: string[];
   completedExams: string[];
+  completedProjects: string[]; // Project IDs
+  certificates: string[]; // Certificate IDs
   weakAreas: string[];
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
