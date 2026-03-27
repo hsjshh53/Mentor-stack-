@@ -3,12 +3,14 @@ import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
 
 // 1. GEMINI SERVICE SETUP
-// The API key is automatically provided by the platform via process.env.GEMINI_API_KEY
+// Always use process.env.GEMINI_API_KEY as the source of truth
 const apiKey = process.env.GEMINI_API_KEY;
+
 if (!apiKey) {
-  console.warn("GEMINI_API_KEY is not defined. MentorStack will run in Offline Mode.");
+  console.warn("Gemini Service: GEMINI_API_KEY is not set in the environment. AI Tutor will operate in fallback mode.");
 }
-const ai = new GoogleGenAI({ apiKey: apiKey || "dummy-key" });
+
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const SYSTEM_INSTRUCTION = `
 You are MentorStack, a global coding academy and personal AI mentor. Your goal is to guide users from zero coding knowledge to job-ready software engineering level across all tech fields.
@@ -340,8 +342,15 @@ const getFallbackLesson = (topic: string): LessonContent => {
 export async function generateLesson(path: CareerPath, stage: Stage, topic: string): Promise<LessonContent | null> {
   // 1. CHECK LOCAL CONTENT FIRST
   if (LESSON_CONTENT[topic]) {
-    console.log("Using local lesson content for:", topic);
+    console.log("Gemini Service: Using local lesson content for:", topic);
     return LESSON_CONTENT[topic];
+  }
+
+  console.log(`Gemini Service: Request started - Generate Lesson (${topic})`);
+
+  if (!ai) {
+    console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
+    return getFallbackLesson(topic);
   }
 
   const prompt = `
@@ -353,11 +362,6 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
   `;
 
   try {
-    // Add a timeout to the API call
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Gemini API request timed out")), 15000)
-    );
-
     const apiCallPromise = ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
@@ -366,7 +370,9 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
       }
     });
 
-    const response = (await Promise.race([apiCallPromise, timeoutPromise])) as any;
+    const response = await apiCallPromise;
+    console.log("Gemini Service: Response status - Success");
+    
     const text = response.text;
     if (!text) throw new Error("Empty response");
 
@@ -376,13 +382,32 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
       commonMistakes: lesson.commonMistakes || [],
       quiz: lesson.quiz || []
     };
-  } catch (e) {
-    console.error("Failed to generate lesson", e);
+  } catch (e: any) {
+    console.error("Gemini Service: Error occurred", e.message);
+    
+    // Specific error handling
+    if (e.message?.includes("API_KEY_INVALID")) {
+      console.error("Gemini Service: Invalid API Key");
+    } else if (e.message?.includes("quota")) {
+      console.error("Gemini Service: Quota exceeded");
+    } else if (e.message?.includes("not enabled")) {
+      console.error("Gemini Service: API not enabled");
+    }
+
+    console.log("Gemini Service: Triggering fallback tutor");
     return getFallbackLesson(topic);
   }
 }
 
 export async function getMentorAdvice(message: string, history: any[], userContext: any) {
+  console.log("Gemini Service: Request started - Mentor Advice");
+  
+  if (!ai) {
+    console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
+    const fallback = getFallbackResponse(message);
+    return `(Mentor Mode: Offline)\n\n${fallback}`;
+  }
+
   try {
     const prompt = `
       User Context: ${JSON.stringify(userContext)}
@@ -393,7 +418,7 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: [
         {
           parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
@@ -401,16 +426,25 @@ export async function getMentorAdvice(message: string, history: any[], userConte
       ]
     });
 
+    console.log("Gemini Service: Response status - Success");
     const text = response.text;
     if (!text) throw new Error("Empty response from Gemini");
     
     return text;
 
   } catch (error: any) {
-    console.error("Exact error message:", error.message);
+    console.error("Gemini Service: Error occurred", error.message);
     
+    // Specific error handling
+    let errorMessage = "I'm having a bit of trouble connecting to my brain right now.";
+    if (error.message?.includes("API_KEY_INVALID")) {
+      errorMessage = "It looks like my API key is invalid. Please check the configuration.";
+    } else if (error.message?.includes("quota")) {
+      errorMessage = "I've reached my daily limit for advice. Let's take a short break!";
+    }
+
+    console.log("Gemini Service: Triggering fallback tutor");
     const fallback = getFallbackResponse(message);
-    const errorPrefix = `⚠️ MentorStack is in Offline Mode (${error.message})\n\n`;
-    return errorPrefix + fallback;
+    return `(Mentor Mode: ${errorMessage})\n\n${fallback}`;
   }
 }

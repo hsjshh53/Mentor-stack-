@@ -9,6 +9,7 @@ import { LessonPage } from './pages/LessonPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PlaygroundPage } from './pages/PlaygroundPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { ProjectDetailsPage } from './pages/ProjectDetailsPage';
 import { AITutorPage } from './pages/AITutorPage';
 import { TestPage } from './pages/TestPage';
 import { ExamPage } from './pages/ExamPage';
@@ -64,6 +65,12 @@ export default function App() {
           <Route path="/projects" element={
             <PrivateRoute>
               <ProjectsPage />
+            </PrivateRoute>
+          } />
+
+          <Route path="/project/:projectId" element={
+            <PrivateRoute>
+              <ProjectDetailsPage />
             </PrivateRoute>
           } />
 

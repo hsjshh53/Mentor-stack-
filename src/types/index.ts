@@ -168,6 +168,57 @@ export interface FinalExam {
   xpReward: number;
 }
 
+export interface ProjectPhase {
+  id: string;
+  title: string;
+  description: string;
+  explanation: string;
+  tasks: string[];
+  checklist: string[];
+  miniChallenge: string;
+  nextStep: string;
+  hints: string[];
+  commonMistakes: string[];
+}
+
+export interface ProjectCheckpoint {
+  id: string;
+  title: string;
+  description: string;
+  xpReward: number;
+}
+
+export interface DetailedProject {
+  id: string;
+  title: string;
+  category: CareerPath | string;
+  description: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  xpReward: number;
+  tags: string[];
+  isCapstone: boolean;
+  estimatedTime: string;
+  objectives: string[];
+  prerequisites: string[];
+  phases: ProjectPhase[];
+  checkpoints: ProjectCheckpoint[];
+  expectedOutcome: string;
+  starterTasks: string[];
+  starterCode?: string;
+  snippets?: Record<string, string>;
+}
+
+export interface UserProjectProgress {
+  projectId: string;
+  status: 'not_started' | 'in_progress' | 'completed';
+  currentPhaseId: string;
+  completedPhases: string[];
+  completedCheckpoints: string[];
+  startedAt: number;
+  updatedAt: number;
+  completedAt: number | null;
+}
+
 export interface Project {
   id: string;
   title: string;
