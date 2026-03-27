@@ -87,12 +87,12 @@ export const MentorChat: React.FC = () => {
                       <Sparkles size={32} />
                     </div>
                     <p className="text-white/40 text-sm max-w-[200px] mx-auto leading-relaxed">
-                      "I am MentorStack, your personal coding mentor. Ask me anything about your current path!"
+                      "I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem, built to guide you step-by-step."
                     </p>
                   </div>
                 )}
                 {messages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div key={`${msg.role}-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${msg.role === 'user' ? 'bg-emerald-500 text-black rounded-tr-none shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-white/80 border border-white/10 rounded-tl-none'}`}>
                       {msg.content}
                     </div>

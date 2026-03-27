@@ -1,7 +1,7 @@
 import { ref, set, get, push, update } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { Certificate, UserProgress, CareerPath, CertificateTier } from '../types';
-import { CURRICULUM } from '../constants/curriculum';
+import { CURRICULUM, PROJECTS } from '../constants/curriculum';
 
 export const checkCertificateEligibility = (progress: UserProgress, path: CareerPath): boolean => {
   const pathData = CURRICULUM[path];
@@ -18,12 +18,14 @@ export const checkCertificateEligibility = (progress: UserProgress, path: Career
   // 3. Final exam passed
   const examPassed = progress.completedExams?.includes(pathData.finalExamId);
 
-  // 4. At least one capstone project completed
-  // Assuming projects are linked to modules or the path
-  const pathProjects = pathData.modules.filter(m => m.projectId).map(m => m.projectId!);
-  const projectCompleted = pathProjects.some(id => progress.completedProjects?.includes(id));
+  // 4. All projects in the path must be submitted with a GitHub link
+  const pathProjectIds = pathData.modules.filter(m => m.projectId).map(m => m.projectId!);
+  const allProjectsSubmitted = pathProjectIds.every(id => {
+    const submission = progress.submissions?.[id];
+    return submission && submission.githubLink && submission.githubLink.trim() !== '';
+  });
 
-  return allLessonsCompleted && allTestsPassed && examPassed && projectCompleted;
+  return allLessonsCompleted && allTestsPassed && examPassed && allProjectsSubmitted;
 };
 
 export const generateCertificate = async (
@@ -31,7 +33,7 @@ export const generateCertificate = async (
   fullName: string,
   path: CareerPath,
   score: number,
-  projectTitle: string,
+  progress: UserProgress,
   tier: CertificateTier = 'Professional'
 ): Promise<Certificate> => {
   const pathData = CURRICULUM[path];
@@ -50,6 +52,18 @@ export const generateCertificate = async (
     }
   }
 
+  // Get project details from submissions
+  const pathProjectIds = pathData.modules.filter(m => m.projectId).map(m => m.projectId!);
+  const certProjects = pathProjectIds.map(id => {
+    const submission = progress.submissions[id];
+    const project = PROJECTS.find(p => p.id === id);
+    return {
+      title: project?.title || 'Unknown Project',
+      githubLink: submission.githubLink,
+      liveLink: submission.liveLink
+    };
+  });
+
   const certsRef = ref(db, 'certificates');
   const newCertRef = push(certsRef);
   const certId = newCertRef.key!;
@@ -60,12 +74,14 @@ export const generateCertificate = async (
     fullName,
     pathName: path,
     tier,
+    level: 'Advanced', // Defaulting to Advanced for path completion
     issueDate: new Date().toISOString(),
     finalScore: score,
-    projectTitle,
     skills: pathData.skills || [],
+    projects: certProjects,
     verificationUrl: `${window.location.origin}/verify/${certId}`,
-    isValid: true
+    isValid: true,
+    issuedBy: "MentorStack AI by OLYNQ SOCIAL"
   };
 
   await set(newCertRef, certificate);

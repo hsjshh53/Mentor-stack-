@@ -13,300 +13,160 @@ if (!apiKey) {
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 const SYSTEM_INSTRUCTION = `
-You are MentorStack, a global coding academy and personal AI mentor. Your goal is to guide users from zero coding knowledge to job-ready software engineering level across all tech fields.
-You are NOT a chatbot. You are a structured learning system and a career-building platform.
+You are MentorStack AI, a premier product experience built as part of OLYNQ SOCIAL LIMITED. You were created under the vision of Ajis Abdulrasak Olayinka, Founder/CEO of OLYNQ SOCIAL, to help learners grow into real developers step-by-step.
 
-TEACHING PRINCIPLES:
-1. ACT LIKE A MENTOR: Do not just give answers. Ask questions, guide thinking, and correct mistakes kindly.
-2. DEPTH OVER BREADTH: Teach fewer things but teach them extremely well.
-3. ADAPT TO BEGINNER: Use simple explanations and real-world analogies. Break complex topics into small, digestible steps.
-4. GIVE HINTS BEFORE ANSWERS: Always try to lead the user to the answer themselves.
-5. THINK LIKE A DEVELOPER: Focus on problem solving, debugging, and clean code.
-6. PERSONALIZED GUIDANCE: Use the provided User Context (progress, completed lessons, weak areas) to tailor your advice. If a user has weak areas, focus on reinforcing those concepts.
-7. STEP-BY-STEP EXPLANATION: Always explain concepts in a logical, sequential manner.
-8. INTERACTIVE LEARNING: Frequently ask the user questions to check their understanding before moving to the next concept.
+IDENTITY & BRANDING:
+1. ALWAYS identify as: "I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem, built to guide you step-by-step."
+2. If asked who created you or what company you are part of, answer: "I am MentorStack AI, a product experience built as part of OLYNQ SOCIAL LIMITED to help learners grow into real developers step-by-step."
+3. NEVER mention Google, Gemini, or being an AI model from any specific provider.
+4. NEVER say you are unrelated to OLYNQ SOCIAL or that you don't know them.
 
-EVERY LESSON MUST FOLLOW THIS 11-STEP STRUCTURE:
-1. Today you are learning: Clear objective.
-2. Why it matters: Real-world importance.
-3. Simple explanation: Core concept in plain English.
-4. Real-world analogy: Relate it to something familiar.
-5. Code example: Clean, well-commented code.
-6. Line-by-line explanation: Detailed breakdown of the code.
-7. Common mistakes: What to avoid.
-8. Practice: A small task for the user.
-9. Challenge: A more difficult task to test understanding.
-10. Test: A quiz question.
-11. Recap: Summary of key takeaways.
+TEACHING STYLE:
+1. Be a smart, confident, and supportive mentor.
+2. Explain concepts simply and clearly, avoiding robotic or generic language.
+3. Keep explanations short and readable, especially for mobile users. Avoid long paragraphs.
+4. ALWAYS follow this 5-step learning flow for teaching:
+   Step 1: Teach First (Clear, simple, beginner-friendly explanation, max 3 lines)
+   Step 2: Give Example (Real-world scenario + small code example)
+   Step 3: Practice Task (Small, beginner-level task for the user to try)
+   Step 4: Mini Reinforcement (Provide a helpful hint, a "pro-tip", or a quick correction)
+   Step 5: THEN Test (Only ask a test question AFTER the user has had a chance to learn and practice. It must feel like a natural next step.)
 
-Always return JSON when requested for structured content.
+TEST RULES:
+1. Do NOT ask users to take a test immediately after introducing a topic.
+2. Only ask tests after meaningful learning and practice have occurred.
+3. Tests should be low-pressure and feel like a natural progression.
+
+UX & INTERACTION RULES:
+1. No pressure, no rushing. Guide the user step-by-step.
+2. Allow the user to say "continue" or "next" to move forward at their own pace.
+3. Respond helpfully to any question (coding, business, mindset, etc.).
+4. If a question is far outside learning/tech, respond politely and helpfully, then gently guide back to useful learning.
+5. Maintain your character as a MentorStack mentor at all times.
+6. Avoid markdown clutter. Use clean, simple formatting.
 `;
 
 // 8. SMART FALLBACK TUTOR
 const getFallbackResponse = (message: string): string => {
   const msg = message.toLowerCase();
   
-  if (msg.includes('who are you') || msg.includes('mentorstack')) {
-    return `Explanation:
-I am MentorStack, your personal AI coding mentor. I'm here to guide you from zero to job-ready in your tech career.
+  if (msg.includes('who are you') || msg.includes('created') || msg.includes('olynq')) {
+    return `Step 1: Teach First
+I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I was created by OLYNQ SOCIAL LIMITED to turn beginners into job-ready engineers.
 
-Mentor Tip:
-Think of me as your senior developer friend who's always available to help you debug, learn new concepts, and build your portfolio.
+Step 2: Give Example
+Think of me as your personal senior developer coach who is always available to help you grow.
 
-Exercise:
-Tell me what career path you're most excited about, and let's start building something!`;
+Step 3: Practice Task
+Type "Let's build" to start your next learning challenge right now.
+
+Step 4: Mini Reinforcement
+Pro-tip: Consistency is the key to mastering any skill.
+
+Step 5: THEN Test
+What is the one skill you want to master most this month?`;
   }
 
   if (msg.includes('center a div') || msg.includes('center div')) {
-    return `Explanation:
-A simple way to center a div is to use Flexbox on the parent container. This is the modern standard for alignment.
+    return `Step 1: Teach First
+To center a div, we usually use Flexbox on its parent container. It is the most modern and reliable way to align items.
 
-Code:
-.parent {
-  display: flex;
-  justify-content: center; /* Centers horizontally */
-  align-items: center;     /* Centers vertically */
-  height: 100vh;           /* Give parent height to see vertical centering */
-}
+Step 2: Give Example
+.container { display: flex; justify-content: center; align-items: center; }
 
-Exercise:
-Create a parent div and place a child box inside it. Then center the child horizontally and vertically using the code above.`;
+Step 3: Practice Task
+Open your CSS file and add "display: flex;" to your main wrapper now.
+
+Step 4: Mini Reinforcement
+Hint: "justify-content" handles horizontal alignment, while "align-items" handles vertical.
+
+Step 5: THEN Test
+Which property centers items horizontally in Flexbox?`;
   }
 
   if (msg.includes('flexbox')) {
-    return `Explanation:
-Flexbox (Flexible Box Layout) is a one-dimensional layout method for arranging items in rows or columns. It makes it easy to align items and distribute space.
+    return `Step 1: Teach First
+Flexbox is a layout mode that makes it easy to align items in rows or columns without using floats or positioning.
 
-Code:
-.container {
-  display: flex;
-  flex-direction: row; /* or column */
-  gap: 20px;           /* space between items */
-}
+Step 2: Give Example
+display: flex; flex-direction: column; gap: 20px;
 
-Exercise:
-Try creating a navigation bar using display: flex and justify-content: space-between.`;
+Step 3: Practice Task
+Try adding "display: flex;" to a div in your playground to see it in action.
+
+Step 4: Mini Reinforcement
+Pro-tip: Flexbox is great for one-dimensional layouts (either a row or a column).
+
+Step 5: THEN Test
+Does Flexbox align items along a main axis or a cross axis?`;
   }
 
   if (msg.includes('html')) {
-    return `Explanation:
-HTML (HyperText Markup Language) is the standard markup language for documents designed to be displayed in a web browser. It defines the structure of a web page.
+    return `Step 1: Teach First
+HTML is the skeleton of every website. It uses "tags" to tell the browser what content to display, like headings or images.
 
-Code:
-<!DOCTYPE html>
-<html>
-<body>
-  <h1>My First Heading</h1>
-  <p>My first paragraph.</p>
-</body>
-</html>
+Step 2: Give Example
+<button>Click Me</button>
 
-Exercise:
-Create a simple HTML file with a heading, a paragraph, and an image tag.`;
+Step 3: Practice Task
+Write a simple <h1> tag with your name inside it right now.
+
+Step 4: Mini Reinforcement
+Hint: Tags usually come in pairs, an opening tag and a closing tag.
+
+Step 5: THEN Test
+What does HTML stand for? (Hint: It starts with Hyper...)`;
   }
 
   if (msg.includes('css')) {
-    return `Explanation:
-CSS (Cascading Style Sheets) is used to style and layout web pages — for example, to alter the font, color, size, and spacing of your content.
+    return `Step 1: Teach First
+CSS is what makes websites look beautiful. It handles colors, fonts, spacing, and the overall layout of your HTML elements.
 
-Code:
-h1 {
-  color: #10b981; /* MentorStack Emerald */
-  font-family: sans-serif;
-  text-align: center;
-}
+Step 2: Give Example
+body { background-color: #0A0A0B; color: #10b981; }
 
-Exercise:
-Change the background color of your body element to a dark gray (#1a1a1a) and make your text white.`;
+Step 3: Practice Task
+Try changing the "color" property of your text to "emerald" or a hex code like #10b981.
+
+Step 4: Mini Reinforcement
+Pro-tip: You can use hex codes, RGB, or even simple names like "red" or "blue".
+
+Step 5: THEN Test
+Which CSS property is used to change the space inside an element's border?`;
   }
 
   if (msg.includes('javascript') || msg.includes(' js')) {
-    return `Explanation:
-JavaScript is a scripting language that enables you to create dynamically updating content, control multimedia, animate images, and much more.
+    return `Step 1: Teach First
+JavaScript is the brain of your website. It allows you to create interactive features like buttons that do things when clicked.
 
-Code:
-const greeting = "Hello, MentorStack!";
-console.log(greeting);
+Step 2: Give Example
+const greet = () => console.log("Hello MentorStack!");
 
-function sayHello(name) {
-  return "Welcome, " + name;
-}
+Step 3: Practice Task
+Create a variable called "name" and assign your name to it in the console.
 
-Exercise:
-Write a function that takes two numbers and returns their sum.`;
-  }
+Step 4: Mini Reinforcement
+Hint: Use "const" for values that won't change and "let" for values that will.
 
-  if (msg.includes('react')) {
-    return `Explanation:
-React is a JavaScript library for building user interfaces, specifically single-page applications. It's used for handling the view layer for web and mobile apps.
-
-Code:
-function Welcome() {
-  return <h1 className="text-emerald-500">Hello, Developer!</h1>;
-}
-
-Exercise:
-Create a simple functional component that displays a "Click Me" button.`;
-  }
-
-  if (msg.includes('python')) {
-    return `Explanation:
-Python is a high-level, interpreted, general-purpose programming language. Its design philosophy emphasizes code readability.
-
-Code:
-def greet(name):
-    print(f"Hello, {name}!")
-
-greet("Future Engineer")
-
-Exercise:
-Create a list of your favorite programming languages and print each one using a for loop.`;
-  }
-
-  if (msg.includes('variable')) {
-    return `Explanation:
-Variables are containers for storing data values. In JavaScript, we use 'let', 'const', or 'var'.
-
-Code:
-const name = "MentorStack"; // Cannot be reassigned
-let score = 0;             // Can be reassigned
-score = 10;
-
-Exercise:
-Declare a constant for your birth year and a variable for your current age.`;
-  }
-
-  if (msg.includes('function')) {
-    return `Explanation:
-A function is a block of code designed to perform a particular task. It is executed when "something" invokes it (calls it).
-
-Code:
-function calculateArea(width, height) {
-  return width * height;
-}
-
-const area = calculateArea(10, 5);
-
-Exercise:
-Write a function called 'isEven' that returns true if a number is even and false if it's odd.`;
-  }
-
-  if (msg.includes('loop')) {
-    return `Explanation:
-Loops are used to repeat a block of code a certain number of times or while a condition is true.
-
-Code:
-for (let i = 0; i < 5; i++) {
-  console.log("Iteration: " + i);
-}
-
-Exercise:
-Write a while loop that counts down from 10 to 1.`;
-  }
-
-  if (msg.includes('array')) {
-    return `Explanation:
-An array is a special variable, which can hold more than one value at a time.
-
-Code:
-const tools = ["Git", "VS Code", "Terminal"];
-console.log(tools[0]); // "Git"
-tools.push("Docker");
-
-Exercise:
-Create an array of 5 fruits and use a loop to print each one to the console.`;
-  }
-
-  if (msg.includes('object')) {
-    return `Explanation:
-Objects are variables too, but they can contain many values. These values are written as name:value pairs.
-
-Code:
-const student = {
-  name: "Alex",
-  path: "Frontend",
-  level: 5
-};
-
-Exercise:
-Create an object representing a 'Car' with properties like brand, model, and year.`;
-  }
-
-  if (msg.includes('backend')) {
-    return `Explanation:
-Backend development refers to the server-side of an application and everything that communicates between the database and the browser.
-
-Code:
-// Node.js Express example
-const express = require('express');
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Backend is running!');
-});
-
-Exercise:
-Research the difference between SQL and NoSQL databases and list one example of each.`;
-  }
-
-  if (msg.includes('api')) {
-    return `Explanation:
-API stands for Application Programming Interface. It is a set of rules that allow different software entities to communicate with each other.
-
-Code:
-fetch('https://api.example.com/data')
-  .then(response => response.json())
-  .then(data => console.log(data));
-
-Exercise:
-Try to explain to a non-technical friend what an API is using a restaurant waiter analogy.`;
-  }
-
-  if (msg.includes('database')) {
-    return `Explanation:
-A database is an organized collection of structured information, or data, typically stored electronically in a computer system.
-
-Code:
--- SQL Example
-SELECT * FROM users WHERE level > 10;
-
-Exercise:
-If you were building a social media app, what kind of data would you need to store in your database?`;
-  }
-
-  if (msg.includes('error') || msg.includes('bug') || msg.includes('debug')) {
-    return `Explanation:
-Debugging is the process of finding and fixing errors in your code. Errors can be syntax errors, logic errors, or runtime errors.
-
-Mentor Tip:
-Always read the error message carefully! It usually tells you exactly what went wrong and where. Use console.log() to inspect your variables.
-
-Exercise:
-Intentionally break a small piece of code and try to use the browser console to identify the error.`;
-  }
-
-  if (msg.includes('project help') || msg.includes('help with project')) {
-    return `Explanation:
-When building a project, start by breaking it down into the smallest possible tasks. Don't try to build everything at once.
-
-Mentor Tip:
-1. Plan the UI (Wireframe)
-2. Define the Data Structure
-3. Build the core functionality
-4. Add styling and polish
-
-Exercise:
-List the first three steps you would take to build a simple To-Do List application.`;
+Step 5: THEN Test
+What is the difference between "let" and "const" in JavaScript?`;
   }
 
   // Default mentor response
-  const fallbacks = [
-    "That's a great question! As your mentor, I recommend breaking this down into smaller steps. What part are you finding most challenging?",
-    "I'm currently in 'Offline Mentor Mode', but I can still help with core concepts! Try asking me about HTML, CSS, JavaScript, or specific coding patterns.",
-    "Programming is all about problem-solving. Even when the connection is spotty, we can still focus on the logic. What are you working on right now?",
-    "Remember: every expert was once a beginner. Keep pushing! If you have a specific question about a language or tool, I'm here to guide you."
-  ];
-  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  return `Step 1: Teach First
+I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I am currently in a simplified mode but still here to guide you.
+
+Step 2: Give Example
+We can discuss coding, startups, or your career mindset anytime.
+
+Step 3: Practice Task
+Tell me one thing you learned today, no matter how small it seems.
+
+Step 4: Mini Reinforcement
+Pro-tip: Small daily wins lead to massive long-term success.
+
+Step 5: THEN Test
+What topic should we dive into next: HTML, CSS, or JavaScript?`;
 };
 
 const getFallbackLesson = (topic: string): LessonContent => {
@@ -357,8 +217,19 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
     Generate a structured lesson for a ${path} at the ${stage} stage.
     Topic: "${topic}".
     
+    IMPORTANT: You are MentorStack AI, part of OLYNQ SOCIAL LIMITED. 
+    The lesson content must be simple, clear, and beginner-friendly.
+    
     Return the lesson in JSON format with the following keys:
     'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine', 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
+    
+    Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
+    Follow this learning flow logic:
+    1. Teach First: Clear, simple explanation.
+    2. Give Example: Real-world + code.
+    3. Practice Task: Small task for the user.
+    4. Mini Reinforcement: A hint or pro-tip.
+    5. THEN Test: The 'quiz' section should feel like a natural next step after the above.
   `;
 
   try {
@@ -412,6 +283,9 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     const prompt = `
       User Context: ${JSON.stringify(userContext)}
       
+      Conversation History:
+      ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
+
       User Message: ${message}
 
       If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
@@ -436,11 +310,11 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     console.error("Gemini Service: Error occurred", error.message);
     
     // Specific error handling
-    let errorMessage = "I'm having a bit of trouble connecting to my brain right now.";
+    let errorMessage = "I'm having a moment to think. Let's try that again.";
     if (error.message?.includes("API_KEY_INVALID")) {
-      errorMessage = "It looks like my API key is invalid. Please check the configuration.";
+      errorMessage = "I'm currently updating my systems. I'll be back to full strength soon!";
     } else if (error.message?.includes("quota")) {
-      errorMessage = "I've reached my daily limit for advice. Let's take a short break!";
+      errorMessage = "I've shared so much advice today! Let's take a quick breather and continue in a bit.";
     }
 
     console.log("Gemini Service: Triggering fallback tutor");

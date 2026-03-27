@@ -91,6 +91,35 @@ export const projectService = {
     });
   },
 
+  // Save project draft (playground code)
+  saveProjectDraft: async (userId: string, projectId: string, draft: any) => {
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    await update(projectRef, {
+      draft,
+      updatedAt: Date.now()
+    });
+  },
+
+  // Submit project
+  submitProject: async (userId: string, projectId: string, submission: any) => {
+    const submissionRef = ref(db, `users/${userId}/submissions/${projectId}`);
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    
+    await set(submissionRef, {
+      ...submission,
+      id: projectId,
+      userId,
+      projectId,
+      submittedAt: Date.now(),
+      status: 'pending'
+    });
+
+    await update(projectRef, {
+      status: 'completed', // Or 'submitted' if we add that status
+      updatedAt: Date.now()
+    });
+  },
+
   // Listen to all user projects
   subscribeToProjects: (userId: string, callback: (projects: Record<string, UserProjectProgress>) => void) => {
     const projectsRef = ref(db, `users/${userId}/projects`);

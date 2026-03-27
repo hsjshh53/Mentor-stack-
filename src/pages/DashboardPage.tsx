@@ -255,9 +255,9 @@ export const DashboardPage: React.FC = () => {
               </div>
 
               <nav className="space-y-3 flex-grow">
-                {menuItems.map((item, i) => (
+                {menuItems.map((item) => (
                   <button 
-                    key={i}
+                    key={item.label}
                     onClick={() => {
                       navigate(item.path);
                       setIsSidebarOpen(false);
@@ -338,9 +338,9 @@ export const DashboardPage: React.FC = () => {
                 { label: 'Streak', value: `${streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
                 { label: 'XP', value: xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
                 { label: 'Level', value: currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
-              ].map((stat, i) => (
+              ].map((stat) => (
                 <Card 
-                  key={i} 
+                  key={stat.label} 
                   role="button"
                   tabIndex={0}
                   onClick={() => navigate('/profile')}
@@ -581,9 +581,9 @@ export const DashboardPage: React.FC = () => {
             </div>
             
             <div className="grid grid-cols-1 gap-6">
-              {featuredLessons.map((lesson, i) => (
+              {featuredLessons.map((lesson) => (
                 <Card 
-                  key={i}
+                  key={lesson.id}
                   onClick={() => navigate(`/lesson/${lesson.id}`)}
                   className="p-8 flex items-center justify-between group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20"
                 >
@@ -759,9 +759,9 @@ export const DashboardPage: React.FC = () => {
               {Object.keys(CURRICULUM)
                 .filter(p => p !== progress.selectedPath)
                 .slice(0, 3)
-                .map((path, i) => (
+                .map((path) => (
                   <Card 
-                    key={i}
+                    key={path}
                     onClick={() => handlePathSwitch(path as CareerPath)}
                     className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98]"
                   >

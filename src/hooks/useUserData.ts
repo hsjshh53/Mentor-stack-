@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ref, onValue, set, update } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { UserProgress } from '../types/index';
+import { UserProgress, ProjectSubmission, ProjectStarterCode } from '../types/index';
 
 const defaultProgress: UserProgress = {
   selectedPath: null,
@@ -15,6 +15,7 @@ const defaultProgress: UserProgress = {
   completedTests: [],
   completedExams: [],
   completedProjects: [],
+  submissions: {},
   certificates: [],
   weakAreas: [],
   skills: {},
@@ -45,6 +46,7 @@ export const useUserData = () => {
           completedTests: data.completedTests || [],
           completedExams: data.completedExams || [],
           completedProjects: data.completedProjects || [],
+          submissions: data.submissions || {},
           certificates: data.certificates || [],
           weakAreas: data.weakAreas || [],
           unlockedPaths: data.unlockedPaths || defaultProgress.unlockedPaths
@@ -73,5 +75,45 @@ export const useUserData = () => {
     await updateProgress({ xp: newXP, level: newLevel });
   };
 
-  return { progress, loading, updateProgress, addXP };
+  const submitProject = async (projectId: string, submission: Omit<ProjectSubmission, 'id' | 'userId' | 'projectId' | 'submittedAt' | 'status'>) => {
+    if (!user || !progress) return;
+
+    const submissionId = `sub_${Date.now()}`;
+    const fullSubmission: ProjectSubmission = {
+      ...submission,
+      id: submissionId,
+      userId: user.uid,
+      projectId,
+      submittedAt: Date.now(),
+      status: 'pending'
+    };
+
+    const newSubmissions = {
+      ...progress.submissions,
+      [projectId]: fullSubmission
+    };
+
+    const newCompletedProjects = progress.completedProjects.includes(projectId)
+      ? progress.completedProjects
+      : [...progress.completedProjects, projectId];
+
+    await updateProgress({
+      submissions: newSubmissions,
+      completedProjects: newCompletedProjects
+    });
+
+    // Add XP for completion
+    await addXP(500); // Base XP for any project
+  };
+
+  const saveProjectDraft = async (projectId: string, draft: ProjectStarterCode) => {
+    if (!user) return;
+    const projectRef = ref(db, `users/${user.uid}/projects/${projectId}`);
+    await update(projectRef, {
+      draft,
+      updatedAt: Date.now()
+    });
+  };
+
+  return { progress, loading, updateProgress, addXP, submitProject, saveProjectDraft };
 };

@@ -131,8 +131,8 @@ export const ProfilePage: React.FC = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-4">
-            {stats.map((stat, i) => (
-              <Card key={i} className="p-6 flex flex-col items-center gap-3 bg-white/[0.02] border-white/5 text-center">
+            {stats.map((stat) => (
+              <Card key={stat.label} className="p-6 flex flex-col items-center gap-3 bg-white/[0.02] border-white/5 text-center">
                 <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
                   {stat.icon}
                 </div>
@@ -185,13 +185,13 @@ export const ProfilePage: React.FC = () => {
 
           {/* Settings Sections */}
           <div className="space-y-12">
-            {sections.map((section, i) => (
-              <div key={i} className="space-y-6">
+            {sections.map((section) => (
+              <div key={section.title} className="space-y-6">
                 <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em] px-2">{section.title}</h3>
                 <div className="grid grid-cols-1 gap-3">
-                  {section.items.map((item, j) => (
+                  {section.items.map((item) => (
                     <Card 
-                      key={j}
+                      key={item.id}
                       onClick={() => setActiveModal(item.id)}
                       className="p-6 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-all border-white/5 active:scale-[0.98]"
                     >

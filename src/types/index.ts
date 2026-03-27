@@ -70,14 +70,46 @@ export interface Certificate {
   fullName: string;
   pathName: CareerPath;
   tier: CertificateTier;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
   issueDate: string;
   finalScore: number;
-  projectTitle: string;
   skills: string[];
+  projects: {
+    title: string;
+    githubLink: string;
+    liveLink?: string;
+  }[];
   verificationUrl: string;
   isValid: boolean;
-  portfolioLink?: string;
-  projectLink?: string;
+  issuedBy: string; // "MentorStack AI by OLYNQ SOCIAL"
+}
+
+export interface ProjectSubmission {
+  id: string;
+  userId: string;
+  projectId: string;
+  githubLink: string;
+  liveLink: string;
+  code?: ProjectStarterCode; // For playground submissions
+  submittedAt: number;
+  status: 'pending' | 'reviewed' | 'approved';
+  githubMetadata?: GithubRepoMetadata;
+  notes?: string;
+}
+
+export interface GithubConnection {
+  accessToken: string;
+  username: string;
+  avatarUrl: string;
+  connectedAt: number;
+}
+
+export interface GithubRepoMetadata {
+  repoName: string;
+  repoUrl: string;
+  publishedAt: number;
+  lastSyncedAt: number;
+  publishStatus: 'published' | 'syncing' | 'failed';
 }
 
 export interface UserProgress {
@@ -91,6 +123,7 @@ export interface UserProgress {
   completedTests: string[];
   completedExams: string[];
   completedProjects: string[]; // Project IDs
+  submissions: Record<string, ProjectSubmission>; // projectId: submission
   certificates: string[]; // Certificate IDs
   weakAreas: string[];
   skills: Record<string, number>; // skillName: level
@@ -188,6 +221,12 @@ export interface ProjectCheckpoint {
   xpReward: number;
 }
 
+export interface ProjectStarterCode {
+  html: string;
+  css: string;
+  js: string;
+}
+
 export interface DetailedProject {
   id: string;
   title: string;
@@ -196,15 +235,17 @@ export interface DetailedProject {
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   xpReward: number;
   tags: string[];
+  skillsUsed: string[];
   isCapstone: boolean;
   estimatedTime: string;
   objectives: string[];
   prerequisites: string[];
+  instructions: string[];
   phases: ProjectPhase[];
   checkpoints: ProjectCheckpoint[];
   expectedOutcome: string;
   starterTasks: string[];
-  starterCode?: string;
+  starterCode?: ProjectStarterCode;
   snippets?: Record<string, string>;
 }
 
@@ -214,6 +255,8 @@ export interface UserProjectProgress {
   currentPhaseId: string;
   completedPhases: string[];
   completedCheckpoints: string[];
+  draft?: ProjectStarterCode;
+  githubMetadata?: GithubRepoMetadata;
   startedAt: number;
   updatedAt: number;
   completedAt: number | null;

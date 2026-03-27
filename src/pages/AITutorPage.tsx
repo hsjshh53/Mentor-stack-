@@ -86,15 +86,15 @@ export const AITutorPage: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-4">
-                <h2 className="text-3xl font-black tracking-tight">How can I help you today?</h2>
+                <h2 className="text-3xl font-black tracking-tight">Ready to level up?</h2>
                 <p className="text-white/40 max-w-md mx-auto leading-relaxed">
-                  "I am MentorStack, your personal coding mentor. I can explain concepts, debug code, or help you with your projects."
+                  "I am your MentorStack AI mentor, here to guide you step-by-step. I am a strict but friendly coach. Type your first question below to start."
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 w-full max-w-md">
-                {suggestions.map((s, i) => (
+                {suggestions.map((s) => (
                   <button 
-                    key={i}
+                    key={s}
                     onClick={() => setInput(s)}
                     className="p-4 rounded-2xl bg-white/5 border border-white/5 text-xs font-bold text-white/40 hover:text-white hover:bg-white/10 hover:border-emerald-500/30 transition-all text-left"
                   >
@@ -107,7 +107,7 @@ export const AITutorPage: React.FC = () => {
 
           {messages.map((msg, i) => (
             <motion.div 
-              key={i}
+              key={`${msg.role}-${i}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -116,7 +116,7 @@ export const AITutorPage: React.FC = () => {
                 <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${msg.role === 'user' ? 'bg-white/5 text-white/20' : 'bg-emerald-500 text-black'}`}>
                   {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                 </div>
-                <div className={`p-6 rounded-3xl leading-relaxed text-sm ${msg.role === 'user' ? 'bg-emerald-500 text-black rounded-tr-none shadow-xl shadow-emerald-500/20' : 'bg-white/5 text-white/80 border border-white/10 rounded-tl-none'}`}>
+                <div className={`p-6 rounded-3xl leading-relaxed text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'bg-emerald-500 text-black rounded-tr-none shadow-xl shadow-emerald-500/20' : 'bg-white/5 text-white/80 border border-white/10 rounded-tl-none'}`}>
                   {msg.content}
                 </div>
               </div>

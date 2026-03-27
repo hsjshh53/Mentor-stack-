@@ -9,6 +9,7 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
     difficulty: 'Beginner',
     xpReward: 500,
     tags: ['HTML', 'CSS', 'JavaScript', 'Responsive Design'],
+    skillsUsed: ['HTML5', 'CSS3', 'Flexbox', 'JavaScript DOM', 'Responsive Design'],
     isCapstone: false,
     estimatedTime: '4-6 hours',
     objectives: [
@@ -21,6 +22,13 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
       'Basic HTML tags',
       'CSS Box Model',
       'Responsive design principles'
+    ],
+    instructions: [
+      'Structure your page with semantic HTML tags.',
+      'Use CSS Flexbox or Grid for the layout.',
+      'Make sure the site is responsive on all devices.',
+      'Add a simple JavaScript animation or interactive element.',
+      'Deploy your site using GitHub Pages or Netlify.'
     ],
     phases: [
       {
@@ -95,7 +103,38 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
       'Initialize a git repository',
       'Create index.html and style.css'
     ],
-    starterCode: '<!DOCTYPE html>\n<html>\n<head>\n  <title>My Portfolio</title>\n</head>\n<body>\n  <h1>Welcome to my site</h1>\n</body>\n</html>'
+    starterCode: {
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <title>My Portfolio</title>
+</head>
+<body>
+  <header>
+    <h1>Welcome to my site</h1>
+  </header>
+  <main>
+    <section id="about">
+      <h2>About Me</h2>
+      <p>Start writing your bio here...</p>
+    </section>
+  </main>
+</body>
+</html>`,
+      css: `body {
+  font-family: sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 20px;
+  background: #f4f4f4;
+}
+
+h1 {
+  color: #333;
+}`,
+      js: `// Add your interactivity here
+console.log("Portfolio loaded!");`
+    }
   },
   {
     id: 'task-manager-api',
@@ -105,6 +144,7 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
     difficulty: 'Intermediate',
     xpReward: 800,
     tags: ['Node.js', 'Express', 'MongoDB', 'JWT'],
+    skillsUsed: ['Node.js', 'Express', 'MongoDB', 'JWT', 'REST API Design'],
     isCapstone: false,
     estimatedTime: '8-10 hours',
     objectives: [
@@ -117,6 +157,13 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
       'JavaScript ES6+',
       'Basic understanding of HTTP methods',
       'Node.js basics'
+    ],
+    instructions: [
+      'Initialize a Node.js project.',
+      'Set up Express and connect to MongoDB.',
+      'Implement user registration and login with JWT.',
+      'Create CRUD endpoints for tasks.',
+      'Add error handling and request validation.'
     ],
     phases: [
       {
@@ -148,7 +195,21 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
     starterTasks: [
       'npm init -y',
       'Create a .env file'
-    ]
+    ],
+    starterCode: {
+      html: `<!-- API Documentation Placeholder -->
+<div id="api-docs">
+  <h1>Task Manager API</h1>
+  <p>Endpoints:</p>
+  <ul>
+    <li>GET /api/tasks</li>
+    <li>POST /api/tasks</li>
+  </ul>
+</div>`,
+      css: `body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #00ff00; }`,
+      js: `// Mock API logic for playground
+console.log("Task Manager API initialized...");`
+    }
   },
   {
     id: 'fullstack-ecommerce',
@@ -158,6 +219,7 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
     difficulty: 'Advanced',
     xpReward: 1500,
     tags: ['React', 'Node.js', 'PostgreSQL', 'Stripe'],
+    skillsUsed: ['React', 'Node.js', 'PostgreSQL', 'Stripe', 'State Management'],
     isCapstone: true,
     estimatedTime: '20-30 hours',
     objectives: [
@@ -171,6 +233,13 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
       'Express.js',
       'SQL basics',
       'API integration'
+    ],
+    instructions: [
+      'Design the database schema for products and orders.',
+      'Build the React frontend with product listings.',
+      'Implement a shopping cart using state management.',
+      'Set up the Node.js backend to handle orders.',
+      'Integrate Stripe for secure payment processing.'
     ],
     phases: [
       {
@@ -203,6 +272,19 @@ export const DETAILED_PROJECTS: DetailedProject[] = [
     starterTasks: [
       'Setup a monorepo structure',
       'Initialize React and Express apps'
-    ]
+    ],
+    starterCode: {
+      html: `<div id="app">
+  <h1>MentorStore</h1>
+  <div id="products"></div>
+</div>`,
+      css: `#app { max-width: 800px; margin: 0 auto; padding: 20px; }
+h1 { color: #F27D26; }`,
+      js: `const products = [
+  { id: 1, name: "Coding Course", price: 99 },
+  { id: 2, name: "Mentor Session", price: 150 }
+];
+console.log("E-commerce app started with", products.length, "products");`
+    }
   }
 ];

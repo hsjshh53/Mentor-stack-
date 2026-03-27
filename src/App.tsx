@@ -62,6 +62,12 @@ export default function App() {
             </PrivateRoute>
           } />
 
+          <Route path="/playground/:projectId" element={
+            <PrivateRoute>
+              <PlaygroundPage />
+            </PrivateRoute>
+          } />
+
           <Route path="/projects" element={
             <PrivateRoute>
               <ProjectsPage />

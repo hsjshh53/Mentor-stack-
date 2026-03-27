@@ -60,6 +60,9 @@ export const ProjectDetailsPage: React.FC = () => {
     const newProgress = await projectService.startProject(user.uid, project.id, initialPhase.id);
     setProgress(newProgress);
     setActivePhase(initialPhase);
+    
+    // Navigate to playground
+    navigate(`/playground/${project.id}`);
   };
 
   const handleCompletePhase = async (phaseId: string) => {
@@ -200,8 +203,8 @@ export const ProjectDetailsPage: React.FC = () => {
                       <div className="space-y-4">
                         <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">Prerequisites</div>
                         <ul className="space-y-2">
-                          {project.prerequisites.map((p, i) => (
-                            <li key={i} className="flex gap-2 text-sm text-white/60">
+                          {project.prerequisites.map((p) => (
+                            <li key={p} className="flex gap-2 text-sm text-white/60">
                               <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                               {p}
                             </li>
@@ -214,6 +217,18 @@ export const ProjectDetailsPage: React.FC = () => {
                           <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-center font-bold">
                             Project Completed!
                           </div>
+                          <Button fullWidth variant="outline" onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+                        </div>
+                      ) : isInProgress ? (
+                        <div className="space-y-4">
+                          <Button 
+                            fullWidth 
+                            onClick={() => navigate(`/playground/${project.id}`)} 
+                            className="h-16 text-lg bg-emerald-500 hover:bg-emerald-600 text-black font-bold"
+                          >
+                            Open in Playground
+                            <Code2 size={20} className="ml-2" />
+                          </Button>
                           <Button fullWidth variant="outline" onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
                         </div>
                       ) : (
@@ -329,8 +344,8 @@ export const ProjectDetailsPage: React.FC = () => {
                     <div className="space-y-4">
                       <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">What to do</h4>
                       <ul className="space-y-3">
-                        {activePhase.tasks.map((task, i) => (
-                          <li key={i} className="flex gap-3 text-sm text-white/60">
+                        {activePhase.tasks.map((task) => (
+                          <li key={task} className="flex gap-3 text-sm text-white/60">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />
                             {task}
                           </li>
@@ -340,8 +355,8 @@ export const ProjectDetailsPage: React.FC = () => {
                     <div className="space-y-4">
                       <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Checklist</h4>
                       <div className="space-y-3">
-                        {activePhase.checklist.map((item, i) => (
-                          <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-white/40">
+                        {activePhase.checklist.map((item) => (
+                          <div key={item} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-white/40">
                             <div className="w-4 h-4 rounded border border-white/20 flex items-center justify-center">
                               <CheckCircle2 size={12} className="opacity-0" />
                             </div>
@@ -360,8 +375,8 @@ export const ProjectDetailsPage: React.FC = () => {
                       <h3 className="font-bold uppercase tracking-widest text-xs">Mentor Tips</h3>
                     </div>
                     <ul className="space-y-3">
-                      {activePhase.hints.map((hint, i) => (
-                        <li key={i} className="text-sm text-white/60 italic">"{hint}"</li>
+                      {activePhase.hints.map((hint) => (
+                        <li key={hint} className="text-sm text-white/60 italic">"{hint}"</li>
                       ))}
                     </ul>
                   </Card>
@@ -371,8 +386,8 @@ export const ProjectDetailsPage: React.FC = () => {
                       <h3 className="font-bold uppercase tracking-widest text-xs">Common Pitfalls</h3>
                     </div>
                     <ul className="space-y-3">
-                      {activePhase.commonMistakes.map((mistake, i) => (
-                        <li key={i} className="text-sm text-white/60">• {mistake}</li>
+                      {activePhase.commonMistakes.map((mistake) => (
+                        <li key={mistake} className="text-sm text-white/60">• {mistake}</li>
                       ))}
                     </ul>
                   </Card>
