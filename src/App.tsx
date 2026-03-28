@@ -15,7 +15,6 @@ import { TestPage } from './pages/TestPage';
 import { ExamPage } from './pages/ExamPage';
 import { VerificationPage } from './pages/VerificationPage';
 import { CertificatePage } from './pages/CertificatePage';
-import { LeaderboardPage } from './pages/LeaderboardPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -102,12 +101,6 @@ export default function App() {
           <Route path="/certificate/:certificateId" element={
             <PrivateRoute>
               <CertificatePage />
-            </PrivateRoute>
-          } />
-
-          <Route path="/leaderboard" element={
-            <PrivateRoute>
-              <LeaderboardPage />
             </PrivateRoute>
           } />
 

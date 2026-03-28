@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BADGES } from '../constants/badges';
-import { STAGE_TESTS } from '../constants/tests';
-import { FINAL_EXAMS } from '../constants/exams';
-import { LESSON_CONTENT } from '../constants/lessons';
 import { 
   User, Settings, Shield, Bell, 
   CreditCard, HelpCircle, LogOut, 
@@ -11,8 +7,7 @@ import {
   Flame, BookOpen, Terminal, Target,
   ArrowLeft, Mail, MapPin, Link as LinkIcon,
   Twitter, Github, Award, ExternalLink, ShieldCheck,
-  CheckCircle2, X, Star, Sparkles, Globe, Briefcase,
-  Users, Share2, Code
+  CheckCircle2, X, Star, Sparkles, Globe, Briefcase
 } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -49,25 +44,9 @@ export const ProfilePage: React.FC = () => {
 
   const stats = [
     { label: 'Streak', value: `${progress.streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
-    { label: 'Followers', value: progress.followers?.length || 0, icon: <Users size={20} />, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-    { label: 'Following', value: progress.following?.length || 0, icon: <Users size={20} />, color: 'text-purple-400', bg: 'bg-purple-400/10' },
     { label: 'XP', value: progress.xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-    { label: 'Level', value: Math.floor(progress.xp / 100) + 1, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
+    { label: 'Level', value: progress.currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
   ];
-
-  const handleShareStreak = () => {
-    const text = `I'm on a ${progress.streak} day streak on MentorStack! 🔥 Join me in becoming a job-ready developer.`;
-    if (navigator.share) {
-      navigator.share({
-        title: 'MentorStack Streak',
-        text: text,
-        url: window.location.origin,
-      });
-    } else {
-      navigator.clipboard.writeText(text);
-      alert('Streak progress copied to clipboard!');
-    }
-  };
 
   const sections = [
     {
@@ -192,7 +171,7 @@ export const ProfilePage: React.FC = () => {
           )}
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {stats.map((stat) => (
               <Card key={stat.label} className="p-6 flex flex-col items-center gap-3 bg-white/[0.02] border-white/5 text-center">
                 <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
@@ -204,68 +183,6 @@ export const ProfilePage: React.FC = () => {
                 </div>
               </Card>
             ))}
-          </div>
-
-          {/* Streak Sharing UI */}
-          <Card className="p-8 border-orange-500/20 bg-gradient-to-br from-orange-500/[0.08] to-transparent relative overflow-hidden group">
-            <div className="relative z-10 flex items-center justify-between gap-8">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400 shadow-lg shadow-orange-500/20">
-                  <Flame size={32} fill="currentColor" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black tracking-tight">🔥 {progress.streak} Day Streak</h3>
-                  <p className="text-white/40 font-medium">You're on fire! Keep learning daily to build your momentum.</p>
-                </div>
-              </div>
-              <Button 
-                onClick={handleShareStreak}
-                className="h-14 px-8 rounded-2xl font-black tracking-tight bg-orange-500 hover:bg-orange-600 text-white shadow-xl shadow-orange-500/20 flex items-center gap-3"
-              >
-                <Share2 size={20} />
-                Share Progress
-              </Button>
-            </div>
-          </Card>
-
-          {/* Badges Section */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">Achievement Badges</h3>
-              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{progress.badges?.length || 0} Earned</Badge>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {BADGES.map((badge) => {
-                const isEarned = progress.badges?.includes(badge.id);
-                return (
-                  <Card 
-                    key={badge.id} 
-                    className={`p-6 flex flex-col items-center gap-4 text-center transition-all duration-500 ${
-                      isEarned 
-                        ? 'bg-white/[0.03] border-emerald-500/20 opacity-100' 
-                        : 'bg-white/[0.01] border-white/5 opacity-40 grayscale'
-                    }`}
-                  >
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
-                      isEarned ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/20'
-                    }`}>
-                      {/* Dynamic icon rendering based on badge.icon string */}
-                      {badge.icon === 'BookOpen' && <BookOpen size={32} />}
-                      {badge.icon === 'Flame' && <Flame size={32} />}
-                      {badge.icon === 'Code' && <Code size={32} />}
-                      {badge.icon === 'Zap' && <Zap size={32} />}
-                      {badge.icon === 'Star' && <Star size={32} />}
-                      {badge.icon === 'Trophy' && <Trophy size={32} />}
-                    </div>
-                    <div>
-                      <h4 className={`font-black text-sm tracking-tight ${isEarned ? 'text-white' : 'text-white/40'}`}>{badge.name}</h4>
-                      <p className="text-[10px] text-white/20 font-medium mt-1">{badge.description}</p>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
           </div>
 
           {/* Certificates Section */}

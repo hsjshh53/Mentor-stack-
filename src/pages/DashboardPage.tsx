@@ -23,9 +23,6 @@ import { LESSON_CONTENT } from '../constants/lessons';
 import { CareerPath, Certificate } from '../types';
 import { getUserCertificates } from '../services/certificateService';
 
-import { ActivityFeed } from '../components/ActivityFeed';
-import { getLeaderboard } from '../services/socialService';
-
 export const DashboardPage: React.FC = () => {
   const { progress, loading, updateProgress } = useUserData();
   const { user } = useAuth();
@@ -33,17 +30,12 @@ export const DashboardPage: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPathSwitcherOpen, setIsPathSwitcherOpen] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
       getUserCertificates(user.uid).then(setCertificates);
-      getLeaderboard(100).then(setLeaderboard);
     }
   }, [user]);
-
-  const myRank = leaderboard.findIndex(u => u.uid === user?.uid) + 1;
-  const percentile = myRank > 0 ? Math.round((1 - myRank / leaderboard.length) * 100) : 0;
 
   const currentPathData = useMemo(() => {
     if (!progress?.selectedPath) return null;
@@ -123,9 +115,6 @@ export const DashboardPage: React.FC = () => {
   const xpProgress = xp % 100;
   const streak = Number(progress.streak) || 0;
   const currentStage = progress.currentStage || 'Beginner';
-  const dailyGoal = progress.dailyGoalMinutes || 20;
-  const minutesLearned = progress.dailyMinutesLearned || 0;
-  const goalProgress = Math.min(Math.round((minutesLearned / dailyGoal) * 100), 100);
 
   if (!progress.selectedPath || !CURRICULUM[progress.selectedPath as CareerPath]) {
     navigate('/onboarding');
@@ -162,7 +151,6 @@ export const DashboardPage: React.FC = () => {
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true, path: '/dashboard' },
-    { icon: <Trophy size={20} />, label: 'Leaderboard', path: '/leaderboard' },
     { icon: <BookOpen size={20} />, label: 'Lessons', path: '/dashboard' },
     { icon: <Zap size={20} />, label: 'AI Tutor', path: '/ai-tutor' },
     { icon: <Terminal size={20} />, label: 'Playground', path: '/playground' },
@@ -339,10 +327,7 @@ export const DashboardPage: React.FC = () => {
                 {progress.selectedPath} <br />
                 <span className="text-gradient">Academy</span>
               </h1>
-              <p className="text-white/60 font-bold text-xl">
-                Welcome back 👋 Let's continue your journey
-              </p>
-              <div className="space-y-3 max-w-md pt-4">
+              <div className="space-y-3 max-w-md">
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
                   <span>Journey Progress</span>
                   <span className="text-emerald-400">{allLessonsInPath.length > 0 ? Math.round((progress.completedLessons.length / allLessonsInPath.length) * 100) : 0}%</span>
@@ -354,11 +339,6 @@ export const DashboardPage: React.FC = () => {
                     className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"
                   />
                 </div>
-                {percentile > 0 && (
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60 pt-1">
-                    ✨ You're ahead of {percentile}% of learners!
-                  </p>
-                )}
               </div>
               <p className="text-white/40 font-medium text-lg md:text-xl max-w-md leading-relaxed pt-4">
                 Welcome back, <span className="text-white font-black">{user?.displayName?.split(' ')[0] || 'Developer'}</span>. You're on step <span className="text-emerald-400 font-black">{allLessonsInPath.indexOf(nextLessonId || '') + 1}</span> of <span className="text-white/60">{allLessonsInPath.length}</span>.
@@ -368,9 +348,9 @@ export const DashboardPage: React.FC = () => {
             {/* Stats Row */}
               <div className="flex flex-wrap gap-4 w-full lg:w-auto">
               {[
-                { label: 'Streak', value: `${streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10', sub: 'Don\'t break your streak' },
-                { label: 'Daily Goal', value: `${minutesLearned}/${dailyGoal}m`, icon: <Clock size={20} fill="currentColor" />, color: 'text-blue-400', bg: 'bg-blue-400/10', sub: `${goalProgress}% Complete` },
-                { label: 'XP', value: xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10', sub: `Level ${Math.floor(xp / 100) + 1}` },
+                { label: 'Streak', value: `${streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+                { label: 'XP', value: xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+                { label: 'Level', value: currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
               ].map((stat) => (
                 <Card 
                   key={stat.label} 
@@ -385,7 +365,6 @@ export const DashboardPage: React.FC = () => {
                   <div>
                     <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.2em] mb-1">{stat.label}</p>
                     <p className="font-black text-xl tracking-tight">{stat.value}</p>
-                    <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mt-1">{stat.sub}</p>
                   </div>
                 </Card>
               ))}
@@ -413,117 +392,6 @@ export const DashboardPage: React.FC = () => {
               >
                 <div className="absolute top-0 right-0 w-8 h-full bg-white/20 blur-md rounded-full animate-pulse" />
               </motion.div>
-            </div>
-          </div>
-
-          {/* Engagement Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Daily Goal Card */}
-            <Card className="p-10 space-y-8 border-white/[0.05] bg-white/[0.01] relative overflow-hidden group">
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                    <Clock size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-xl tracking-tight">Daily Goal</h3>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Stay consistent, stay ahead</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {[10, 20, 30].map(min => (
-                    <button
-                      key={min}
-                      onClick={() => updateProgress({ dailyGoalMinutes: min })}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${
-                        dailyGoal === min 
-                          ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
-                          : 'bg-white/5 text-white/40 hover:bg-white/10'
-                      }`}
-                    >
-                      {min}m
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4 relative z-10">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                  <span className="text-white/40">Progress Today</span>
-                  <span className="text-blue-400">{minutesLearned} / {dailyGoal} min</span>
-                </div>
-                <div className="w-full h-3 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${goalProgress}%` }}
-                    className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-                  />
-                </div>
-              </div>
-              
-              <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
-                <Clock size={160} />
-              </div>
-            </Card>
-
-            {/* Continue Learning Card */}
-            <Card 
-              onClick={() => progress.lastLessonId && navigate(`/lesson/${progress.lastLessonId}`)}
-              className="p-10 space-y-8 border-white/[0.05] bg-white/[0.01] relative overflow-hidden group cursor-pointer hover:bg-white/[0.03] transition-all"
-            >
-              <div className="flex items-center gap-4 relative z-10">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                  <Play size={24} fill="currentColor" />
-                </div>
-                <div>
-                  <h3 className="font-black text-xl tracking-tight">Continue Learning</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30">Pick up where you left off</p>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.05] relative z-10 group-hover:border-emerald-500/30 transition-all">
-                <h4 className="font-black text-lg tracking-tight mb-1">{progress.lastLessonTitle || 'Start your first lesson'}</h4>
-                <p className="text-xs text-white/40 font-medium">Click to resume your journey</p>
-              </div>
-
-              <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none">
-                <BookOpen size={160} />
-              </div>
-            </Card>
-          </div>
-
-          {/* Skill Progress Section */}
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-emerald-400">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <TrendingUp size={22} />
-                </div>
-                <h3 className="font-black uppercase text-sm tracking-[0.2em]">Skill Progress</h3>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(currentPathData?.skills || ['Logic', 'Problem Solving', 'Consistency']).map((skill, i) => {
-                // Simulate skill progress based on overall progress for now
-                const skillProgress = Math.min(Math.round(((progress.completedLessons.length / allLessonsInPath.length) * 100) * (0.8 + Math.random() * 0.4)), 100);
-                return (
-                  <Card key={skill} className="p-8 space-y-6 bg-white/[0.01] border-white/[0.05] hover:border-emerald-500/20 transition-all group">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-black text-sm tracking-tight text-white/60 group-hover:text-white transition-colors">{skill}</h4>
-                      <span className="text-xs font-black text-emerald-400">{skillProgress}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${skillProgress}%` }}
-                        transition={{ duration: 1, delay: i * 0.1 }}
-                        className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-                      />
-                    </div>
-                  </Card>
-                );
-              })}
             </div>
           </div>
 
@@ -614,9 +482,6 @@ export const DashboardPage: React.FC = () => {
 
           {/* Grid Sections */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {/* Activity Feed */}
-            <ActivityFeed />
-
             {/* Progress Summary */}
             <Card className="p-10 space-y-10">
               <div className="flex items-center justify-between">
@@ -665,34 +530,13 @@ export const DashboardPage: React.FC = () => {
             <Card className="p-10 space-y-10">
               <div className="flex items-center gap-4 text-emerald-400">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <Trophy size={22} />
+                  <BrainCircuit size={22} />
                 </div>
-                <h3 className="font-black uppercase text-sm tracking-[0.2em]">Leaderboard</h3>
+                <h3 className="font-black uppercase text-sm tracking-[0.2em]">Mastery & Skills</h3>
               </div>
               
-              <div className="space-y-6">
-                <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl">
-                      {myRank || '?'}
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Your Rank</p>
-                      <p className="font-black text-lg">Global Standing</p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => navigate('/leaderboard')}
-                    variant="outline" 
-                    size="sm" 
-                    className="rounded-xl border-white/10 hover:border-emerald-500/50"
-                  >
-                    View All
-                  </Button>
-                </div>
-
-                <div className="space-y-12">
-                  <div className="space-y-5">
+              <div className="space-y-12">
+                <div className="space-y-5">
                   <div className="flex items-center gap-3">
                     <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.3em]">Top Strengths</p>
                     <div className="flex-grow h-px bg-white/[0.05]" />
@@ -715,8 +559,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
           </div>
 
           {/* Skill Tree Progress */}

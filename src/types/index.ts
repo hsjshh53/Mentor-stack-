@@ -186,34 +186,8 @@ export interface UserProgress {
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
   isPremium: boolean;
-  dailyGoalMinutes: number;
-  dailyMinutesLearned: number;
-  lastLessonId: string | null;
-  lastLessonTitle: string | null;
-  lastActiveDate: string | null;
   goal?: string;
   experienceLevel?: string;
-  followers?: string[];
-  following?: string[];
-  badges?: string[];
-}
-
-export interface Activity {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  type: 'lesson_complete' | 'level_up' | 'project_complete' | 'badge_earned' | 'streak_milestone';
-  content: string;
-  timestamp: number;
-}
-
-export interface Badge {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: 'milestone' | 'streak' | 'skill' | 'community';
 }
 
 export interface UserProfile {

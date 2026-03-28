@@ -1,5 +1,5 @@
-import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
-import { db, handleFirestoreError, OperationType } from "../lib/firebase";
+import { ref, set, get, update, onValue, off } from "firebase/database";
+import { db } from "../lib/firebase";
 import { GithubConnection, GithubRepoMetadata } from "../types";
 
 const FUNCTIONS_BASE_URL = "/.netlify/functions";
@@ -8,6 +8,7 @@ export const githubService = {
   // Connect GitHub (Triggers OAuth flow)
   connectGithub: async (userId: string): Promise<GithubConnection | null> => {
     return new Promise((resolve, reject) => {
+      // 1. Open OAuth popup
       const width = 600;
       const height = 700;
       const left = window.screen.width / 2 - width / 2;
@@ -24,12 +25,16 @@ export const githubService = {
         return;
       }
 
+      // 2. Listen for message from popup
       const handleMessage = async (event: MessageEvent) => {
+        // Validate origin if possible, but '*' is often used for these popups
         if (event.data?.type === 'GITHUB_AUTH_SUCCESS' && event.data?.accessToken) {
           window.removeEventListener('message', handleMessage);
           
           try {
             const accessToken = event.data.accessToken;
+            
+            // 3. Fetch user info to confirm connection
             const userResponse = await fetch(`${FUNCTIONS_BASE_URL}/github-user?accessToken=${accessToken}`);
             if (!userResponse.ok) throw new Error('Failed to fetch GitHub user info');
             
@@ -42,8 +47,9 @@ export const githubService = {
               connectedAt: Date.now()
             };
             
-            const connectionRef = doc(db, 'users', userId);
-            await setDoc(connectionRef, { githubConnection: connection }, { merge: true });
+            // 4. Save connection to Firebase
+            const connectionRef = ref(db, `users/${userId}/githubConnection`);
+            await set(connectionRef, connection);
             
             resolve(connection);
           } catch (error) {
@@ -54,10 +60,12 @@ export const githubService = {
 
       window.addEventListener('message', handleMessage);
 
+      // 3. Check if window is closed without success
       const checkClosed = setInterval(() => {
         if (authWindow.closed) {
           clearInterval(checkClosed);
           window.removeEventListener('message', handleMessage);
+          // We don't reject here because the message might have been sent just before closing
         }
       }, 1000);
     });
@@ -65,26 +73,15 @@ export const githubService = {
 
   // Get GitHub connection
   getGithubConnection: async (userId: string): Promise<GithubConnection | null> => {
-    const path = `users/${userId}`;
-    try {
-      const connectionRef = doc(db, 'users', userId);
-      const snapshot = await getDoc(connectionRef);
-      return snapshot.exists() ? snapshot.data()?.githubConnection : null;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.GET, path);
-      return null;
-    }
+    const connectionRef = ref(db, `users/${userId}/githubConnection`);
+    const snapshot = await get(connectionRef);
+    return snapshot.exists() ? snapshot.val() : null;
   },
 
   // Disconnect GitHub
   disconnectGithub: async (userId: string) => {
-    const path = `users/${userId}`;
-    try {
-      const connectionRef = doc(db, 'users', userId);
-      await setDoc(connectionRef, { githubConnection: null }, { merge: true });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
-    }
+    const connectionRef = ref(db, `users/${userId}/githubConnection`);
+    await set(connectionRef, null);
   },
 
   // Create Repository
@@ -134,34 +131,26 @@ export const githubService = {
 
     const data = await response.json();
 
-    const path = `users/${userId}/projects/${projectId}`;
-    try {
-      const projectRef = doc(db, 'users', userId, 'projects', projectId);
-      const metadata: GithubRepoMetadata = {
-        repoName,
-        repoUrl: `https://github.com/` + connection.username + `/` + repoName,
-        publishedAt: Date.now(),
-        lastSyncedAt: Date.now(),
-        publishStatus: 'published'
-      };
-      
-      await setDoc(projectRef, { githubMetadata: metadata }, { merge: true });
-      return metadata;
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
-      return null;
-    }
+    // Save metadata to Firebase
+    const metadataRef = ref(db, `users/${userId}/projects/${projectId}/githubMetadata`);
+    const metadata: GithubRepoMetadata = {
+      repoName,
+      repoUrl: `https://github.com/` + connection.username + `/` + repoName,
+      publishedAt: Date.now(),
+      lastSyncedAt: Date.now(),
+      publishStatus: 'published'
+    };
+    
+    await set(metadataRef, metadata);
+    return metadata;
   },
 
   // Subscribe to connection
   subscribeToConnection: (userId: string, callback: (connection: GithubConnection | null) => void) => {
-    const path = `users/${userId}`;
-    const connectionRef = doc(db, 'users', userId);
-    const unsubscribe = onSnapshot(connectionRef, (snapshot) => {
-      callback(snapshot.data()?.githubConnection || null);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, path);
+    const connectionRef = ref(db, `users/${userId}/githubConnection`);
+    onValue(connectionRef, (snapshot) => {
+      callback(snapshot.val());
     });
-    return unsubscribe;
+    return () => off(connectionRef);
   }
 };

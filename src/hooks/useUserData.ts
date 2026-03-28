@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { ref, onValue, set, update } from 'firebase/database';
+import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { UserProgress, ProjectSubmission, ProjectStarterCode } from '../types/index';
 
@@ -20,19 +20,8 @@ const defaultProgress: UserProgress = {
   weakAreas: [],
   skills: {},
   unlockedPaths: ['Frontend Developer', 'Full-Stack Developer'],
-  isPremium: false,
-  dailyGoalMinutes: 20,
-  dailyMinutesLearned: 0,
-  lastLessonId: null,
-  lastLessonTitle: null,
-  lastActiveDate: null,
-  followers: [],
-  following: [],
-  badges: []
+  isPremium: false
 };
-
-import { recordActivity } from '../services/socialService';
-import { BADGES } from '../constants/badges';
 
 export const useUserData = () => {
   const { user } = useAuth();
@@ -46,49 +35,14 @@ export const useUserData = () => {
       return;
     }
 
-    const userRef = doc(db, 'users', user.uid);
-    const unsubscribe = onSnapshot(userRef, async (snapshot) => {
+    const userRef = ref(db, `users/${user.uid}/progress`);
+    const unsubscribe = onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        const userData = snapshot.data();
-        const data = userData.progress as UserProgress;
-        const today = new Date().toISOString().split('T')[0];
-        const lastActiveDate = data.lastActiveDate;
-        
-        let streak = data.streak || 0;
-        let dailyMinutesLearned = data.dailyMinutesLearned || 0;
-
-        // Reset daily minutes if it's a new day
-        if (lastActiveDate !== today) {
-          dailyMinutesLearned = 0;
-          
-          // Reset streak if missed a day
-          if (lastActiveDate) {
-            const lastDate = new Date(lastActiveDate);
-            const todayDate = new Date(today);
-            const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 1) {
-              streak = 0;
-            }
-          }
-          
-          // Persist the reset
-          try {
-            await updateDoc(userRef, { 
-              'progress.dailyMinutesLearned': dailyMinutesLearned, 
-              'progress.streak': streak, 
-              'progress.lastActiveDate': today 
-            });
-          } catch (error) {
-            handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
-          }
-        }
-
+        const data = snapshot.val();
         setProgress({
           ...defaultProgress,
           ...data,
-          streak,
-          dailyMinutesLearned,
+          // Ensure arrays exist even if they were missing in the database
           completedLessons: data.completedLessons || [],
           completedTests: data.completedTests || [],
           completedExams: data.completedExams || [],
@@ -99,21 +53,10 @@ export const useUserData = () => {
           unlockedPaths: data.unlockedPaths || defaultProgress.unlockedPaths
         });
       } else {
-        // Initialize new user profile
-        try {
-          await setDoc(userRef, {
-            displayName: user.displayName || 'Developer',
-            photoURL: user.photoURL || null,
-            progress: defaultProgress
-          });
-          setProgress(defaultProgress);
-        } catch (error) {
-          handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}`);
-        }
+        // Initialize new user progress
+        set(userRef, defaultProgress);
+        setProgress(defaultProgress);
       }
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
       setLoading(false);
     });
 
@@ -122,129 +65,15 @@ export const useUserData = () => {
 
   const updateProgress = async (updates: Partial<UserProgress>) => {
     if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
-    const firestoreUpdates: any = {};
-    Object.entries(updates).forEach(([key, value]) => {
-      firestoreUpdates[`progress.${key}`] = value;
-    });
-    try {
-      await updateDoc(userRef, firestoreUpdates);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
-    }
+    const userRef = ref(db, `users/${user.uid}/progress`);
+    await update(userRef, updates);
   };
 
   const addXP = async (amount: number) => {
     if (!progress || !user) return;
     const newXP = progress.xp + amount;
     const newLevel = Math.floor(newXP / 100) + 1;
-    
-    const updates: Partial<UserProgress> = { xp: newXP, level: newLevel };
-    
-    const newBadges = [...(progress.badges || [])];
-    if (newXP >= 100 && !newBadges.includes('xp-100')) {
-      newBadges.push('xp-100');
-      updates.badges = newBadges;
-      await recordActivity({
-        userId: user.uid,
-        userName: user.displayName || 'Developer',
-        userPhoto: user.photoURL || undefined,
-        type: 'badge_earned',
-        content: 'earned the Centurion badge!'
-      });
-    }
-
-    if (newLevel > progress.level) {
-      await recordActivity({
-        userId: user.uid,
-        userName: user.displayName || 'Developer',
-        userPhoto: user.photoURL || undefined,
-        type: 'level_up',
-        content: `reached Level ${newLevel}!`
-      });
-    }
-
-    await updateProgress(updates);
-  };
-
-  const completeLesson = async (lessonId: string, lessonTitle: string) => {
-    if (!progress || !user) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    const lastActiveDate = progress.lastActiveDate;
-    
-    let newStreak = progress.streak;
-    if (!lastActiveDate) {
-      newStreak = 1;
-    } else if (lastActiveDate !== today) {
-      const lastDate = new Date(lastActiveDate);
-      const todayDate = new Date(today);
-      const diffTime = Math.abs(todayDate.getTime() - lastDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 1) {
-        newStreak += 1;
-      } else {
-        newStreak = 1;
-      }
-    }
-
-    const newCompletedLessons = progress.completedLessons.includes(lessonTitle)
-      ? progress.completedLessons
-      : [...progress.completedLessons, lessonTitle];
-
-    const newXP = progress.xp + 10;
-    const newLevel = Math.floor(newXP / 100) + 1;
-
-    const updates: any = {
-      completedLessons: newCompletedLessons,
-      streak: newStreak,
-      lastActiveDate: today,
-      lastLessonId: lessonId,
-      lastLessonTitle: lessonTitle,
-      xp: newXP,
-      level: newLevel
-    };
-
-    const newBadges = [...(progress.badges || [])];
-    if (newCompletedLessons.length === 1 && !newBadges.includes('first-lesson')) {
-      newBadges.push('first-lesson');
-      updates.badges = newBadges;
-      await recordActivity({
-        userId: user.uid,
-        userName: user.displayName || 'Developer',
-        userPhoto: user.photoURL || undefined,
-        type: 'badge_earned',
-        content: 'earned the First Step badge!'
-      });
-    }
-    if (newStreak === 7 && !newBadges.includes('streak-7')) {
-      newBadges.push('streak-7');
-      updates.badges = newBadges;
-      await recordActivity({
-        userId: user.uid,
-        userName: user.displayName || 'Developer',
-        userPhoto: user.photoURL || undefined,
-        type: 'streak_milestone',
-        content: `reached a 7-day streak! 🔥`
-      });
-    }
-
-    await updateProgress(updates);
-
-    await recordActivity({
-      userId: user.uid,
-      userName: user.displayName || 'Developer',
-      userPhoto: user.photoURL || undefined,
-      type: 'lesson_complete',
-      content: `completed ${lessonTitle}`
-    });
-  };
-
-  const addMinutesLearned = async (minutes: number) => {
-    if (!progress || !user) return;
-    const newMinutes = (progress.dailyMinutesLearned || 0) + minutes;
-    await updateProgress({ dailyMinutesLearned: newMinutes });
+    await updateProgress({ xp: newXP, level: newLevel });
   };
 
   const submitProject = async (projectId: string, submission: Omit<ProjectSubmission, 'id' | 'userId' | 'projectId' | 'submittedAt' | 'status'>) => {
@@ -269,52 +98,23 @@ export const useUserData = () => {
       ? progress.completedProjects
       : [...progress.completedProjects, projectId];
 
-    const newXP = progress.xp + 50;
-    const newLevel = Math.floor(newXP / 100) + 1;
-
-    const updates: any = {
+    await updateProgress({
       submissions: newSubmissions,
-      completedProjects: newCompletedProjects,
-      xp: newXP,
-      level: newLevel
-    };
-
-    const newBadges = [...(progress.badges || [])];
-    if (newCompletedProjects.length === 1 && !newBadges.includes('first-project')) {
-      newBadges.push('first-project');
-      updates.badges = newBadges;
-      await recordActivity({
-        userId: user.uid,
-        userName: user.displayName || 'Developer',
-        userPhoto: user.photoURL || undefined,
-        type: 'badge_earned',
-        content: 'earned the Builder badge!'
-      });
-    }
-
-    await updateProgress(updates);
-
-    await recordActivity({
-      userId: user.uid,
-      userName: user.displayName || 'Developer',
-      userPhoto: user.photoURL || undefined,
-      type: 'project_complete',
-      content: `built a new project: ${projectId}`
+      completedProjects: newCompletedProjects
     });
+
+    // Add XP for completion
+    await addXP(500); // Base XP for any project
   };
 
   const saveProjectDraft = async (projectId: string, draft: ProjectStarterCode) => {
     if (!user) return;
-    const projectRef = doc(db, 'users', user.uid, 'projects', projectId);
-    try {
-      await setDoc(projectRef, {
-        draft,
-        updatedAt: Date.now()
-      }, { merge: true });
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/projects/${projectId}`);
-    }
+    const projectRef = ref(db, `users/${user.uid}/projects/${projectId}`);
+    await update(projectRef, {
+      draft,
+      updatedAt: Date.now()
+    });
   };
 
-  return { progress, loading, updateProgress, addXP, completeLesson, addMinutesLearned, submitProject, saveProjectDraft };
+  return { progress, loading, updateProgress, addXP, submitProject, saveProjectDraft };
 };
