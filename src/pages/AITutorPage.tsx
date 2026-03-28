@@ -63,12 +63,19 @@ export const AITutorPage: React.FC = () => {
             <ArrowLeft size={24} />
           </button>
           <div>
-            <h1 className="font-bold text-lg tracking-tight">AI Tutor</h1>
+            <h1 className="font-black text-lg tracking-tighter uppercase">AI Tutor</h1>
             <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Powered by MentorStack AI</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+        <div className="flex items-center gap-4">
+          {progress.isPremium && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+              <Sparkles size={12} fill="currentColor" />
+              Pro Mode Active
+            </div>
+          )}
+          <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Online
           </div>
         </div>
@@ -113,10 +120,18 @@ export const AITutorPage: React.FC = () => {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`flex gap-4 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                <div className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center ${msg.role === 'user' ? 'bg-white/5 text-white/20' : 'bg-emerald-500 text-black'}`}>
+                <div className={`w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center shadow-lg ${
+                  msg.role === 'user' 
+                    ? 'bg-white/5 text-white/20 border border-white/10' 
+                    : 'bg-emerald-500 text-black shadow-emerald-500/20'
+                }`}>
                   {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                 </div>
-                <div className={`p-6 rounded-3xl leading-relaxed text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'bg-emerald-500 text-black rounded-tr-none shadow-xl shadow-emerald-500/20' : 'bg-white/5 text-white/80 border border-white/10 rounded-tl-none'}`}>
+                <div className={`p-6 rounded-3xl leading-relaxed text-sm whitespace-pre-wrap shadow-2xl ${
+                  msg.role === 'user' 
+                    ? 'bg-emerald-500 text-black rounded-tr-none shadow-emerald-500/10 font-medium' 
+                    : 'bg-white/[0.03] text-white/80 border border-white/10 rounded-tl-none backdrop-blur-md'
+                }`}>
                   {msg.content}
                 </div>
               </div>

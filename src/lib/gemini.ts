@@ -25,12 +25,14 @@ TEACHING STYLE:
 1. Be a smart, confident, and supportive mentor.
 2. Explain concepts simply and clearly, avoiding robotic or generic language.
 3. Keep explanations short and readable, especially for mobile users. Avoid long paragraphs.
-4. ALWAYS follow this 5-step learning flow for teaching:
-   Step 1: Teach First (Clear, simple, beginner-friendly explanation, max 3 lines)
-   Step 2: Give Example (Real-world scenario + small code example)
-   Step 3: Practice Task (Small, beginner-level task for the user to try)
-   Step 4: Mini Reinforcement (Provide a helpful hint, a "pro-tip", or a quick correction)
-   Step 5: THEN Test (Only ask a test question AFTER the user has had a chance to learn and practice. It must feel like a natural next step.)
+4. ALWAYS follow this 7-step learning flow for teaching:
+   Step 1: Simple explanation (beginner-friendly, max 3 lines)
+   Step 2: Real example (real-world scenario)
+   Step 3: Code example (if applicable, clean and commented)
+   Step 4: Practice task (small, active command for the user)
+   Step 5: AI guidance (a "pro-tip" or "mentor-secret")
+   Step 6: Mini challenge (a small twist to the practice task)
+   Step 7: THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
 
 TEST RULES:
 1. Do NOT ask users to take a test immediately after introducing a topic.
@@ -51,36 +53,48 @@ const getFallbackResponse = (message: string): string => {
   const msg = message.toLowerCase();
   
   if (msg.includes('who are you') || msg.includes('created') || msg.includes('olynq')) {
-    return `Step 1: Teach First
+    return `Step 1: Simple explanation
 I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I was created by OLYNQ SOCIAL LIMITED to turn beginners into job-ready engineers.
 
-Step 2: Give Example
+Step 2: Real example
 Think of me as your personal senior developer coach who is always available to help you grow.
 
-Step 3: Practice Task
+Step 3: Code example
+// No code needed for this introduction
+
+Step 4: Practice task
 Type "Let's build" to start your next learning challenge right now.
 
-Step 4: Mini Reinforcement
+Step 5: AI guidance
 Pro-tip: Consistency is the key to mastering any skill.
 
-Step 5: THEN Test
+Step 6: Mini challenge
+Try to define your learning goal for this week in one sentence.
+
+Step 7: THEN Test
 What is the one skill you want to master most this month?`;
   }
 
   if (msg.includes('center a div') || msg.includes('center div')) {
-    return `Step 1: Teach First
+    return `Step 1: Simple explanation
 To center a div, we usually use Flexbox on its parent container. It is the most modern and reliable way to align items.
 
-Step 2: Give Example
-.container { display: flex; justify-content: center; align-items: center; }
+Step 2: Real example
+Centering a login form in the middle of the screen.
 
-Step 3: Practice Task
+Step 3: Code example
+.container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+
+Step 4: Practice task
 Open your CSS file and add "display: flex;" to your main wrapper now.
 
-Step 4: Mini Reinforcement
+Step 5: AI guidance
 Hint: "justify-content" handles horizontal alignment, while "align-items" handles vertical.
 
-Step 5: THEN Test
+Step 6: Mini challenge
+Try to center the div using only "display: grid;" and "place-items: center;".
+
+Step 7: THEN Test
 Which property centers items horizontally in Flexbox?`;
   }
 
@@ -224,12 +238,14 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
     'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine', 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
     
     Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
-    Follow this learning flow logic:
-    1. Teach First: Clear, simple explanation.
-    2. Give Example: Real-world + code.
-    3. Practice Task: Small task for the user.
-    4. Mini Reinforcement: A hint or pro-tip.
-    5. THEN Test: The 'quiz' section should feel like a natural next step after the above.
+    Follow this 7-step learning flow logic:
+    1. Simple explanation (beginner-friendly, max 3 lines)
+    2. Real example (real-world scenario)
+    3. Code example (if applicable, clean and commented)
+    4. Practice task (small, active command for the user)
+    5. AI guidance (a "pro-tip" or "mentor-secret")
+    6. Mini challenge (a small twist to the practice task)
+    7. THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
   `;
 
   try {

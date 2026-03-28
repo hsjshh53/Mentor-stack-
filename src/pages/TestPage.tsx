@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, CheckCircle2, AlertCircle, 
   Trophy, Zap, Target, HelpCircle,
-  ChevronRight, RefreshCcw, BookOpen
+  ChevronRight, RefreshCcw, BookOpen, Sparkles
 } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
@@ -115,16 +115,39 @@ export const TestPage: React.FC = () => {
 
           <div className="flex flex-col gap-3">
             {passed ? (
-              <Button onClick={() => navigate('/dashboard')} fullWidth className="h-14 rounded-2xl">
+              <Button onClick={() => navigate('/dashboard')} fullWidth className="h-14 rounded-2xl bg-emerald-500 text-black font-black uppercase tracking-widest">
                 Back to Dashboard
               </Button>
             ) : (
-              <Button onClick={() => window.location.reload()} fullWidth className="h-14 rounded-2xl">
-                <RefreshCcw size={18} className="mr-2" />
-                Retry Test
-              </Button>
+              <div className="space-y-3">
+                <Button onClick={() => window.location.reload()} fullWidth className="h-14 rounded-2xl bg-white text-black font-black uppercase tracking-widest">
+                  <RefreshCcw size={18} className="mr-2" />
+                  Retry Test
+                </Button>
+                {progress.isPremium ? (
+                  <Button 
+                    onClick={() => navigate('/ai-tutor')} 
+                    variant="outline" 
+                    fullWidth 
+                    className="h-14 rounded-2xl border-emerald-500/20 text-emerald-400 font-black uppercase tracking-widest bg-emerald-500/5"
+                  >
+                    <Sparkles size={18} className="mr-2" />
+                    Review with AI Coach
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => navigate('/profile')} 
+                    variant="premium" 
+                    fullWidth 
+                    className="h-14 rounded-2xl font-black uppercase tracking-widest"
+                  >
+                    <Sparkles size={18} className="mr-2" />
+                    Unlock AI Review
+                  </Button>
+                )}
+              </div>
             )}
-            <Button variant="outline" onClick={() => navigate('/dashboard')} fullWidth className="h-14 rounded-2xl border-white/10">
+            <Button variant="outline" onClick={() => navigate('/dashboard')} fullWidth className="h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase tracking-widest">
               Exit
             </Button>
           </div>

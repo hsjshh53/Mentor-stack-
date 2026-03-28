@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { BADGES } from '../constants/badges';
+import { STAGE_TESTS } from '../constants/tests';
+import { FINAL_EXAMS } from '../constants/exams';
+import { LESSON_CONTENT } from '../constants/lessons';
 import { 
   User, Settings, Shield, Bell, 
   CreditCard, HelpCircle, LogOut, 
@@ -7,7 +11,8 @@ import {
   Flame, BookOpen, Terminal, Target,
   ArrowLeft, Mail, MapPin, Link as LinkIcon,
   Twitter, Github, Award, ExternalLink, ShieldCheck,
-  CheckCircle2, X
+  CheckCircle2, X, Star, Sparkles, Globe, Briefcase,
+  Users, Share2, Code
 } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +20,8 @@ import { useUserData } from '../hooks/useUserData';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { PremiumUpsell } from '../components/PremiumUpsell';
+import { PaywallModal } from '../components/PaywallModal';
 import { getUserCertificates } from '../services/certificateService';
 import { Certificate } from '../types';
 
@@ -23,6 +30,7 @@ export const ProfilePage: React.FC = () => {
   const { progress, loading } = useUserData();
   const navigate = useNavigate();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -41,9 +49,25 @@ export const ProfilePage: React.FC = () => {
 
   const stats = [
     { label: 'Streak', value: `${progress.streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+    { label: 'Followers', value: progress.followers?.length || 0, icon: <Users size={20} />, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+    { label: 'Following', value: progress.following?.length || 0, icon: <Users size={20} />, color: 'text-purple-400', bg: 'bg-purple-400/10' },
     { label: 'XP', value: progress.xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-    { label: 'Level', value: progress.currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
+    { label: 'Level', value: Math.floor(progress.xp / 100) + 1, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
   ];
+
+  const handleShareStreak = () => {
+    const text = `I'm on a ${progress.streak} day streak on MentorStack! 🔥 Join me in becoming a job-ready developer.`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'MentorStack Streak',
+        text: text,
+        url: window.location.origin,
+      });
+    } else {
+      navigator.clipboard.writeText(text);
+      alert('Streak progress copied to clipboard!');
+    }
+  };
 
   const sections = [
     {
@@ -115,22 +139,60 @@ export const ProfilePage: React.FC = () => {
 
             <div className="space-y-4 flex-grow">
               <div className="space-y-1">
-                <h1 className="text-3xl font-black tracking-tight">{user?.displayName || 'Developer'}</h1>
-                <p className="text-white/40 font-medium">{user?.email}</p>
+                <div className="flex items-center justify-center md:justify-start gap-3">
+                  <h1 className="text-4xl font-black tracking-tighter">{user?.displayName || 'Developer'}</h1>
+                  {progress.isPremium && (
+                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
+                      <CheckCircle2 size={14} fill="currentColor" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-white/40 font-medium text-lg">{user?.email}</p>
               </div>
               <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5 rounded-xl font-bold">
+                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5 rounded-xl font-black uppercase tracking-widest text-[10px]">
                   {progress.selectedPath || 'Full-Stack Developer'}
                 </Badge>
-                <Badge className="bg-white/5 text-white/40 border-white/10 px-4 py-1.5 rounded-xl font-bold">
+                <Badge className="bg-white/5 text-white/40 border-white/10 px-4 py-1.5 rounded-xl font-black uppercase tracking-widest text-[10px]">
                   Level {Math.floor(progress.xp / 100) + 1}
                 </Badge>
+                {progress.isPremium && (
+                  <Badge className="bg-gradient-to-r from-emerald-600 to-emerald-400 text-black border-none px-4 py-1.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
+                    PRO MEMBER
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
 
+          {/* Premium Status Card */}
+          {!progress.isPremium && (
+            <Card className="p-8 border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] to-transparent relative overflow-hidden group">
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                <div className="space-y-4 text-center md:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest">
+                    <Sparkles size={12} fill="currentColor" />
+                    Unlock Your Potential
+                  </div>
+                  <h3 className="text-2xl font-black tracking-tight">Upgrade to MentorStack <span className="text-emerald-400">Pro</span></h3>
+                  <p className="text-white/40 font-medium max-w-md">Get unlimited access to all 26+ career paths, AI-powered code reviews, and verified professional certificates.</p>
+                </div>
+                <Button 
+                  variant="premium"
+                  onClick={() => setActiveModal('subscription')}
+                  className="h-14 px-10 rounded-2xl font-black tracking-tight shadow-xl shadow-emerald-500/20"
+                >
+                  Upgrade Now
+                </Button>
+              </div>
+              <div className="absolute -right-10 -bottom-10 opacity-[0.05] group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
+                <Zap size={200} fill="currentColor" />
+              </div>
+            </Card>
+          )}
+
           {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {stats.map((stat) => (
               <Card key={stat.label} className="p-6 flex flex-col items-center gap-3 bg-white/[0.02] border-white/5 text-center">
                 <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
@@ -144,10 +206,83 @@ export const ProfilePage: React.FC = () => {
             ))}
           </div>
 
+          {/* Streak Sharing UI */}
+          <Card className="p-8 border-orange-500/20 bg-gradient-to-br from-orange-500/[0.08] to-transparent relative overflow-hidden group">
+            <div className="relative z-10 flex items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-400 shadow-lg shadow-orange-500/20">
+                  <Flame size={32} fill="currentColor" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight">🔥 {progress.streak} Day Streak</h3>
+                  <p className="text-white/40 font-medium">You're on fire! Keep learning daily to build your momentum.</p>
+                </div>
+              </div>
+              <Button 
+                onClick={handleShareStreak}
+                className="h-14 px-8 rounded-2xl font-black tracking-tight bg-orange-500 hover:bg-orange-600 text-white shadow-xl shadow-orange-500/20 flex items-center gap-3"
+              >
+                <Share2 size={20} />
+                Share Progress
+              </Button>
+            </div>
+          </Card>
+
+          {/* Badges Section */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">Achievement Badges</h3>
+              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20">{progress.badges?.length || 0} Earned</Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {BADGES.map((badge) => {
+                const isEarned = progress.badges?.includes(badge.id);
+                return (
+                  <Card 
+                    key={badge.id} 
+                    className={`p-6 flex flex-col items-center gap-4 text-center transition-all duration-500 ${
+                      isEarned 
+                        ? 'bg-white/[0.03] border-emerald-500/20 opacity-100' 
+                        : 'bg-white/[0.01] border-white/5 opacity-40 grayscale'
+                    }`}
+                  >
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                      isEarned ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-white/20'
+                    }`}>
+                      {/* Dynamic icon rendering based on badge.icon string */}
+                      {badge.icon === 'BookOpen' && <BookOpen size={32} />}
+                      {badge.icon === 'Flame' && <Flame size={32} />}
+                      {badge.icon === 'Code' && <Code size={32} />}
+                      {badge.icon === 'Zap' && <Zap size={32} />}
+                      {badge.icon === 'Star' && <Star size={32} />}
+                      {badge.icon === 'Trophy' && <Trophy size={32} />}
+                    </div>
+                    <div>
+                      <h4 className={`font-black text-sm tracking-tight ${isEarned ? 'text-white' : 'text-white/40'}`}>{badge.name}</h4>
+                      <p className="text-[10px] text-white/20 font-medium mt-1">{badge.description}</p>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Certificates Section */}
-          {certificates.length > 0 && (
-            <div className="space-y-6">
-              <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em] px-2">Professional Certifications</h3>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">Professional Certifications</h3>
+              {!progress.isPremium && (
+                <button 
+                  onClick={() => setShowPaywall(true)}
+                  className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:underline"
+                >
+                  Unlock All
+                </button>
+              )}
+            </div>
+            
+            {certificates.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
                 {certificates.map((cert) => (
                   <Card 
@@ -180,8 +315,59 @@ export const ProfilePage: React.FC = () => {
                   </Card>
                 ))}
               </div>
+            ) : (
+              <Card 
+                onClick={() => setShowPaywall(true)}
+                className="p-12 border-dashed border-white/10 bg-white/[0.01] text-center space-y-6 group cursor-pointer hover:border-emerald-500/30 transition-all"
+              >
+                <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-white/10 mx-auto group-hover:text-emerald-500/50 transition-colors">
+                  <Award size={40} />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-bold text-xl">No Certificates Yet</h4>
+                  <p className="text-sm text-white/40 max-w-xs mx-auto leading-relaxed">
+                    Complete a career path to earn your first verified professional certificate.
+                  </p>
+                </div>
+                {!progress.isPremium && (
+                  <Button variant="outline" className="h-12 px-8 rounded-xl text-[10px] font-black uppercase tracking-widest border-white/10 group-hover:border-emerald-500/50">
+                    Unlock Verified Certificates
+                  </Button>
+                )}
+              </Card>
+            )}
+          </div>
+
+          {/* Portfolio & Trust Section */}
+          <div className="space-y-6">
+            <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em] px-2">Portfolio & Trust</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-6 space-y-4 bg-white/[0.01] border-white/5 hover:border-emerald-500/20 transition-all group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                    <Globe size={20} />
+                  </div>
+                  <h4 className="font-bold tracking-tight">Public Portfolio</h4>
+                </div>
+                <p className="text-sm text-white/40 font-medium">Your public profile is currently <span className="text-emerald-400">active</span> and visible to recruiters.</p>
+                <Button variant="outline" className="w-full h-10 rounded-xl text-xs font-black uppercase tracking-widest border-white/10 hover:bg-white/5">
+                  View Portfolio <ExternalLink size={14} className="ml-2" />
+                </Button>
+              </Card>
+              <Card className="p-6 space-y-4 bg-white/[0.01] border-white/5 hover:border-emerald-500/20 transition-all group">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400">
+                    <Briefcase size={20} />
+                  </div>
+                  <h4 className="font-bold tracking-tight">Job Readiness</h4>
+                </div>
+                <p className="text-sm text-white/40 font-medium">Complete <span className="text-white font-bold">3 more projects</span> to unlock job placement assistance.</p>
+                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="w-1/3 h-full bg-orange-500" />
+                </div>
+              </Card>
             </div>
-          )}
+          </div>
 
           {/* Settings Sections */}
           <div className="space-y-12">
@@ -256,17 +442,23 @@ export const ProfilePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
-                <div className="p-8 rounded-3xl bg-white/[0.02] border border-dashed border-white/10 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto">
-                    <Zap size={32} />
+                {activeModal === 'subscription' && !progress.isPremium ? (
+                  <div className="space-y-8">
+                    <PremiumUpsell />
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="font-bold text-lg">Feature Coming Soon</h3>
-                    <p className="text-sm text-white/40 leading-relaxed">
-                      We're currently polishing the {sections.flatMap(s => s.items).find(i => i.id === activeModal)?.label.toLowerCase()} settings. This will be available in the next update!
-                    </p>
+                ) : (
+                  <div className="p-8 rounded-3xl bg-white/[0.02] border border-dashed border-white/10 text-center space-y-4">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mx-auto">
+                      <Zap size={32} />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-bold text-lg">Feature Coming Soon</h3>
+                      <p className="text-sm text-white/40 leading-relaxed">
+                        We're currently polishing the {sections.flatMap(s => s.items).find(i => i.id === activeModal)?.label.toLowerCase()} settings. This will be available in the next update!
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 <Button 
                   onClick={() => setActiveModal(null)}
@@ -280,6 +472,12 @@ export const ProfilePage: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+      <PaywallModal 
+        isOpen={showPaywall} 
+        onClose={() => setShowPaywall(false)}
+        title="Verified Certificates"
+        description="Earn credentials that employers trust. Unlock professional certificates with MentorStack Pro."
+      />
     </div>
   );
 };

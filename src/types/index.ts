@@ -7,13 +7,17 @@ export type CareerCategory =
   | 'Infrastructure & Systems'
   | 'Specialized Development'
   | 'Product & Design'
-  | 'Emerging High-Income Skills';
+  | 'Emerging High-Income Skills'
+  | 'Business & Operations';
 
 export type CareerPath = 
   | 'Frontend Developer'
   | 'Backend Developer'
   | 'Full-Stack Developer'
   | 'Mobile App Developer'
+  | 'Software Engineer'
+  | 'Systems Architect'
+  | 'QA Engineer'
   | 'Data Analyst'
   | 'AI Engineer'
   | 'Machine Learning'
@@ -27,16 +31,31 @@ export type CareerPath =
   | 'Cloud Engineer'
   | 'SRE'
   | 'System Admin'
+  | 'Network Engineer'
+  | 'Database Administrator'
+  | 'Embedded Systems'
   | 'Game Developer'
   | 'AR/VR'
   | 'IoT'
   | 'Blockchain'
+  | 'Web3'
+  | 'Robotics'
   | 'UI/UX'
   | 'Product Design'
+  | 'UX Designer'
+  | 'Product Manager'
+  | 'Project Manager'
+  | 'Business Analyst'
   | 'AI Automation'
   | 'Prompt Engineering'
-  | 'Web3'
-  | 'Robotics';
+  | 'Technical Writer'
+  | 'SEO Specialist'
+  | 'Digital Marketer'
+  | 'Content Creator'
+  | 'HR Specialist'
+  | 'Sales Specialist'
+  | 'Customer Support'
+  | 'Virtual Assistant';
 
 export type Stage = 'Beginner' | 'Intermediate' | 'Advanced' | 'Projects' | 'Final Exam';
 
@@ -58,8 +77,45 @@ export interface PathCurriculum {
   icon?: string;
   skills?: string[];
   recommended?: boolean;
-  modules: Module[];
+  levels: {
+    beginner: PathLevel;
+    intermediate: PathLevel;
+    advanced: PathLevel;
+  };
+  tools: string[]; // TechTool IDs
   finalExamId: string;
+}
+
+export type TechCategory = 
+  | 'Programming Languages'
+  | 'Frontend Tools & Frameworks'
+  | 'Backend Frameworks'
+  | 'Databases'
+  | 'Cloud & Hosting'
+  | 'Authentication & Payments'
+  | 'Testing Tools'
+  | 'Version Control'
+  | 'Development Tools'
+  | 'Package Managers'
+  | 'DevOps & Deployment'
+  | 'APIs & Real-Time'
+  | 'UI/UX & Design Tools'
+  | 'Specialized Tech';
+
+export interface TechTool {
+  id: string;
+  name: string;
+  category: TechCategory;
+  description: string;
+  icon?: string;
+}
+
+export interface PathLevel {
+  id: 'beginner' | 'intermediate' | 'advanced';
+  title: string;
+  description: string;
+  modules: Module[];
+  projects: Project[];
 }
 
 export type CertificateTier = 'Foundation' | 'Intermediate' | 'Advanced' | 'Professional';
@@ -74,6 +130,7 @@ export interface Certificate {
   issueDate: string;
   finalScore: number;
   skills: string[];
+  projectTitle?: string;
   projects: {
     title: string;
     githubLink: string;
@@ -128,6 +185,35 @@ export interface UserProgress {
   weakAreas: string[];
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
+  isPremium: boolean;
+  dailyGoalMinutes: number;
+  dailyMinutesLearned: number;
+  lastLessonId: string | null;
+  lastLessonTitle: string | null;
+  lastActiveDate: string | null;
+  goal?: string;
+  experienceLevel?: string;
+  followers?: string[];
+  following?: string[];
+  badges?: string[];
+}
+
+export interface Activity {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  type: 'lesson_complete' | 'level_up' | 'project_complete' | 'badge_earned' | 'streak_milestone';
+  content: string;
+  timestamp: number;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'milestone' | 'streak' | 'skill' | 'community';
 }
 
 export interface UserProfile {
@@ -150,6 +236,7 @@ export interface LessonContent {
   commonMistakes: string[];
   practice: string;
   challenge: string;
+  proTip?: string;
   quiz: {
     question: string;
     options: string[];
@@ -237,6 +324,7 @@ export interface DetailedProject {
   tags: string[];
   skillsUsed: string[];
   isCapstone: boolean;
+  isPremium?: boolean;
   estimatedTime: string;
   objectives: string[];
   prerequisites: string[];

@@ -6,7 +6,7 @@ import {
   CheckCircle2, Zap, MessageSquare, Code,
   ChevronRight, Play, HelpCircle, Terminal,
   AlertCircle, Lightbulb, Target, RefreshCcw,
-  Bell, User, Menu, X, Sparkles
+  Bell, User, Menu, X, Sparkles, Star
 } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
@@ -120,6 +120,7 @@ export const LessonPage: React.FC = () => {
     await updateProgress({
       completedLessons: [...progress.completedLessons, lesson.title]
     });
+
     navigate('/dashboard');
   };
 
@@ -149,8 +150,10 @@ export const LessonPage: React.FC = () => {
             className="flex items-center gap-3 pl-4 border-l border-white/10 cursor-pointer group active:scale-95"
           >
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold truncate max-w-[120px] group-hover:text-emerald-400 transition-colors">{user?.displayName || 'AJIA Abdulrasak'}</p>
-              <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Beginner</p>
+              <p className="text-xs font-black truncate max-w-[120px] group-hover:text-emerald-400 transition-colors">{user?.displayName || 'Developer'}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">
+                Verified Learner
+              </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-emerald-500/50 transition-colors">
               {user?.photoURL ? (
@@ -225,6 +228,26 @@ export const LessonPage: React.FC = () => {
             </div>
           </section>
 
+          {/* Pro Tip Section */}
+          <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group">
+            <div className="flex items-start gap-6 relative z-10">
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400">
+                <Star size={24} fill="currentColor" />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h4 className="font-black uppercase text-xs tracking-[0.2em] text-emerald-400">Pro Tip & Best Practices</h4>
+                </div>
+                <p className="text-white/70 leading-relaxed font-medium italic">
+                  "{lesson?.proTip || 'Always keep your code clean and well-documented. It saves hours of debugging later.'}"
+                </p>
+              </div>
+            </div>
+            <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+              <Sparkles size={120} />
+            </div>
+          </Card>
+
           {/* Analogy */}
           <Card className="p-8 border-2 border-indigo-500/20 bg-indigo-500/10 space-y-4">
             <div className="flex items-center gap-3 text-indigo-400">
@@ -236,13 +259,29 @@ export const LessonPage: React.FC = () => {
 
           {/* Code Block Section */}
           <section className="space-y-6">
-            <div className="flex items-center gap-3 text-emerald-400">
-              <Terminal size={20} />
-              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Code Example</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-emerald-400">
+                <Terminal size={20} />
+                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Code Example</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(lesson?.codeExample || '');
+                  // Add toast notification here if available
+                }}
+                className="text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-emerald-400 transition-colors"
+              >
+                Copy Code
+              </button>
             </div>
             <div className="relative group">
               <div className="absolute -inset-1 bg-emerald-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative bg-[#050505] border border-white/5 rounded-3xl p-8 font-mono text-sm leading-relaxed overflow-x-auto">
+              <div className="relative bg-[#050505] border border-white/5 rounded-3xl p-8 font-mono text-sm leading-relaxed overflow-x-auto shadow-2xl">
+                <div className="flex items-center gap-2 mb-6 opacity-30">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                  <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                </div>
                 <pre className="text-emerald-300/90">
                   {lesson?.codeExample || '// Code example loading...'}
                 </pre>
@@ -430,29 +469,29 @@ export const LessonPage: React.FC = () => {
 
       {/* Bottom Action Bar - Matches Screenshot */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-[#0A0A0B]/80 backdrop-blur-2xl border-t border-white/5 z-40">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-4">
           <button 
             onClick={handleComplete}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-500 text-black font-black hover:bg-emerald-400 transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
           >
             <CheckCircle2 size={20} />
-            <span className="text-[10px] uppercase tracking-tighter">Complete</span>
+            <span className="text-[10px] uppercase tracking-widest">Complete</span>
           </button>
           
           <button 
             onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 transition-all"
+            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-emerald-400 hover:bg-white/[0.06] transition-all active:scale-95"
           >
             <Zap size={20} />
-            <span className="text-[10px] uppercase tracking-tighter">Ask AI</span>
+            <span className="text-[10px] uppercase tracking-widest">Ask AI</span>
           </button>
-
+ 
           <button 
             onClick={() => setIsCodingOpen(true)}
-            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-white/5 border border-white/5 text-white/60 hover:bg-white/10 transition-all"
+            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-emerald-400 hover:bg-white/[0.06] transition-all active:scale-95"
           >
             <Terminal size={20} />
-            <span className="text-[10px] uppercase tracking-tighter">Coding</span>
+            <span className="text-[10px] uppercase tracking-widest">Coding</span>
           </button>
         </div>
       </div>

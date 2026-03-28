@@ -131,7 +131,7 @@ export const ExamPage: React.FC = () => {
               user!.displayName || 'Learner',
               progress.selectedPath,
               finalScore,
-              'Capstone Project' // Default project title if not found
+              progress
             );
             setEarnedCertificate(cert);
             setIsSuccessModalOpen(true);

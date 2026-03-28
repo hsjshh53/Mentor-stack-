@@ -19,6 +19,7 @@ import { UserProjectProgress, DetailedProject, ProjectStarterCode } from '../typ
 import { useEffect } from 'react';
 import { ProjectPlayground } from '../components/ProjectPlayground';
 import { ProjectSubmissionModal } from '../components/ProjectSubmissionModal';
+import { PaywallModal } from '../components/PaywallModal';
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export const ProjectsPage: React.FC = () => {
   const [selectedProject, setSelectedProject] = useState<DetailedProject | null>(null);
   const [showPlayground, setShowPlayground] = useState(false);
   const [showSubmission, setShowSubmission] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -50,6 +52,10 @@ export const ProjectsPage: React.FC = () => {
 
   const handleStartProject = async (project: DetailedProject) => {
     if (!user) return;
+    if (!progress.isPremium && project.isPremium) {
+      setShowPaywall(true);
+      return;
+    }
     await projectService.startProject(user.uid, project.id, project.phases[0].id);
     setSelectedProject(project);
   };
@@ -87,14 +93,20 @@ export const ProjectsPage: React.FC = () => {
             >
               <ArrowLeft size={24} />
             </button>
-            <div>
-              <h1 className="font-bold text-lg tracking-tight uppercase">{selectedProject.title}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="font-black text-xl tracking-tighter uppercase">{selectedProject.title}</h1>
               <div className="flex items-center gap-2">
-                <Badge className="bg-[#F27D26]/10 text-[#F27D26] border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest">
+                <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest">
                   {selectedProject.difficulty}
                 </Badge>
+                {selectedProject.isPremium && (
+                  <Badge className="bg-amber-500 text-black border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest flex items-center gap-1">
+                    <Sparkles size={8} fill="currentColor" />
+                    PRO
+                  </Badge>
+                )}
                 {isCompleted ? (
-                  <Badge className="bg-green-500/10 text-green-500 border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest">
+                  <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest">
                     Completed
                   </Badge>
                 ) : submission ? (
@@ -268,6 +280,12 @@ export const ProjectsPage: React.FC = () => {
             />
           )}
         </AnimatePresence>
+        <PaywallModal 
+          isOpen={showPaywall} 
+          onClose={() => setShowPaywall(false)}
+          title="Unlock Premium Projects"
+          description="Build real-world applications and create a portfolio that gets you hired with MentorStack Pro."
+        />
       </div>
     );
   }
@@ -361,13 +379,21 @@ export const ProjectsPage: React.FC = () => {
                   <div className="p-8 space-y-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold uppercase tracking-wider group-hover:text-[#F27D26] transition-colors">{project.title}</h3>
+                        <h3 className="text-xl font-black uppercase tracking-tighter group-hover:text-emerald-400 transition-colors">{project.title}</h3>
                         <div className="flex flex-col items-end gap-1">
-                          <Badge className="bg-[#F27D26]/10 text-[#F27D26] border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest">
-                            {project.difficulty}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {project.isPremium && (
+                              <Badge className="bg-amber-500 text-black border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest flex items-center gap-1">
+                                <Sparkles size={8} fill="currentColor" />
+                                PRO
+                              </Badge>
+                            )}
+                            <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] px-2 py-0.5 uppercase font-black tracking-widest">
+                              {project.difficulty}
+                            </Badge>
+                          </div>
                           {isCompleted ? (
-                            <span className="text-[8px] font-black text-green-500 uppercase tracking-widest">Completed</span>
+                            <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Completed</span>
                           ) : progress.submissions[project.id] ? (
                             <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">Submitted</span>
                           ) : projectProgress?.draft ? (
@@ -380,7 +406,7 @@ export const ProjectsPage: React.FC = () => {
                     
                     <div className="flex items-center gap-6 text-[10px] font-black text-white/20 uppercase tracking-widest">
                       <div className="flex items-center gap-2">
-                        <Zap size={12} className="text-[#F27D26]" />
+                        <Zap size={12} className="text-emerald-400" />
                         {project.xpReward} XP
                       </div>
                       <div className="flex items-center gap-2">
@@ -389,22 +415,37 @@ export const ProjectsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <Button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isInProgress || isCompleted) {
-                          setSelectedProject(project);
-                        } else {
-                          handleStartProject(project);
-                        }
-                      }}
-                      variant={isCompleted ? "outline" : "primary"} 
-                      fullWidth 
-                      className={`h-14 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] ${isCompleted ? 'border-green-500/20 text-green-500' : 'bg-white text-black hover:bg-white/90'}`}
-                    >
-                      {isCompleted ? 'View Submission' : isInProgress ? 'Resume Project' : 'Start Project'}
-                      <ChevronRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
+                    {project.isPremium && !progress.isPremium ? (
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/profile');
+                        }}
+                        variant="premium" 
+                        fullWidth 
+                        className="h-14 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px]"
+                      >
+                        Unlock with Pro
+                        <Sparkles size={18} className="ml-2" />
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isInProgress || isCompleted) {
+                            setSelectedProject(project);
+                          } else {
+                            handleStartProject(project);
+                          }
+                        }}
+                        variant={isCompleted ? "outline" : "primary"} 
+                        fullWidth 
+                        className={`h-14 rounded-2xl transition-all font-black uppercase tracking-widest text-[10px] ${isCompleted ? 'border-emerald-500/20 text-emerald-500' : 'bg-white text-black hover:bg-white/90'}`}
+                      >
+                        {isCompleted ? 'View Submission' : isInProgress ? 'Resume Project' : 'Start Project'}
+                        <ChevronRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    )}
                   </div>
                 </Card>
               );

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Zap, ArrowLeft, Loader2, Award, Share2, Download, Copy } from 'lucide-react';
 import { getCertificate } from '../services/certificateService';
 import { Certificate } from '../types';
 import { CertificateView } from '../components/CertificateView';
 import { useAuth } from '../context/AuthContext';
+import { useUserData } from '../hooks/useUserData';
+import { Button } from '../components/ui';
 
 export const CertificatePage: React.FC = () => {
   const { certificateId } = useParams<{ certificateId: string }>();
@@ -13,6 +15,7 @@ export const CertificatePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { progress, loading: userLoading } = useUserData();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export const CertificatePage: React.FC = () => {
     fetchCertificate();
   }, [certificateId]);
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -69,7 +72,9 @@ export const CertificatePage: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-black tracking-tight">{user?.displayName || 'Developer'}</p>
-            <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.2em]">Verified Learner</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+              Verified Learner
+            </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] p-1">
             <div className="w-full h-full rounded-[0.6rem] overflow-hidden bg-white/[0.05]">
@@ -128,7 +133,9 @@ export const CertificatePage: React.FC = () => {
               </div>
             </div>
 
-            <CertificateView certificate={certificate} isPublic={!isOwner} />
+            <div className="relative">
+              <CertificateView certificate={certificate} isPublic={!isOwner} />
+            </div>
           </div>
         ) : null}
       </main>
