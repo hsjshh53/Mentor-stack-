@@ -3,37 +3,116 @@ import { TECH_TOOLS } from './techStack';
 
 export const PROJECTS: Project[] = [
   {
-    id: 'fe-projects-module',
-    title: 'Personal Portfolio',
+    id: 'fe-beginner-profile',
+    title: 'Personal Profile Page',
     path: 'Frontend Developer',
-    description: 'Build a stunning portfolio to showcase your work and skills.',
-    objective: 'Create a responsive React portfolio with multiple sections.',
+    description: 'Create your first web page to introduce yourself to the world.',
+    objective: 'Build a simple, clean profile page using HTML and CSS.',
     steps: [
-      'Set up a new React project with Tailwind CSS',
-      'Create a Hero section with a professional introduction',
-      'Implement a Projects section with cards for your work',
-      'Add a Skills section with visual progress bars',
-      'Create a Contact form with validation',
-      'Deploy your portfolio to Vercel or Netlify'
+      'Structure the page with semantic HTML (header, main, footer)',
+      'Add an image of yourself and a short bio',
+      'List your skills and hobbies using unordered lists',
+      'Style the page with basic CSS (colors, fonts, spacing)',
+      'Make the profile card centered on the screen'
     ],
-    output: 'A live URL to your personal portfolio website.',
-    xpReward: 500
+    output: 'A clean, styled personal profile web page.',
+    xpReward: 300
   },
   {
-    id: 'fe-intermediate-project',
-    title: 'E-commerce Dashboard',
+    id: 'fe-beginner-landing',
+    title: 'Product Landing Page',
     path: 'Frontend Developer',
-    description: 'Build a complex dashboard for managing products and orders.',
-    objective: 'Create a data-driven dashboard with charts and tables.',
+    description: 'Design and build a high-converting landing page for a product.',
+    objective: 'Master layout techniques and responsive design basics.',
     steps: [
-      'Implement a sidebar for navigation',
-      'Create a dashboard overview with Recharts',
-      'Build a product table with search and filters',
-      'Add a modal for adding/editing products',
-      'Implement dark/light mode toggle'
+      'Create a navigation bar with links',
+      'Build a hero section with a call-to-action button',
+      'Add a features section with icons and descriptions',
+      'Implement a responsive grid for product benefits',
+      'Style the page to look professional and modern'
     ],
-    output: 'A functional e-commerce dashboard.',
-    xpReward: 800
+    output: 'A responsive product landing page.',
+    xpReward: 450
+  },
+  {
+    id: 'fe-intermediate-todo',
+    title: 'Smart To-Do App',
+    path: 'Frontend Developer',
+    description: 'Build a functional task management app with JavaScript.',
+    objective: 'Master DOM manipulation and local storage.',
+    steps: [
+      'Create an input field and add button',
+      'Implement logic to add tasks to a list',
+      'Add functionality to mark tasks as complete',
+      'Implement task deletion',
+      'Save and load tasks from LocalStorage'
+    ],
+    output: 'A fully functional To-Do application.',
+    xpReward: 600
+  },
+  {
+    id: 'fe-intermediate-weather',
+    title: 'Real-time Weather App',
+    path: 'Frontend Developer',
+    description: 'Connect to a live API to show weather data for any city.',
+    objective: 'Learn how to fetch data from external APIs and handle JSON.',
+    steps: [
+      'Sign up for an OpenWeatherMap API key',
+      'Create a search interface for city names',
+      'Fetch weather data using the Fetch API',
+      'Display temperature, humidity, and conditions dynamically',
+      'Add weather-themed icons based on the current conditions'
+    ],
+    output: 'A weather app that displays real-time data.',
+    xpReward: 750
+  },
+  {
+    id: 'fe-advanced-blog',
+    title: 'React Blog Platform',
+    path: 'Frontend Developer',
+    description: 'Build a multi-page blog application using React and Router.',
+    objective: 'Master React components, state, and routing.',
+    steps: [
+      'Set up a React project with React Router',
+      'Create a homepage that lists blog posts',
+      'Implement dynamic routing for individual post pages',
+      'Add a search filter for blog posts',
+      'Implement a "Like" and "Comment" system using state'
+    ],
+    output: 'A complete React-based blog application.',
+    xpReward: 1000
+  },
+  {
+    id: 'fe-advanced-dashboard',
+    title: 'Admin Dashboard App',
+    path: 'Frontend Developer',
+    description: 'Create a complex data dashboard with charts and analytics.',
+    objective: 'Learn to manage complex state and integrate data visualization libraries.',
+    steps: [
+      'Design a sidebar and top navigation layout',
+      'Integrate Recharts or D3.js for data visualization',
+      'Build interactive tables with sorting and filtering',
+      'Implement a user management section',
+      'Add dark mode support using Tailwind'
+    ],
+    output: 'A professional-grade admin dashboard.',
+    xpReward: 1200
+  },
+  {
+    id: 'fe-final-portfolio',
+    title: 'Ultimate Portfolio Website',
+    path: 'Frontend Developer',
+    description: 'Your final masterpiece: a professional portfolio to get you hired.',
+    objective: 'Combine everything you have learned into a high-end production site.',
+    steps: [
+      'Design a unique, high-end UI in Figma first',
+      'Build the site using React and Framer Motion for animations',
+      'Showcase all your previous projects with detailed case studies',
+      'Optimize for performance (Lighthouse score 90+)',
+      'Deploy with a custom domain and SSL'
+    ],
+    output: 'A job-ready professional portfolio website.',
+    xpReward: 2000
   },
   {
     id: 'be-projects-module',
@@ -148,6 +227,54 @@ export const PROJECTS: Project[] = [
     ],
     output: 'A trained AI model and API endpoint.',
     xpReward: 1200
+  },
+  {
+    id: 'uiux-beginner-project',
+    title: 'Simple App Screen & Wireframe',
+    path: 'UI/UX',
+    description: 'Design a basic mobile app screen from scratch.',
+    objective: 'Create a low-fidelity wireframe and a high-fidelity screen design.',
+    steps: [
+      'Define the user goal for the screen (e.g., Login or Profile)',
+      'Sketch a low-fidelity wireframe on paper or Figma',
+      'Choose a color palette and typography',
+      'Design the high-fidelity version in Figma',
+      'Ensure proper spacing and alignment'
+    ],
+    output: 'A Figma link showing the wireframe and final design.',
+    xpReward: 400
+  },
+  {
+    id: 'uiux-intermediate-project',
+    title: 'Mobile App & Landing Page',
+    path: 'UI/UX',
+    description: 'Design a multi-screen mobile app and its promotional landing page.',
+    objective: 'Create a cohesive design system and interactive prototype.',
+    steps: [
+      'Conduct basic user research and create a persona',
+      'Design 5-7 key screens for a mobile application',
+      'Build an interactive prototype with transitions',
+      'Design a responsive landing page for the app',
+      'Create a small design system (buttons, inputs, colors)'
+    ],
+    output: 'A comprehensive Figma project with prototype and landing page.',
+    xpReward: 800
+  },
+  {
+    id: 'uiux-advanced-project',
+    title: 'Professional Design Case Study',
+    path: 'UI/UX',
+    description: 'A full end-to-end product design project for your portfolio.',
+    objective: 'Solve a real-world problem through design and document the process.',
+    steps: [
+      'Identify a problem and perform deep UX research',
+      'Create user journeys and information architecture',
+      'Design a full web or mobile product (10+ screens)',
+      'Perform usability testing and iterate on feedback',
+      'Write a detailed case study and publish on Behance/Portfolio'
+    ],
+    output: 'A professional case study and a high-quality design portfolio entry.',
+    xpReward: 1500
   }
 ];
 
@@ -159,59 +286,80 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     category: 'Core Software Development',
     status: 'active',
     icon: 'Layout',
-    skills: ['HTML', 'CSS', 'JavaScript', 'React'],
+    skills: ['HTML', 'CSS', 'JavaScript', 'React', 'TypeScript'],
     recommended: true,
     levels: {
       beginner: {
         id: 'beginner',
-        title: 'Beginner foundations',
+        title: 'Beginner Foundations',
         description: 'Learn the core building blocks of the web.',
         modules: [
           {
             id: 'fe-foundations',
-            title: 'Foundations',
+            title: '1. Foundations (Internet + Tools)',
             description: 'The absolute basics of programming and the web.',
-            lessons: ['what-is-coding', 'how-computers-work', 'how-websites-work', 'internet-basics', 'what-are-websites'],
+            lessons: ['what-is-coding', 'how-websites-work', 'internet-basics', 'browser-internals', 'dev-tools-setup'],
             testId: 'foundations-test'
           },
           {
             id: 'fe-html',
-            title: 'HTML',
+            title: '2. HTML',
             description: 'The skeleton of every website.',
-            lessons: ['html-structure', 'tags-elements', 'links-images', 'html-forms', 'semantic-html'],
+            lessons: ['html-structure', 'semantic-html', 'html-forms', 'html-media', 'accessibility-basics'],
             testId: 'html-test'
           },
           {
             id: 'fe-css',
-            title: 'CSS',
+            title: '3. CSS',
             description: 'Making the web beautiful.',
-            lessons: ['css-basics', 'colors-typography', 'box-model', 'flexbox', 'css-grid', 'responsive-design'],
+            lessons: ['css-selectors', 'box-model', 'flexbox-mastery', 'css-grid-layout', 'css-variables'],
             testId: 'css-test'
+          },
+          {
+            id: 'fe-git',
+            title: '4. Git & GitHub',
+            description: 'Version control for developers.',
+            lessons: ['git-basics', 'branching-merging', 'github-workflow', 'collaboration-tools'],
+            testId: 'git-test'
           }
         ],
-        projects: [PROJECTS[0]]
+        projects: [PROJECTS[0], PROJECTS[1]]
       },
       intermediate: {
         id: 'intermediate',
         title: 'Intermediate Development',
-        description: 'Master JavaScript and modern frameworks.',
+        description: 'Master JavaScript and modern UI patterns.',
         modules: [
           {
-            id: 'fe-js',
-            title: 'JavaScript',
+            id: 'fe-js-basics',
+            title: '5. JavaScript Basics',
             description: 'The engine of the web.',
-            lessons: ['js-intro', 'variables-data-types', 'functions-scope', 'arrays-objects', 'dom-manipulation', 'async-js'],
-            testId: 'js-test'
+            lessons: ['js-variables', 'js-functions', 'js-objects-arrays', 'js-control-flow'],
+            testId: 'js-basics-test'
           },
           {
-            id: 'fe-react',
-            title: 'React',
-            description: 'Modern UI library basics.',
-            lessons: ['react-basics', 'components-props', 'state-hooks', 'react-router', 'api-integration'],
-            testId: 'react-test'
+            id: 'fe-dom',
+            title: '6. DOM & Events',
+            description: 'Making pages interactive.',
+            lessons: ['dom-selection', 'event-listeners', 'dynamic-ui-updates', 'local-storage-api'],
+            testId: 'dom-test'
+          },
+          {
+            id: 'fe-js-advanced',
+            title: '7. Advanced JavaScript',
+            description: 'Mastering complex logic.',
+            lessons: ['async-await', 'promises-api', 'es6-plus-features', 'js-modules'],
+            testId: 'js-advanced-test'
+          },
+          {
+            id: 'fe-modern-ui',
+            title: '8. Modern UI & Responsive Design',
+            description: 'Building for every screen.',
+            lessons: ['mobile-first-design', 'tailwind-css-intro', 'animations-framer-motion', 'glassmorphism-ui'],
+            testId: 'modern-ui-test'
           }
         ],
-        projects: []
+        projects: [PROJECTS[2], PROJECTS[3]]
       },
       advanced: {
         id: 'advanced',
@@ -219,17 +367,52 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
         description: 'Build complex, production-ready applications.',
         modules: [
           {
-            id: 'fe-projects',
-            title: 'Projects',
-            description: 'Build real-world applications.',
-            lessons: [],
-            projectId: 'fe-projects-module'
+            id: 'fe-react-basics',
+            title: '9. React Basics',
+            description: 'Modern UI library basics.',
+            lessons: ['react-components', 'props-state', 'react-hooks-intro', 'handling-forms-react'],
+            testId: 'react-basics-test'
+          },
+          {
+            id: 'fe-react-advanced',
+            title: '10. Advanced React',
+            description: 'Mastering React ecosystem.',
+            lessons: ['react-router-v6', 'context-api', 'custom-hooks', 'react-query-fetching'],
+            testId: 'react-advanced-test'
+          },
+          {
+            id: 'fe-performance',
+            title: '11. Performance Optimization',
+            description: 'Making apps lightning fast.',
+            lessons: ['code-splitting', 'memoization-react', 'image-optimization', 'lighthouse-audits'],
+            testId: 'performance-test'
+          },
+          {
+            id: 'fe-deployment',
+            title: '12. Deployment',
+            description: 'Going live with your projects.',
+            lessons: ['vercel-deployment', 'netlify-setup', 'custom-domains', 'ci-cd-basics'],
+            testId: 'deployment-test'
+          },
+          {
+            id: 'fe-portfolio',
+            title: '13. Portfolio Building',
+            description: 'Showcasing your work.',
+            lessons: ['writing-case-studies', 'portfolio-seo', 'personal-branding'],
+            projectId: 'fe-final-portfolio'
+          },
+          {
+            id: 'fe-career',
+            title: '14. Job & Freelancing Preparation',
+            description: 'Getting hired as a developer.',
+            lessons: ['resume-for-devs', 'technical-interviews', 'freelancing-platforms', 'networking-linkedin'],
+            testId: 'career-test'
           }
         ],
-        projects: []
+        projects: [PROJECTS[4], PROJECTS[5]]
       }
     },
-    tools: ['html', 'css', 'javascript', 'typescript', 'react', 'nextjs', 'tailwind', 'sass', 'figma'],
+    tools: ['html', 'css', 'javascript', 'typescript', 'react', 'nextjs', 'tailwind', 'sass', 'figma', 'git', 'github', 'vercel'],
     finalExamId: 'frontend-final-exam'
   },
   'Backend Developer': {
@@ -1375,60 +1558,145 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
   },
   'UI/UX': {
     id: 'ui-ux',
-    title: 'UI/UX',
-    description: 'Design user experiences.',
+    title: 'UI/UX Designer',
+    description: 'Master the art of creating professional, user-centric digital products.',
     category: 'Product & Design',
     status: 'active',
     icon: 'Palette',
-    skills: ['Figma', 'Prototyping'],
+    skills: ['Figma', 'UX Research', 'Prototyping', 'Design Systems', 'Visual Design', 'Wireframing', 'User Research'],
+    recommended: true,
     levels: {
       beginner: {
         id: 'beginner',
-        title: 'Design Foundations',
-        description: 'Introduction to design principles.',
+        title: 'Level 1: Foundation',
+        description: 'Master the core principles of UI/UX design.',
         modules: [
           {
             id: 'uiux-intro',
-            title: 'UI/UX Intro',
-            description: 'Principles of design.',
-            lessons: ['uiux-basics', 'user-research'],
+            title: 'Introduction to UI/UX',
+            description: 'The basics of UI vs UX and why design matters.',
+            lessons: ['ui-vs-ux', 'why-design-matters', 'real-world-examples'],
             testId: 'uiux-intro-test'
+          },
+          {
+            id: 'design-principles',
+            title: 'Design Principles',
+            description: 'Color, typography, and layout basics.',
+            lessons: ['color-theory-basics', 'typography-for-ui', 'spacing-and-layout'],
+            testId: 'design-principles-test'
+          },
+          {
+            id: 'ux-basics',
+            title: 'User Experience Basics',
+            description: 'User journeys, needs, and pain points.',
+            lessons: ['user-journeys', 'user-needs-and-pain-points'],
+            testId: 'ux-basics-test'
+          },
+          {
+            id: 'wireframing-module',
+            title: 'Wireframing',
+            description: 'Creating low-fidelity layouts.',
+            lessons: ['low-fi-wireframes', 'simple-layout-design'],
+            testId: 'wireframing-test'
+          },
+          {
+            id: 'tools-intro',
+            title: 'Tools Introduction',
+            description: 'Getting started with Figma and Canva.',
+            lessons: ['figma-basics', 'canva-basics'],
+            testId: 'tools-test'
           }
         ],
-        projects: []
+        projects: [PROJECTS.find(p => p.id === 'uiux-beginner-project')!]
       },
       intermediate: {
         id: 'intermediate',
-        title: 'UX Research & Prototyping',
-        description: 'Understanding users and building prototypes.',
+        title: 'Level 2: Build',
+        description: 'Build complex components and interactive prototypes.',
         modules: [
           {
-            id: 'ux-research-module',
+            id: 'ui-design-systems',
+            title: 'UI Design Systems',
+            description: 'Components, consistency, and patterns.',
+            lessons: ['design-system-components', 'buttons-cards-inputs', 'design-consistency'],
+            testId: 'design-systems-test'
+          },
+          {
+            id: 'ux-research-intermediate',
             title: 'UX Research',
-            description: 'Understanding users and building prototypes.',
-            lessons: ['user-research-methods', 'personas-user-journeys'],
+            description: 'Personas, surveys, and feedback.',
+            lessons: ['user-personas', 'surveys-and-feedback'],
             testId: 'ux-research-test'
+          },
+          {
+            id: 'prototyping-module',
+            title: 'Prototyping',
+            description: 'Interactive prototypes in Figma.',
+            lessons: ['figma-prototyping-basics', 'advanced-transitions'],
+            testId: 'prototyping-test'
+          },
+          {
+            id: 'mobile-design-module',
+            title: 'Mobile Design',
+            description: 'Mobile-first and responsive layouts.',
+            lessons: ['mobile-first-design', 'responsive-ui-layouts'],
+            testId: 'mobile-design-test'
+          },
+          {
+            id: 'web-design-module',
+            title: 'Web Design',
+            description: 'Landing pages and dashboards.',
+            lessons: ['landing-page-design', 'dashboard-ui-design'],
+            testId: 'web-design-test'
           }
         ],
-        projects: []
+        projects: [PROJECTS.find(p => p.id === 'uiux-intermediate-project')!]
       },
       advanced: {
         id: 'advanced',
-        title: 'Advanced Design Systems',
-        description: 'Building scalable design systems.',
+        title: 'Level 3: Real-World',
+        description: 'Prepare for a professional career in UI/UX.',
         modules: [
           {
-            id: 'design-systems-module',
-            title: 'Design Systems',
-            description: 'Building scalable design systems.',
-            lessons: ['design-system-basics', 'component-libraries-design'],
-            testId: 'ds-test'
+            id: 'real-product-design',
+            title: 'Real Product Design',
+            description: 'The case study approach to design.',
+            lessons: ['case-study-approach', 'solving-real-problems'],
+            testId: 'real-product-test'
+          },
+          {
+            id: 'portfolio-creation',
+            title: 'Portfolio Creation',
+            description: 'Presenting your work and Behance setup.',
+            lessons: ['presenting-designs', 'behance-portfolio-setup'],
+            testId: 'portfolio-test'
+          },
+          {
+            id: 'uiux-for-devs',
+            title: 'UI/UX for Developers',
+            description: 'Handoff and frontend basics.',
+            lessons: ['developer-handoff', 'frontend-for-designers'],
+            testId: 'dev-handoff-test'
+          },
+          {
+            id: 'freelancing-jobs',
+            title: 'Freelancing & Jobs',
+            description: 'Getting clients, pricing, and interviews.',
+            lessons: ['getting-clients', 'pricing-and-interviews'],
+            testId: 'freelancing-test'
+          },
+          {
+            id: 'advanced-ux-module',
+            title: 'Advanced UX',
+            description: 'Usability testing and A/B testing.',
+            lessons: ['usability-testing', 'ab-testing-ux'],
+            testId: 'advanced-ux-test'
           }
         ],
-        projects: []
+        projects: [PROJECTS.find(p => p.id === 'uiux-advanced-project')!]
       }
     },
-    tools: ['figma', 'adobe-xd', 'framer'],
+    tools: ['figma', 'canva', 'behance', 'framer', 'adobe-xd'],
     finalExamId: 'uiux-final-exam'
   },
   'Product Design': {

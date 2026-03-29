@@ -20,6 +20,7 @@ const defaultProgress: UserProgress = {
   weakAreas: [],
   skills: {},
   unlockedPaths: ['Frontend Developer', 'Full-Stack Developer'],
+  currentLessonId: null,
   isPremium: false
 };
 
@@ -50,7 +51,8 @@ export const useUserData = () => {
           submissions: data.submissions || {},
           certificates: data.certificates || [],
           weakAreas: data.weakAreas || [],
-          unlockedPaths: data.unlockedPaths || defaultProgress.unlockedPaths
+          unlockedPaths: data.unlockedPaths || defaultProgress.unlockedPaths,
+          currentLessonId: data.currentLessonId || null
         });
       } else {
         // Initialize new user progress

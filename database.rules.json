@@ -1,0 +1,40 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')"
+      }
+    },
+    "admins": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+      ".write": "auth != null && auth.token.email === 'olynqsociallimited@gmail.com'"
+    },
+    "stats": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+      ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')"
+    },
+    "submissions": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+      "$submissionId": {
+        ".read": "auth != null && (data.child('userId').val() === auth.uid || root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+        ".write": "auth != null && (!data.exists() || data.child('userId').val() === auth.uid || root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')"
+      }
+    },
+    "reports": {
+      ".read": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')",
+      ".write": "auth != null"
+    },
+    "announcements": {
+      ".read": true,
+      ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')"
+    },
+    "platformSettings": {
+      ".read": true,
+      ".write": "auth != null && (root.child('admins').child(auth.uid).exists() || auth.token.email === 'olynqsociallimited@gmail.com')"
+    }
+  }
+}

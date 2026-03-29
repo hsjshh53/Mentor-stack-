@@ -25,7 +25,7 @@ import { getUserCertificates } from '../services/certificateService';
 
 export const DashboardPage: React.FC = () => {
   const { progress, loading, updateProgress } = useUserData();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPathSwitcherOpen, setIsPathSwitcherOpen] = useState(false);
@@ -57,12 +57,28 @@ export const DashboardPage: React.FC = () => {
   const nextLessonId = useMemo(() => {
     if (!progress || !allLessonsInPath.length) return null;
     
-    // Check for next lesson
+    // 1. If we have a currentLessonId, check if it's completed
+    if (progress.currentLessonId) {
+      const currentIndex = allLessonsInPath.indexOf(progress.currentLessonId);
+      if (currentIndex !== -1) {
+        // If current lesson is NOT completed, return it
+        if (!progress.completedLessons?.includes(progress.currentLessonId)) {
+          return progress.currentLessonId;
+        }
+        // If it IS completed, return the next one in sequence
+        if (currentIndex < allLessonsInPath.length - 1) {
+          return allLessonsInPath[currentIndex + 1];
+        }
+      }
+    }
+
+    // 2. Fallback: Find the first uncompleted lesson in the path
     const lessonId = allLessonsInPath.find(id => !progress.completedLessons?.includes(id));
     if (lessonId) return lessonId;
 
+    // 3. Last fallback: Return the first lesson
     return allLessonsInPath[0];
-  }, [allLessonsInPath, progress?.completedLessons]);
+  }, [allLessonsInPath, progress?.completedLessons, progress?.currentLessonId]);
 
   const nextExam = useMemo(() => {
     if (!progress || !currentPathData?.finalExamId) return null;
@@ -156,26 +172,27 @@ export const DashboardPage: React.FC = () => {
     { icon: <Terminal size={20} />, label: 'Playground', path: '/playground' },
     { icon: <Target size={20} />, label: 'Projects', path: '/projects' },
     { icon: <User size={20} />, label: 'Profile', path: '/profile' },
+    ...(isAdmin ? [{ icon: <ShieldCheck size={20} />, label: 'Admin Panel', path: '/admin' }] : []),
   ];
 
   const featuredLessons = [
     { 
       tag: 'RECOMMENDED', 
-      id: allLessonsInPath[0] || 'what-is-coding',
-      title: 'Getting Started', 
-      desc: 'Begin your journey with the fundamentals.', 
+      id: nextLessonId || allLessonsInPath[0] || 'what-is-coding',
+      title: nextLesson?.title || 'Getting Started', 
+      desc: nextLesson?.todayYouAreLearning || 'Begin your journey with the fundamentals.', 
       duration: '10 mins' 
     },
     { 
       tag: 'ESSENTIAL', 
-      id: allLessonsInPath[5] || 'html-structure',
+      id: allLessonsInPath[Math.min(5, allLessonsInPath.length - 1)] || 'html-structure',
       title: 'Core Concepts', 
       desc: 'Master the building blocks of your path.', 
       duration: '15 mins' 
     },
     { 
       tag: 'ADVANCED', 
-      id: allLessonsInPath[15] || 'js-intro',
+      id: allLessonsInPath[Math.min(15, allLessonsInPath.length - 1)] || 'js-intro',
       title: 'Deep Dive', 
       desc: 'Take your skills to the next level.', 
       duration: '20 mins' 

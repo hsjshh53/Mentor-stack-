@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Button, Input, Card } from '../components/ui';
-import { auth } from '../lib/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, getAuthErrorMessage, googleProvider } from '../lib/firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Sparkles, ArrowLeft, Chrome } from 'lucide-react';
 
 export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
   const [email, setEmail] = useState('');
@@ -12,6 +12,20 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithPopup(auth, googleProvider);
+      navigate('/onboarding');
+    } catch (err: any) {
+      console.error('Google Auth error:', err);
+      setError(getAuthErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +40,9 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
       }
       navigate('/onboarding');
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      const message = getAuthErrorMessage(err.code);
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -53,6 +69,27 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
         </div>
 
         <Card className="p-8">
+          <Button
+            type="button"
+            variant="outline"
+            fullWidth
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="mb-6 flex items-center justify-center gap-3 border-white/10 hover:bg-white/5"
+          >
+            <Chrome size={20} />
+            Continue with Google
+          </Button>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/5"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase tracking-widest">
+              <span className="bg-[#111112] px-4 text-white/20 font-bold">Or continue with email</span>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input 
               label="Email Address"

@@ -109,6 +109,9 @@ export const TECH_TOOLS: TechTool[] = [
   { id: 'figma', name: 'Figma', category: 'UI/UX & Design Tools', description: 'Collaborative interface design tool.' },
   { id: 'adobe-xd', name: 'Adobe XD', category: 'UI/UX & Design Tools', description: 'UI/UX design and prototyping tool.' },
   { id: 'sketch', name: 'Sketch', category: 'UI/UX & Design Tools', description: 'Digital design platform.' },
+  { id: 'canva', name: 'Canva', category: 'UI/UX & Design Tools', description: 'Online graphic design tool.' },
+  { id: 'behance', name: 'Behance', category: 'UI/UX & Design Tools', description: 'Social media platform for creative work.' },
+  { id: 'framer', name: 'Framer', category: 'UI/UX & Design Tools', description: 'Interactive design and prototyping tool.' },
 
   // 14. Specialized Tech
   { id: 'tensorflow', name: 'TensorFlow', category: 'Specialized Tech', description: 'End-to-end machine learning platform.' },

@@ -2,6 +2,128 @@ import { FinalExam } from '../types';
 
 export const FINAL_EXAMS: FinalExam[] = [
   {
+    id: 'uiux-final-exam',
+    title: 'UI/UX Designer Final Exam',
+    path: 'UI/UX Designer',
+    description: 'The ultimate test of your UI/UX design skills. Prove you are ready for a professional design role.',
+    theoryQuestions: [
+      {
+        question: 'What is the primary difference between UI and UX?',
+        options: [
+          'UI is for mobile, UX is for desktop',
+          'UI is about visuals, UX is about the overall experience and feeling',
+          'There is no difference',
+          'UX is only for developers'
+        ],
+        correctIndex: 1,
+        explanation: 'UI (User Interface) is the visual layer, while UX (User Experience) encompasses the entire interaction and emotional response.'
+      },
+      {
+        question: 'What is "User-Centered Design" (UCD)?',
+        options: [
+          'Designing for what the CEO wants',
+          'Designing based on the latest trends only',
+          'A process that prioritizes the needs and goals of the end-user',
+          'Designing only for young people'
+        ],
+        correctIndex: 2,
+        explanation: 'UCD is a framework that keeps the user at the heart of every design decision.'
+      },
+      {
+        question: 'What is the purpose of a "Design System"?',
+        options: [
+          'To make the design more colorful',
+          'To ensure consistency and scalability across a product',
+          'To replace the need for designers',
+          'To host the website'
+        ],
+        correctIndex: 1,
+        explanation: 'Design systems provide a single source of truth for components and styles, making it easier for teams to build consistent products.'
+      },
+      {
+        question: 'What are "Design Tokens" in a design system?',
+        options: [
+          'Physical coins given to designers',
+          'The smallest atoms of a design (colors, spacing, etc.) stored as data to ensure consistency across platforms',
+          'A type of vector icon',
+          'A way to pay for Figma subscriptions'
+        ],
+        correctIndex: 1,
+        explanation: 'Design tokens allow you to sync styles between design and code automatically, ensuring a single source of truth.'
+      },
+      {
+        question: 'What is "Information Architecture" (IA)?',
+        options: [
+          'The physical layout of a server room',
+          'The structural design of shared information environments, focusing on organization and labeling',
+          'The code used to build a database',
+          'A type of computer hardware'
+        ],
+        correctIndex: 1,
+        explanation: 'IA is about organizing content so users can find what they need with minimal effort.'
+      }
+    ],
+    practicalQuestions: [
+      {
+        question: 'How would you improve a mobile app with a high "Bounce Rate"?',
+        options: [
+          'Add more animations',
+          'Simplify the navigation and clarify the value proposition',
+          'Change all the fonts to bold',
+          'Make the app more expensive'
+        ],
+        correctIndex: 1,
+        explanation: 'Reducing friction and making it easier for users to find what they need is the best way to improve retention.'
+      },
+      {
+        question: 'What is the best way to validate a new feature idea?',
+        options: [
+          'Ask the developers if they can build it',
+          'Create a prototype and conduct usability testing with real users',
+          'Look at what competitors are doing and copy them',
+          'Guess based on your personal experience'
+        ],
+        correctIndex: 1,
+        explanation: 'User testing provides concrete evidence of whether a feature actually solves a problem.'
+      },
+      {
+        question: 'What is the goal of "Competitive Analysis" during the research phase?',
+        options: [
+          'To copy the competitor\'s design exactly',
+          'To identify market gaps, strengths, and weaknesses of existing solutions',
+          'To find out who the competitor\'s employees are',
+          'To lower your prices below theirs'
+        ],
+        correctIndex: 1,
+        explanation: 'Competitive analysis helps you understand the landscape and find opportunities for innovation.'
+      }
+    ],
+    debuggingQuestions: [
+      {
+        question: 'A user says they "can\'t find the checkout button." What is the most likely issue?',
+        options: [
+          'The button is too colorful',
+          'The button lacks visual hierarchy or is placed in an unexpected location',
+          'The user doesn\'t know how to use a phone',
+          'The internet is too slow'
+        ],
+        correctIndex: 1,
+        explanation: 'Clear hierarchy and standard placement are key to a usable interface.'
+      },
+      {
+        question: 'Your design looks great on your monitor but the text is hard to read for some users. What should you check?',
+        options: [
+          'The font size only',
+          'Color contrast ratios against WCAG standards',
+          'The user\'s eyesight',
+          'The brightness of the screen'
+        ],
+        correctIndex: 1,
+        explanation: 'Accessibility is a core part of UX. Ensuring proper contrast is essential for inclusive design.'
+      }
+    ]
+  },
+  {
     id: 'frontend-final-exam',
     title: 'Frontend Developer Final Exam',
     path: 'Frontend Developer',

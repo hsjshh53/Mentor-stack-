@@ -8,6 +8,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Coding is the backbone of the modern world. Understanding it opens doors to building anything you can imagine.',
     explanation: 'Coding is the process of writing instructions for a computer to execute. Computers are incredibly fast but not very smart—they need precise, step-by-step guidance to perform even the simplest tasks. We use programming languages as a bridge between human logic and machine execution.',
     analogy: 'Think of coding like writing a recipe. If you tell a robot to "make a sandwich," it won\'t know where to start. You must tell it: 1. Open the cupboard. 2. Take out two slices of bread. 3. Spread peanut butter on one slice. That level of detail is exactly what coding is.',
+    visualExplanation: 'Imagine a flowchart where each box is a single, clear instruction. If the condition is met, follow one arrow; if not, follow another. This logical flow is the heart of every program.',
     codeExample: '// A simple instruction to display text\nconsole.log("Hello, Future Developer!");',
     lineByLine: 'The "console.log" command tells the computer to output whatever is inside the parentheses to the screen. The text inside the quotes is called a "string".',
     commonMistakes: [
@@ -50,6 +51,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Knowing how the "brain" of the computer works helps you write more efficient and powerful code.',
     explanation: 'A computer consists of hardware (the physical parts) and software (the code). The CPU (Central Processing Unit) is the brain that executes instructions. RAM (Random Access Memory) is the short-term memory where active data lives. When you run code, the CPU fetches instructions from memory and processes them at lightning speed.',
     analogy: 'Imagine a chef (CPU) in a kitchen. The recipe (Code) is on the counter (RAM). The chef reads the recipe and uses tools to create a dish. If the recipe is missing a step, the chef gets stuck.',
+    visualExplanation: 'Visualize a factory line. The CPU is the machine at the end, RAM is the conveyor belt bringing parts (data) quickly, and the Hard Drive is the warehouse where everything is stored long-term.',
     codeExample: 'let x = 5;\nlet y = 10;\nconsole.log(x + y);',
     lineByLine: 'First, we store 5 in a memory slot named "x". Then we store 10 in "y". Finally, the CPU adds them and sends the result to the console.',
     commonMistakes: [
@@ -87,6 +89,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Every frontend developer needs to understand the journey a website takes from a server to a user\'s screen.',
     explanation: 'When you type a URL, your browser (the Client) sends a request over the internet to another computer (the Server). The server finds the requested files (HTML, CSS, JS) and sends them back. Your browser then "renders" these files, turning code into the visual page you see.',
     analogy: 'Think of a restaurant. You are the customer (Client). The waiter is the internet. The kitchen is the Server. You ask for a menu (Request), the waiter brings it, and the kitchen prepares your food (Response).',
+    visualExplanation: 'Picture a tennis match. The Client (you) hits the ball (Request) over the net (Internet) to the Server. The Server hits it back (Response) with the website data.',
     codeExample: '<!-- This is what the server sends -->\n<!DOCTYPE html>\n<html>\n  <body>\n    <h1>Welcome to the Web!</h1>\n  </body>\n</html>',
     lineByLine: 'The server sends this text. The browser sees the "h1" tag and knows to display "Welcome to the Web!" as a large heading.',
     commonMistakes: [
@@ -129,6 +132,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'The internet is the platform you build on. Knowing its rules is essential for debugging and deployment.',
     explanation: 'The internet is a global network of connected computers. Every device has a unique "IP Address" (like a phone number). Since numbers are hard to remember, we use "Domain Names" (like google.com). A DNS (Domain Name System) acts like a phonebook, translating names into IP addresses so your browser can find the right server.',
     analogy: 'Imagine sending a letter. The IP address is the physical street address. The Domain Name is the name of the building (e.g., "The Empire State Building"). The DNS is the directory that tells the mailman exactly where that building is located.',
+    visualExplanation: 'Think of the internet as a massive web of wires and signals. Each intersection is a router or server, and your data "packets" hop from one to the next until they reach their destination.',
     codeExample: '// An example of an HTTP request URL\nhttps://api.example.com/v1/users',
     lineByLine: '"https" is the secure protocol. "api.example.com" is the domain name. "/v1/users" is the specific path to the data.',
     commonMistakes: [
@@ -171,6 +175,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'To build for the web, you need to know how the pieces fit together.',
     explanation: 'A website is just a collection of files stored on a computer (server) that your browser (client) downloads and displays. HTML provides the structure, CSS provides the style, and JavaScript provides the interactivity.',
     analogy: 'Think of a house. HTML is the wooden frame and walls. CSS is the paint and furniture. JavaScript is the electricity and plumbing that makes things work.',
+    visualExplanation: 'Visualize a car. HTML is the chassis and engine. CSS is the color, leather seats, and sleek body. JavaScript is the dashboard, GPS, and self-parking features.',
     codeExample: '<!-- HTML -->\n<h1>Hello</h1>\n\n/* CSS */\nh1 { color: blue; }\n\n// JS\ndocument.querySelector("h1").innerText = "Hi!";',
     lineByLine: 'The HTML creates a heading. The CSS makes it blue. The JS changes the text from "Hello" to "Hi!".',
     commonMistakes: [
@@ -197,6 +202,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Without a proper structure, browsers won\'t know how to interpret your content correctly.',
     explanation: 'Every HTML document follows a strict boilerplate. It starts with a `<!DOCTYPE html>` declaration, followed by the `<html>` tag which wraps everything. Inside, the `<head>` contains metadata (info about the page), and the `<body>` contains everything the user actually sees.',
     analogy: 'Think of an HTML document like a human body. The `<html>` is the skin wrapping everything. The `<head>` is the brain (containing thoughts and info that aren\'t visible), and the `<body>` is the physical form that people interact with.',
+    visualExplanation: 'Imagine a set of nested boxes. The biggest box is <html>. Inside it are two smaller boxes: <head> (the hidden brain) and <body> (the visible body). Everything you see on a site lives inside the <body> box.',
     codeExample: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>My First Page</title>\n</head>\n<body>\n  <h1>Hello World</h1>\n</body>\n</html>',
     lineByLine: 'The DOCTYPE tells the browser to use modern HTML5. The "lang" attribute specifies the language. The "meta charset" ensures special characters display correctly. The "title" appears in the browser tab.',
     commonMistakes: [
@@ -234,6 +240,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Tags tell the browser what your content IS, allowing it to display it with the right importance and style.',
     explanation: 'HTML uses tags like `<h1>` for the main title, `<p>` for paragraphs, and `<ul>`/`<li>` for lists. An "element" is the combination of the opening tag, the content, and the closing tag.',
     analogy: 'Tags are like labels on boxes. One box says "Fragile", another says "Heavy". They tell the person handling the boxes (the browser) how to treat what\'s inside.',
+    visualExplanation: 'Think of a sandwich. The top bread is the opening tag, the filling is the content, and the bottom bread is the closing tag. Together, they make a complete element.',
     codeExample: '<h1>My Favorite Foods</h1>\n<p>I love cooking and trying new things.</p>\n<ul>\n  <li>Pizza</li>\n  <li>Sushi</li>\n  <li>Tacos</li>\n</ul>',
     lineByLine: 'h1 creates a large heading. p creates a block of text. ul starts an "unordered" (bulleted) list. li defines each item in that list.',
     commonMistakes: [
@@ -266,6 +273,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'The "Hypertext" in HTML refers to links. They are what make the web a "web". Images make it engaging.',
     explanation: 'Links use the `<a>` (anchor) tag with an `href` attribute. Images use the `<img>` tag with `src` (source) and `alt` (alternative text) attributes. Note that `<img>` is a self-closing tag!',
     analogy: 'A link is like a portal in a video game—step through it to go somewhere else. An image is like a window—it lets you see something without leaving the room.',
+    visualExplanation: 'Imagine a map with pins. Each pin is a link (<a>) that takes you to a new location. The images (<img>) are the photos on the map that show you what those places look like.',
     codeExample: '<a href="https://google.com">Visit Google</a>\n<img src="https://picsum.photos/200" alt="A random beautiful image">',
     lineByLine: 'The "href" in the <a> tag is the destination URL. The "src" in <img> is the location of the image file. "alt" describes the image for screen readers.',
     commonMistakes: [
@@ -301,8 +309,9 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     title: 'Forms',
     todayYouAreLearning: 'How to collect user data using inputs, labels, and buttons.',
     whyItMatters: 'Forms are how users interact with your site—from logging in to searching for products.',
-    explanation: 'A `<form>` wraps various input elements like `<input type="text">`, `<input type="email">`, and `<button>`. We use `<label>` tags to describe what each input is for, which is vital for accessibility.',
+    explanation: 'Forms allow users to send data to a server. They use the `<form>` tag, containing `<input>` fields (for text, passwords, etc.), `<label>`s (for accessibility), and a `<button type="submit">` to send the data.',
     analogy: 'A form is like a physical application at a bank. You have boxes to fill in your name, address, and a "Submit" button at the bottom to hand it over to the teller.',
+    visualExplanation: 'Imagine a physical mailbox. The <form> is the mailbox itself. The <input> fields are the slots where you drop your letters (data). The "Submit" button is the mailman taking the letters away to be processed.',
     codeExample: '<form>\n  <label for="name">Name:</label>\n  <input type="text" id="name" placeholder="Enter your name">\n  <button type="submit">Send</button>\n</form>',
     lineByLine: 'The "for" attribute on the label matches the "id" of the input. "placeholder" shows temporary text. "type=submit" makes the button send the form.',
     commonMistakes: [
@@ -340,6 +349,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Semantic HTML improves SEO, accessibility, and code readability.',
     explanation: 'Instead of using `<div>` for everything, we use tags that describe their purpose. `<header>` for the top, `<nav>` for links, `<main>` for the core content, and `<footer>` for the bottom.',
     analogy: 'Think of a newspaper. It has a clear Masthead (Header), Sections (Main), and a bottom area with contact info (Footer). You can tell what each part is just by looking at its structure.',
+    visualExplanation: 'Visualize a skeleton. Semantic tags are like the bones—the skull (header), the spine (main), and the feet (footer). They give the body a clear, logical structure that anyone can understand.',
     codeExample: '<header>\n  <nav>Home | About</nav>\n</header>\n<main>\n  <article>My Story</article>\n</main>\n<footer>© 2024</footer>',
     lineByLine: 'header wraps the top info. nav wraps the links. main wraps the unique content. footer wraps the bottom info.',
     commonMistakes: [
@@ -377,6 +387,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'CSS is how you turn a plain document into a professional-looking interface.',
     explanation: 'CSS works by selecting an HTML element and applying styles. A rule consists of a selector (e.g., `h1`), a property (e.g., `color`), and a value (e.g., `blue`).',
     analogy: 'If HTML is the house, CSS is the interior designer. The designer says: "Select the walls (Selector) and paint them (Property) blue (Value)." ',
+    visualExplanation: 'Imagine a coloring book. The black lines are the HTML. The crayons you use to fill in the shapes are the CSS. You can choose any color or texture for any part of the drawing.',
     codeExample: 'h1 {\n  color: #2ecc71;\n  font-size: 32px;\n  text-align: center;\n}',
     lineByLine: 'h1 is the selector. color changes the text color using a Hex code. font-size sets the height. text-align centers the text.',
     commonMistakes: [
@@ -409,6 +420,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Color and type are the most powerful tools for creating a specific mood and brand.',
     explanation: 'Colors can be defined by name (red), Hex (#ff0000), or RGB (255, 0, 0). Typography involves `font-family`, `font-weight`, and `line-height`. We often use Google Fonts to add custom typefaces.',
     analogy: 'Colors are like the paint on a car, and typography is like the dashboard design. One makes it look good from a distance, the other makes it readable and functional up close.',
+    visualExplanation: 'Think of a paint palette and a set of stamps. The palette gives you the colors (HEX/RGB), and the stamps give you the different font styles (Serif/Sans-serif). Mixing them correctly creates a unique look.',
     codeExample: 'body {\n  color: rgb(50, 50, 50);\n  background-color: #f4f4f4;\n  font-family: "Inter", sans-serif;\n  line-height: 1.5;\n}',
     lineByLine: 'rgb sets a dark gray. background-color sets a light gray. font-family tries to use "Inter" first. line-height adds space between lines.',
     commonMistakes: [
@@ -446,6 +458,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'The Box Model is the foundation of all web layout. If you don\'t get this, your elements will never go where you want them.',
     explanation: 'Every element in HTML is a rectangular box. The box consists of: 1. Content (the text/image), 2. Padding (space inside the border), 3. Border (the line around the padding), 4. Margin (space outside the border).',
     analogy: 'Imagine a framed picture. The photo is the Content. The white matting around the photo is the Padding. The wooden frame is the Border. The space between this frame and the next picture on the wall is the Margin.',
+    visualExplanation: 'Visualize a present. The gift is the Content. The bubble wrap inside the box is the Padding. The cardboard box is the Border. The space between this box and other boxes in the delivery truck is the Margin.',
     codeExample: '.box {\n  width: 300px;\n  padding: 20px;\n  border: 5px solid black;\n  margin: 40px;\n}',
     lineByLine: 'The total width of this box on the screen will be 300 + 20+20 + 5+5 = 350px. The 40px margin pushes other things away.',
     commonMistakes: [
@@ -478,6 +491,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Flexbox makes it incredibly easy to align elements horizontally or vertically without using hacks.',
     explanation: 'Flexbox is a layout mode for a parent container and its children. By setting `display: flex` on the parent, you can control how children are spaced and aligned along a single axis (row or column).',
     analogy: 'Think of a row of seats in a theater. Flexbox lets you decide if the people sit in the middle, spread out to the edges, or bunch up at the start of the row.',
+    visualExplanation: 'Think of a rubber band. Flexbox allows the items inside to stretch or shrink to fill the available space, keeping them perfectly aligned no matter how wide the container gets.',
     codeExample: '.container {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}',
     lineByLine: 'display: flex turns on the flexbox magic. justify-content spreads items out. align-items centers them vertically.',
     commonMistakes: [
@@ -510,6 +524,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Grid is the most powerful layout system in CSS, allowing you to build entire page structures with ease.',
     explanation: 'CSS Grid allows you to define a grid of columns and rows. You can then place elements exactly where you want them in that grid, even spanning multiple columns or rows.',
     analogy: 'Think of a game of Chess or a spreadsheet. You have a grid of squares, and you can place your pieces (elements) in specific coordinates (cells).',
+    visualExplanation: 'Visualize a bento box. Each compartment is a grid cell. You can have one big compartment for rice (spanning two columns) and smaller ones for sides. Grid lets you define these spaces precisely.',
     codeExample: '.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr 1fr;\n  gap: 20px;\n}',
     lineByLine: 'display: grid starts the grid. grid-template-columns creates 3 columns (the middle one is twice as wide). gap adds space between cells.',
     commonMistakes: [
@@ -542,6 +557,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'More people browse the web on phones than on computers. Your site MUST work on small screens.',
     explanation: 'Responsive design uses "Media Queries" to apply different CSS rules based on the screen size. We usually start with a mobile layout and then add rules for larger screens (Mobile-First).',
     analogy: 'Imagine a liquid. It takes the shape of whatever container you pour it into. A responsive website is like a liquid—it flows to fit the screen.',
+    visualExplanation: 'Imagine a transformer robot. On a small screen, it\'s a compact car (stacked layout). On a large screen, it unfolds into a giant robot (multi-column layout). Media queries are the triggers for this transformation.',
     codeExample: '@media (min-width: 768px) {\n  .container {\n    flex-direction: row;\n  }\n}',
     lineByLine: 'The @media rule says: "If the screen is at least 768px wide, run this code." Inside, we change the layout to a row.',
     commonMistakes: [
@@ -579,6 +595,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'JavaScript is the only language that runs natively in every web browser. It is the engine of the modern web.',
     explanation: 'JavaScript is a high-level, interpreted programming language. It allows you to implement complex features on web pages—from updating content dynamically to controlling multimedia and animating images.',
     analogy: 'If HTML is the skeleton and CSS is the skin/clothes, JavaScript is the nervous system. It allows the body to react to touch, move its limbs, and think.',
+    visualExplanation: 'Imagine a puppet. HTML is the wooden body. CSS is the paint and costume. JavaScript is the strings and the puppeteer that make the puppet dance, wave, and interact with the audience.',
     codeExample: 'console.log("Hello from JavaScript!");\nalert("Welcome to the world of logic!");',
     lineByLine: 'console.log prints a message to the browser\'s developer console. alert shows a popup window to the user.',
     commonMistakes: [
@@ -611,6 +628,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Programming is all about manipulating data. You need to know how to store it and what kind of data you\'re working with.',
     explanation: 'Variables are containers for storing data values. We use `let` for values that can change and `const` for values that stay the same. Common data types include Strings (text), Numbers, and Booleans (true/false).',
     analogy: 'A variable is like a labeled box in a warehouse. The label is the variable name, and the item inside is the data. Some boxes are taped shut (const), while others can be opened and swapped (let).',
+    visualExplanation: 'Visualize a row of lockers. Each locker has a name (variable name) and contains something inside (data). Some lockers are permanently locked (const), while others can be opened to change their contents (let).',
     codeExample: 'const name = "Mentor";\nlet score = 0;\nscore = score + 10;\nconst isLearning = true;',
     lineByLine: 'const name creates a permanent string. let score creates a number that we then update. const isLearning creates a boolean.',
     commonMistakes: [
@@ -643,6 +661,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Functions allow you to write code once and use it many times, making your programs organized and efficient.',
     explanation: 'A function is a block of code designed to perform a particular task. It is executed when "called". Scope determines the accessibility of variables—some are global, others are only available inside a function.',
     analogy: 'A function is like a recipe. You write it down once, and whenever you want that dish, you just follow the recipe (call the function). The ingredients inside the kitchen (local scope) aren\'t visible to people outside on the street (global scope).',
+    visualExplanation: 'Think of a remote control. Each button is a function. You don\'t need to know how the wires inside work; you just press the button (call the function) to get a specific result (change the channel).',
     codeExample: 'function greet(user) {\n  let message = "Hello " + user;\n  return message;\n}\nconsole.log(greet("Student"));',
     lineByLine: 'We define a function "greet" that takes a "user" parameter. It creates a local variable "message" and "returns" it. Then we call it with "Student".',
     commonMistakes: [
@@ -680,6 +699,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Real-world data is complex. You need arrays for lists of items and objects to describe single entities in detail.',
     explanation: 'An Array is an ordered list of values: `[1, 2, 3]`. An Object is a collection of properties: `{ name: "Alex", age: 25 }`. We use these together to build complex data structures.',
     analogy: 'An Array is like a numbered list of students in a class. An Object is like a single student\'s ID card, containing their name, age, and grade.',
+    visualExplanation: 'Visualize a shopping list (Array) vs. a product tag (Object). The list is just items in order. The tag has specific details: Price, Size, and Color. Both help you organize your shopping trip.',
     codeExample: 'let fruits = ["Apple", "Banana"];\nlet user = {\n  name: "John",\n  age: 30,\n  isAdmin: false\n};\nconsole.log(fruits[0]);\nconsole.log(user.name);',
     lineByLine: 'fruits[0] accesses the first item in the array (arrays start at 0!). user.name uses "dot notation" to get the name property.',
     commonMistakes: [
@@ -712,6 +732,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'This is the "magic" of the web. It\'s how you make buttons do things and content update without a refresh.',
     explanation: 'The DOM (Document Object Model) is the browser\'s internal map of your HTML. JavaScript can use methods like `document.querySelector()` to find elements and change their text, style, or classes.',
     analogy: 'The DOM is like the blueprint of a building that the browser is currently living in. JavaScript is the renovation crew that can move walls, paint rooms, and add new windows while the browser is still inside.',
+    visualExplanation: 'Imagine a tree structure. The <html> is the trunk, <body> is a branch, and each <div> or <p> is a leaf. JavaScript can climb this tree, find a specific leaf, and change its color or pluck it off entirely.',
     codeExample: 'const btn = document.querySelector("button");\nbtn.addEventListener("click", () => {\n  document.body.style.backgroundColor = "blue";\n});',
     lineByLine: 'We find the button. We listen for a "click" event. When it happens, we change the body\'s background color to blue.',
     commonMistakes: [
@@ -749,6 +770,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Modern apps need to talk to servers. You can\'t freeze the whole app while waiting for a response—you need to do it asynchronously.',
     explanation: 'Asynchronous code allows the browser to keep running while waiting for a task to finish. We use `fetch()` to get data from URLs, and `async`/`await` to handle the results cleanly.',
     analogy: 'Synchronous is like a fast-food counter where you wait for your food before the next person can order. Asynchronous is like a sit-down restaurant: you order, get a buzzer (a Promise), and can talk to your friends until the food is ready.',
+    visualExplanation: 'Visualize a track race. Synchronous is one runner waiting for the next to finish. Asynchronous is multiple runners on different tracks, all running at once and finishing whenever they can.',
     codeExample: 'async function getData() {\n  const response = await fetch("https://api.example.com/data");\n  const data = await response.json();\n  console.log(data);\n}\ngetData();',
     lineByLine: 'async marks the function as special. await pauses the function until the fetch is done. response.json() converts the raw data into a JS object.',
     commonMistakes: [
@@ -786,6 +808,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'React is the industry standard for building complex, high-performance web applications.',
     explanation: 'React is a JavaScript library for building user interfaces. It uses a "declarative" approach and breaks the UI into small, reusable pieces called Components.',
     analogy: 'Building a site with plain HTML is like building a house out of one giant block of clay. Building with React is like using LEGO bricks—you create small pieces and snap them together.',
+    visualExplanation: 'Imagine a puzzle. Each piece is a component. You can build the sky, the trees, and the house separately, then put them all together to create the final picture.',
     codeExample: 'function Welcome() {\n  return <h1>Hello, React!</h1>;\n}',
     lineByLine: 'This is a functional component. It looks like a regular JS function but returns something that looks like HTML (called JSX).',
     commonMistakes: [
@@ -818,6 +841,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Props allow you to make your components dynamic. One "Button" component can have different text and colors on every page.',
     explanation: 'Components are like functions that return UI. "Props" (short for properties) are the arguments you pass to these functions to customize them.',
     analogy: 'If a component is a "Coffee Machine", the Props are the settings: "Size", "Strength", and "Milk Type". The machine is the same, but the output depends on the props.',
+    visualExplanation: 'Think of a template. The component is the layout, and the props are the specific details (Name, Photo, Bio) that fill in the blanks to create a unique profile card every time.',
     codeExample: 'function UserCard(props) {\n  return <div>Name: {props.name}</div>;\n}\n\n// Usage\n<UserCard name="Alex" />',
     lineByLine: 'The UserCard component receives an object called "props". We use curly braces {} to inject the JS value into the JSX.',
     commonMistakes: [
@@ -850,6 +874,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'State is the "memory" of a component. It\'s how a component remembers things like "is this checkbox checked?" or "what did the user type?".',
     explanation: 'State is data that changes over time. When state updates, React automatically re-renders the component to show the new data. We use the `useState` hook to add state to functional components.',
     analogy: 'State is like the current score in a basketball game. It changes constantly, and every time it does, the scoreboard (the UI) updates to show the new reality.',
+    visualExplanation: 'Visualize a light switch. The state is either "ON" or "OFF". When you flip the switch (update state), the bulb (UI) immediately changes its appearance to match the new state.',
     codeExample: 'import { useState } from "react";\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  return <button onClick={() => setCount(count + 1)}>{count}</button>;\n}',
     lineByLine: 'useState(0) sets the initial count to 0. count is the current value, setCount is the function to change it. onClick triggers the update.',
     commonMistakes: [
@@ -892,6 +917,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Users expect to navigate between "pages" (like /about or /contact) without the whole site reloading.',
     explanation: 'React Router is a library that allows you to define "routes". It listens to the URL and renders different components based on the path, all without a page refresh.',
     analogy: 'React Router is like a GPS for your app. You tell it: "If the user goes to /home, show the Home component. If they go to /settings, show the Settings component."',
+    visualExplanation: 'Imagine a house with many rooms. React Router is the hallway. Depending on which door (URL) you open, you see a completely different room (Component), but you never leave the house.',
     codeExample: '<BrowserRouter>\n  <Routes>\n    <Route path="/" element={<Home />} />\n    <Route path="/about" element={<About />} />\n  </Routes>\n</BrowserRouter>',
     lineByLine: 'BrowserRouter wraps the app. Routes holds all possible paths. Route defines a specific path and the component to show.',
     commonMistakes: [
@@ -929,6 +955,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     whyItMatters: 'Most apps aren\'t useful without data. You need to know how to pull in info from external services.',
     explanation: 'We use the `useEffect` hook to trigger a data fetch when a component loads. We store the result in state and then render it in the UI.',
     analogy: 'It\'s like a waiter at a restaurant. When you sit down (Component Mounts), the waiter goes to the kitchen (API) to get the menu (Data). When they come back, they put the menu on your table (Update State).',
+    visualExplanation: 'Visualize a loading spinner. When the component starts, it shows the spinner (Loading state). Once the data arrives from the API, the spinner disappears and the real content takes its place.',
     codeExample: 'useEffect(() => {\n  fetch("https://api.com/data")\n    .then(res => res.json())\n    .then(data => setData(data));\n}, []);',
     lineByLine: 'useEffect runs after the component renders. The empty array [] means it only runs once. fetch gets the data, then we update state.',
     commonMistakes: [
@@ -3284,6 +3311,1776 @@ print(report)`,
       }
     ],
     recap: 'C# is the brain of your Unity games. Learning it well is essential for creating complex gameplay.'
+  },
+  // LEVEL 1: FOUNDATION
+  'ui-vs-ux': {
+    id: 'ui-vs-ux',
+    title: 'UI vs UX: What\'s the Difference?',
+    todayYouAreLearning: 'The fundamental difference between User Interface (UI) and User Experience (UX).',
+    whyItMatters: 'Understanding these two roles is the first step to becoming a professional designer. They work together but focus on different things.',
+    explanation: 'UX (User Experience) is the internal experience that a person has as they interact with every aspect of a company’s products and services. It focuses on the "why" and "how" of a product. UI (User Interface) is the series of screens, pages, and visual elements—like buttons and icons—that enable a person to interact with a product or service. It focuses on the "look" and "feel".',
+    analogy: 'Imagine a house. The UX is the blueprint, the flow of the rooms, and how easy it is to live in. The UI is the paint, the furniture, the curtains, and the beautiful decorations.',
+    codeExample: '// UI focus: Color and Size\nbutton.style.backgroundColor = "blue";\nbutton.style.borderRadius = "8px";\n\n// UX focus: Logic and Feedback\nbutton.onClick = () => {\n  showLoadingSpinner();\n  saveData();\n};',
+    lineByLine: 'UI defines the visual properties (blue, rounded corners). UX defines the interaction flow (click -> loading -> save).',
+    commonMistakes: ['Thinking UI is just about making things "pretty"', 'Ignoring UX and focusing only on visuals', 'Confusing the two terms in professional settings'],
+    practice: 'Pick an app you use daily. List 3 things that are UI (visuals) and 3 things that are UX (how it works/feels).',
+    challenge: 'Explain UI/UX to a 5-year-old using a bicycle as an example.',
+    quiz: [
+      {
+        question: 'Which one focuses on the visual elements like buttons and icons?',
+        options: ['UX (User Experience)', 'UI (User Interface)', 'Backend Development', 'Project Management'],
+        correctIndex: 1,
+        explanation: 'UI is all about the interface—the visual part the user interacts with.'
+      },
+      {
+        question: 'If an app is beautiful but very hard to use, it has:',
+        options: ['Good UI, Good UX', 'Bad UI, Good UX', 'Good UI, Bad UX', 'Bad UI, Bad UX'],
+        correctIndex: 2,
+        explanation: 'Beauty is UI; ease of use is UX. A beautiful but confusing app has good UI but bad UX.'
+      }
+    ],
+    recap: 'UX is the brain and the flow; UI is the face and the skin. You need both for a great product.'
+  },
+  'why-design-matters': {
+    id: 'why-design-matters',
+    title: 'Why Design Matters',
+    todayYouAreLearning: 'The impact of good design on business, users, and the world.',
+    whyItMatters: 'Design isn\'t just art; it\'s a problem-solving tool that can make or break a company.',
+    explanation: 'Good design builds trust, increases efficiency, and makes products accessible to everyone. It helps users achieve their goals faster and with less frustration. In business, design-led companies consistently outperform their competitors.',
+    analogy: 'Design is like a clear road sign. Without it, you might eventually find your destination, but you\'ll be stressed, lost, and likely to give up. With it, the journey is effortless.',
+    codeExample: '/* Bad Design: No hierarchy */\n.text { font-size: 16px; color: black; }\n\n/* Good Design: Clear hierarchy */\n.title { font-size: 24px; font-weight: bold; }\n.subtitle { font-size: 18px; color: #666; }\n.body { font-size: 16px; line-height: 1.5; }',
+    lineByLine: 'Good design uses hierarchy (size, weight, color) to guide the user\'s eye to the most important information first.',
+    commonMistakes: ['Assuming users will "figure it out"', 'Prioritizing aesthetics over functionality', 'Designing for yourself instead of the user'],
+    practice: 'Find a "bad" design in your physical environment (e.g., a confusing door handle or remote control). Take a photo and write down how you would fix it.',
+    challenge: 'Can you name a company that succeeded primarily because of its superior design?',
+    quiz: [
+      {
+        question: 'What is the primary goal of good design?',
+        options: ['To win awards', 'To make things look expensive', 'To solve problems for users', 'To use as many colors as possible'],
+        correctIndex: 2,
+        explanation: 'At its core, design is about solving problems and making things work better for people.'
+      }
+    ],
+    recap: 'Design is a powerful tool for communication and problem-solving.'
+  },
+  'real-world-examples': {
+    id: 'real-world-examples',
+    title: 'Real-World Design Examples',
+    todayYouAreLearning: 'Analyzing successful and unsuccessful designs in the real world.',
+    whyItMatters: 'Learning from existing products helps you develop a "designer\'s eye" and avoid common pitfalls.',
+    explanation: 'We look at apps like Instagram (UI focus on content), Uber (UX focus on reducing friction), and Airbnb (Trust-based design). We also look at "dark patterns"—designs intended to trick users.',
+    analogy: 'Analyzing designs is like a chef tasting different dishes. You learn what ingredients work well together and what leaves a bad taste in the mouth.',
+    codeExample: '// Example of a "Dark Pattern" (UX to avoid)\nconst subscribeCheckbox = document.getElementById("newsletter");\nsubscribeCheckbox.checked = true; // Pre-checked to trick users',
+    lineByLine: 'Pre-checking a newsletter box is a dark pattern because it tricks users into an action they didn\'t explicitly choose.',
+    commonMistakes: ['Copying designs without understanding why they work', 'Ignoring the context in which a product is used', 'Falling for trendy designs that don\'t last'],
+    practice: 'Open your 3 favorite apps. Write down one specific thing you love about the design of each.',
+    challenge: 'Find an example of a "Dark Pattern" in an app or website you use.',
+    quiz: [
+      {
+        question: 'What is a "Dark Pattern" in design?',
+        options: ['A design with a dark color theme', 'A design intended to trick or manipulate users', 'A design that only works at night', 'A very complex design system'],
+        correctIndex: 1,
+        explanation: 'Dark patterns are deceptive UX techniques used to make users do things they might not want to do.'
+      }
+    ],
+    recap: 'The best designs are often invisible—they just work so well you don\'t notice them.'
+  },
+  'color-theory-basics': {
+    id: 'color-theory-basics',
+    title: 'Color Theory for UI',
+    todayYouAreLearning: 'How to use color effectively to create mood, hierarchy, and accessibility.',
+    whyItMatters: 'Color is one of the first things a user notices. It triggers emotions and guides actions.',
+    explanation: 'Color theory involves understanding the color wheel, harmonies (complementary, analogous), and psychology (red for danger, blue for trust). In UI, we also focus on contrast for accessibility.',
+    analogy: 'Color is like the seasoning in a meal. Too little and it\'s bland; too much and it\'s overwhelming. The right balance makes everything better.',
+    codeExample: ':root {\n  --primary: #3B82F6; /* Trusting Blue */\n  --danger: #EF4444; /* Alert Red */\n  --success: #10B981; /* Positive Green */\n  --text: #1F2937; /* High contrast dark gray */\n}',
+    lineByLine: 'We define semantic colors (primary, danger, success) to give meaning to our UI elements.',
+    commonMistakes: ['Using too many colors', 'Ignoring color blindness and accessibility', 'Using colors that clash and hurt the eyes'],
+    practice: 'Create a color palette for a "Meditation App" using 3 main colors. Why did you choose them?',
+    challenge: 'Check the contrast ratio between white text and a light yellow background. Is it accessible?',
+    quiz: [
+      {
+        question: 'Which color is most commonly associated with "Success" or "Go" in UI design?',
+        options: ['Red', 'Blue', 'Green', 'Purple'],
+        correctIndex: 2,
+        explanation: 'Green is universally recognized as a positive, "success" color in interfaces.'
+      }
+    ],
+    recap: 'Use color with purpose. Focus on meaning, mood, and accessibility.'
+  },
+  'typography-for-ui': {
+    id: 'typography-for-ui',
+    title: 'Typography for UI',
+    todayYouAreLearning: 'Choosing and using fonts to improve readability and brand identity.',
+    whyItMatters: 'Most of the web is text. If your typography is bad, your user experience is bad.',
+    explanation: 'Typography involves choosing typefaces (Serif vs Sans-Serif), setting font sizes, line heights (leading), and letter spacing (kerning). Good typography ensures the user can read your content without effort.',
+    analogy: 'Typography is like the voice of your product. Some voices are formal and serious (Serif), while others are modern and friendly (Sans-Serif).',
+    codeExample: 'body {\n  font-family: "Inter", sans-serif;\n  font-size: 16px;\n  line-height: 1.6;\n  letter-spacing: -0.01em;\n}',
+    lineByLine: 'We use a clean sans-serif font, a readable size (16px), and generous line-height (1.6) for optimal legibility.',
+    commonMistakes: ['Using too many different fonts', 'Line length being too long or too short', 'Not enough contrast between text and background'],
+    practice: 'Find two different fonts on Google Fonts—one that feels "Luxury" and one that feels "Tech".',
+    challenge: 'Try to read a paragraph with 1.0 line-height vs 1.6 line-height. Which is easier?',
+    quiz: [
+      {
+        question: 'Which type of font is generally considered more "modern" and "clean" for digital screens?',
+        options: ['Serif (with small feet)', 'Sans-Serif (without feet)', 'Script (handwritten)', 'Monospace'],
+        correctIndex: 1,
+        explanation: 'Sans-serif fonts are the standard for digital UI due to their clean lines and high legibility on screens.'
+      }
+    ],
+    recap: 'Typography is about more than just fonts; it\'s about readability and hierarchy.'
+  },
+  'spacing-and-layout': {
+    id: 'spacing-and-layout',
+    title: 'Spacing and Layout Basics',
+    todayYouAreLearning: 'Using grids and whitespace to create balance and organization.',
+    whyItMatters: 'Proper spacing makes a design feel professional and organized. It prevents the UI from feeling "cluttered".',
+    explanation: 'We use the 8pt grid system, padding, and margins to create consistent spacing. Layout involves placing elements in a way that follows a logical flow (e.g., F-pattern or Z-pattern).',
+    analogy: 'Spacing is like the silence between notes in music. Without the silence, it\'s just noise. Whitespace gives your design room to breathe.',
+    codeExample: '.card {\n  padding: 24px; /* Internal space */\n  margin-bottom: 16px; /* External space */\n  display: flex;\n  gap: 12px; /* Space between items */\n}',
+    lineByLine: 'We use multiples of 4 or 8 (12, 16, 24) to create a consistent rhythm in our spacing.',
+    commonMistakes: ['Cramming too much information into one screen', 'Inconsistent spacing between similar elements', 'Ignoring the "Negative Space" (whitespace)'],
+    practice: 'Draw a simple layout for a news article on a piece of paper. Focus on where the gaps should be.',
+    challenge: 'What is the "8pt Grid System" and why do designers use it?',
+    quiz: [
+      {
+        question: 'What is "Whitespace" (or Negative Space) in design?',
+        options: ['Space that must be filled with content', 'The empty space between design elements', 'A background that is strictly white', 'A mistake in the layout'],
+        correctIndex: 1,
+        explanation: 'Whitespace is the intentional empty space that helps organize content and improve focus.'
+      }
+    ],
+    recap: 'Consistent spacing is the secret ingredient to a professional-looking UI.'
+  },
+  'user-journeys': {
+    id: 'user-journeys',
+    title: 'User Journeys',
+    todayYouAreLearning: 'Mapping out the steps a user takes to achieve a goal.',
+    whyItMatters: 'A user journey helps you see the "big picture" and identify where users might get stuck or frustrated.',
+    explanation: 'A user journey is a visual representation of the process a user goes through. It includes their actions, thoughts, and emotions at each step of the way.',
+    analogy: 'A user journey is like a map for a hike. It shows the path, the steep hills (pain points), and the beautiful viewpoints (successes).',
+    codeExample: '// User Journey: Ordering Pizza\n1. Open App\n2. Browse Menu\n3. Add to Cart\n4. Enter Address\n5. Pay\n6. Track Delivery',
+    lineByLine: 'Each step represents a critical interaction point between the user and the product.',
+    commonMistakes: ['Making the journey too complex', 'Assuming the user always takes the "happy path"', 'Ignoring the user\'s emotional state'],
+    practice: 'Map out the user journey for "Buying a movie ticket" from start to finish.',
+    challenge: 'Identify one "pain point" in the journey of "Waking up and getting to work/school".',
+    quiz: [
+      {
+        question: 'What does a User Journey map primarily help a designer understand?',
+        options: ['The color palette of the app', 'The step-by-step experience of the user', 'The coding language needed', 'The marketing budget'],
+        correctIndex: 1,
+        explanation: 'User journeys focus on the flow and experience of the user as they interact with a product.'
+      }
+    ],
+    recap: 'Design the journey, not just the screens.'
+  },
+  'user-needs-and-pain-points': {
+    id: 'user-needs-and-pain-points',
+    title: 'User Needs and Pain Points',
+    todayYouAreLearning: 'Identifying what users actually want and what frustrates them.',
+    whyItMatters: 'If you don\'t solve a user\'s problem, they won\'t use your product. It\'s that simple.',
+    explanation: 'User needs are the goals users want to achieve. Pain points are the specific problems or frustrations they encounter. We find these through research, interviews, and observation.',
+    analogy: 'A user need is being hungry. A pain point is a restaurant menu that is impossible to read. Your job is to provide the food AND a clear menu.',
+    codeExample: '// Solving a Pain Point: "Password Reset is too hard"\n- Add "Forgot Password" link on login\n- Send one-tap reset link to email\n- Allow login with Google/Apple',
+    lineByLine: 'We identify the frustration (hard reset) and provide multiple simple solutions.',
+    commonMistakes: ['Solving problems that don\'t exist', 'Ignoring the "silent" frustrations of users', 'Thinking you are the user'],
+    practice: 'Interview a friend about an app they hate. Ask them: "What is the most frustrating thing about it?"',
+    challenge: 'What is the difference between a "Want" and a "Need" in UX?',
+    quiz: [
+      {
+        question: 'In UX design, what is a "Pain Point"?',
+        options: ['A physical injury', 'A specific problem or frustration a user has', 'A bright red button', 'A high price point'],
+        correctIndex: 1,
+        explanation: 'Pain points are the obstacles that prevent users from having a smooth experience.'
+      }
+    ],
+    recap: 'Great design starts with empathy. Find the pain, then build the cure.'
+  },
+  'low-fi-wireframes': {
+    id: 'low-fi-wireframes',
+    title: 'Low-Fidelity Wireframes',
+    todayYouAreLearning: 'Creating simple, black-and-white sketches of your layout.',
+    whyItMatters: 'Wireframes allow you to iterate on the structure quickly without getting distracted by colors or fonts.',
+    explanation: 'Low-fi wireframes use basic shapes (boxes, lines, circles) to represent elements. They focus on placement, hierarchy, and flow. You can do them on paper or using digital tools.',
+    analogy: 'A wireframe is like the skeleton of a building. You need to make sure the structure is solid before you start picking out the wallpaper.',
+    codeExample: '/* Wireframe representation in CSS */\n.box { border: 1px solid black; background: #eee; }\n.placeholder-img { background: #ccc; display: flex; align-items: center; }',
+    lineByLine: 'We use simple placeholders to represent complex UI elements like images and buttons.',
+    commonMistakes: ['Adding too much detail too early', 'Using colors in a low-fi wireframe', 'Not showing the wireframes to anyone for feedback'],
+    practice: 'Sketch a wireframe for a "Music Player" app on a piece of paper. Use only boxes and lines.',
+    challenge: 'Why do we use an "X" inside a box to represent an image in wireframes?',
+    quiz: [
+      {
+        question: 'What is the main purpose of a Low-Fidelity Wireframe?',
+        options: ['To show the final colors', 'To test the layout and structure quickly', 'To impress the client with visuals', 'To write the final code'],
+        correctIndex: 1,
+        explanation: 'Wireframes are for planning the structure and flow, not the visual details.'
+      }
+    ],
+    recap: 'Keep it simple. Focus on the "where" and "what", not the "how it looks".'
+  },
+  'simple-layout-design': {
+    id: 'simple-layout-design',
+    title: 'Simple Layout Design',
+    todayYouAreLearning: 'Applying basic design rules to create a balanced screen.',
+    whyItMatters: 'A good layout guides the user naturally through the information.',
+    explanation: 'We use alignment (left, center, right), proximity (grouping related items), and contrast to create a clear visual path. We often use a "Grid" to keep things aligned.',
+    analogy: 'A layout is like a well-organized bookshelf. You know exactly where to look for what you need because things are grouped and aligned logically.',
+    codeExample: '.container {\n  display: grid;\n  grid-template-columns: 1fr 2fr;\n  gap: 20px;\n  align-items: start;\n}',
+    lineByLine: 'We use a grid to create columns and a gap to keep them separated and organized.',
+    commonMistakes: ['Randomly placing elements on the screen', 'Not aligning items to a grid', 'Having no clear starting point for the user'],
+    practice: 'Take your "Music Player" wireframe and try to align everything to a 3-column grid.',
+    challenge: 'What is the "Rule of Thirds" and how can it be used in layout design?',
+    quiz: [
+      {
+        question: 'Which design principle suggests that related items should be placed close together?',
+        options: ['Contrast', 'Alignment', 'Proximity', 'Repetition'],
+        correctIndex: 2,
+        explanation: 'Proximity helps users understand that elements are related by placing them near each other.'
+      }
+    ],
+    recap: 'Alignment and grouping are the keys to a clean layout.'
+  },
+  'figma-basics': {
+    id: 'figma-basics',
+    title: 'Figma Basics',
+    todayYouAreLearning: 'Navigating the world\'s most popular design tool.',
+    whyItMatters: 'Figma is the industry standard. Knowing it is a requirement for almost every UI/UX job.',
+    explanation: 'Figma is a cloud-based design tool. You\'ll learn about Frames (artboards), Shapes, Text, Layers, and how to use the Pen tool. It\'s collaborative, meaning multiple people can work at once.',
+    analogy: 'Figma is like Google Docs but for designers. It\'s a canvas where you can draw, type, and build together in real-time.',
+    codeExample: '// Figma "Code" (CSS Export)\nwidth: 375px;\nheight: 812px;\nbackground: #FFFFFF;\nborder-radius: 40px;',
+    lineByLine: 'Figma allows you to see the CSS properties of your designs, which is great for developer handoff.',
+    commonMistakes: ['Not using Frames correctly', 'Having messy, unnamed layers', 'Not using "Auto Layout" (we will learn this later!)'],
+    practice: 'Open Figma, create a new file, and draw a perfect circle and a rounded rectangle.',
+    challenge: 'Find out how to "Share" a Figma file with a view-only link.',
+    quiz: [
+      {
+        question: 'Is Figma a browser-based tool or only for desktop?',
+        options: ['Only Desktop', 'Only Browser', 'Both Browser and Desktop', 'Only Mobile'],
+        correctIndex: 2,
+        explanation: 'Figma works in the browser and has a desktop app, making it very accessible.'
+      }
+    ],
+    recap: 'Figma is your new best friend. Spend time exploring its interface.'
+  },
+  'canva-basics': {
+    id: 'canva-basics',
+    title: 'Canva Basics (Optional)',
+    todayYouAreLearning: 'Using Canva for quick graphics and social media design.',
+    whyItMatters: 'While not a professional UI tool, Canva is great for quick marketing assets and simple presentations.',
+    explanation: 'Canva uses templates and drag-and-drop elements. It\'s perfect for non-designers or for designers who need to move fast on simple tasks.',
+    analogy: 'If Figma is a professional kitchen, Canva is a high-quality microwave meal. It\'s fast, looks good, and gets the job done when you\'re in a hurry.',
+    codeExample: '// No code here! Canva is purely visual drag-and-drop.',
+    lineByLine: 'Canva abstracts away the complexity of design tools for speed and ease of use.',
+    commonMistakes: ['Using too many generic templates', 'Over-designing simple graphics', 'Thinking Canva replaces professional UI tools like Figma'],
+    practice: 'Create a "Coming Soon" social media post for your imaginary app in Canva.',
+    challenge: 'Try to recreate a simple Canva template from scratch in Figma.',
+    quiz: [
+      {
+        question: 'What is Canva best used for?',
+        options: ['Complex UI Design', 'Coding websites', 'Quick social media graphics and presentations', 'Database management'],
+        correctIndex: 2,
+        explanation: 'Canva is optimized for speed and ease of use for general graphic design tasks.'
+      }
+    ],
+    recap: 'Canva is a great tool for your secondary design needs.'
+  },
+  // LEVEL 2: BUILD
+  'design-system-components': {
+    id: 'design-system-components',
+    title: 'UI Design Systems: Components',
+    todayYouAreLearning: 'Building reusable building blocks for your interface.',
+    whyItMatters: 'Design systems ensure consistency across large products and save designers massive amounts of time.',
+    explanation: 'A component is a reusable element like a button, input field, or card. In Figma, we use "Main Components" and "Instances" to manage changes globally.',
+    analogy: 'Components are like LEGO bricks. You design the brick once, and then you can use it to build a castle, a car, or a space station.',
+    codeExample: '// A React Component mapping to a Design System\nconst PrimaryButton = ({ label }) => (\n  <button className="bg-blue-500 text-white p-4 rounded-lg">\n    {label}\n  </button>\n);',
+    lineByLine: 'The code reflects the design system: blue background, white text, specific padding and corners.',
+    commonMistakes: ['Not making elements reusable', 'Having 10 different versions of the same button', 'Ignoring edge cases (e.g., long text in a button)'],
+    practice: 'Create a "Button" component in Figma with a hover state.',
+    challenge: 'What is "Atomic Design" and how does it relate to components?',
+    quiz: [
+      {
+        question: 'In Figma, what happens when you change the "Main Component"?',
+        options: ['Nothing happens to other elements', 'Only that specific element changes', 'All "Instances" of that component update automatically', 'The file gets deleted'],
+        correctIndex: 2,
+        explanation: 'This is the power of components—update once, and it reflects everywhere.'
+      }
+    ],
+    recap: 'Build once, use everywhere. Components are the foundation of modern UI.'
+  },
+  'buttons-cards-inputs': {
+    id: 'buttons-cards-inputs',
+    title: 'Buttons, Cards, and Inputs',
+    todayYouAreLearning: 'Designing the most common UI elements with precision.',
+    whyItMatters: 'These are the workhorses of any UI. If they are poorly designed, the whole app feels broken.',
+    explanation: 'We study the anatomy of a button (label, icon, container), a card (image, title, body, action), and an input field (label, placeholder, focus state).',
+    analogy: 'These elements are like the steering wheel, pedals, and dashboard of a car. They need to be in the right place and feel right to the touch.',
+    codeExample: '/* Card styling */\n.card {\n  border-radius: 12px;\n  box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n  overflow: hidden;\n  transition: transform 0.2s;\n}',
+    lineByLine: 'We use rounded corners, subtle shadows, and hover transitions to make cards feel interactive.',
+    commonMistakes: ['Buttons that don\'t look clickable', 'Input fields without clear labels', 'Cards that are too cluttered with information'],
+    practice: 'Design a "Product Card" for an e-commerce app in Figma.',
+    challenge: 'What are the 4 main states of a button? (Normal, Hover, Pressed, Disabled)',
+    quiz: [
+      {
+        question: 'What is the purpose of a "Placeholder" in an input field?',
+        options: ['To show the final data', 'To provide a hint about what to type', 'To hide the user\'s password', 'To make the box look full'],
+        correctIndex: 1,
+        explanation: 'Placeholders guide the user on what information is expected in that field.'
+      }
+    ],
+    recap: 'Master the basics. Perfect your buttons, cards, and inputs.'
+  },
+  'design-consistency': {
+    id: 'design-consistency',
+    title: 'Design Consistency',
+    todayYouAreLearning: 'Maintaining a unified look and feel across your entire product.',
+    whyItMatters: 'Consistency builds trust and makes the app easier to learn. Inconsistency feels unprofessional and confusing.',
+    explanation: 'Consistency means using the same colors, fonts, spacing, and interaction patterns everywhere. If a "Delete" button is red on one screen, it should be red on all screens.',
+    analogy: 'Consistency is like a brand\'s personality. If your best friend suddenly started acting like a completely different person every day, you\'d be confused and stop trusting them.',
+    codeExample: '// Using constants for consistency\nconst COLORS = {\n  PRIMARY: "#3B82F6",\n  SECONDARY: "#6B7280",\n  ACCENT: "#F59E0B"\n};',
+    lineByLine: 'By using a central set of constants, we ensure the same colors are used throughout the code.',
+    commonMistakes: ['Using slightly different shades of the same color', 'Mixing different icon styles (e.g., outlined and filled)', 'Having inconsistent padding on different pages'],
+    practice: 'Review your "Mobile App" design. Are all your headings the same size and color?',
+    challenge: 'Why is "Internal Consistency" different from "External Consistency"?',
+    quiz: [
+      {
+        question: 'Why is consistency important in UI design?',
+        options: ['It makes the app look more colorful', 'It reduces the user\'s "cognitive load" (thinking effort)', 'It allows you to use fewer images', 'It makes the code run faster'],
+        correctIndex: 1,
+        explanation: 'When things are consistent, users don\'t have to re-learn how to use your app on every screen.'
+      }
+    ],
+    recap: 'Consistency is the hallmark of a professional designer.'
+  },
+  'user-personas': {
+    id: 'user-personas',
+    title: 'User Personas',
+    todayYouAreLearning: 'Creating fictional characters to represent your real users.',
+    whyItMatters: 'Personas help you design for specific needs rather than a generic "everyone". They keep the team focused on the user.',
+    explanation: 'A persona includes a name, photo, goals, frustrations, and a short bio. It\'s based on real research data, not just imagination.',
+    analogy: 'A persona is like a character in a movie. The writers need to know exactly who they are to write believable dialogue. You need to know your user to design a believable product.',
+    codeExample: '// Persona Data Object\nconst persona = {\n  name: "Sarah the Student",\n  age: 21,\n  goal: "Find affordable textbooks quickly",\n  painPoint: "High shipping costs and slow delivery"\n};',
+    lineByLine: 'We summarize the user\'s core identity and needs into a simple, relatable format.',
+    commonMistakes: ['Creating too many personas', 'Making personas based on stereotypes', 'Creating "Perfect" personas that have no problems'],
+    practice: 'Create a persona for a "Fitness App" user. What are their goals and fears?',
+    challenge: 'What is the difference between a "User Persona" and a "Marketing Segment"?',
+    quiz: [
+      {
+        question: 'What is a User Persona?',
+        options: ['A real person you interviewed', 'A fictional character representing a user group', 'A list of all your app features', 'A type of social media profile'],
+        correctIndex: 1,
+        explanation: 'Personas are archetypes that help designers empathize with their target audience.'
+      }
+    ],
+    recap: 'Design for Sarah, not for "the user".'
+  },
+  'surveys-and-feedback': {
+    id: 'surveys-and-feedback',
+    title: 'Surveys and Feedback',
+    todayYouAreLearning: 'Gathering quantitative and qualitative data from real users.',
+    whyItMatters: 'You can\'t improve what you don\'t measure. Feedback tells you if your design is actually working.',
+    explanation: 'Surveys give you "What" (numbers), while interviews and feedback give you "Why" (reasons). We use tools like Google Forms, Typeform, or in-app feedback widgets.',
+    analogy: 'Feedback is like a GPS. It tells you if you\'re on the right track or if you need to make a U-turn.',
+    codeExample: '// Simple Feedback Form Logic\nif (userClosedAppQuickly) {\n  showSurvey("Was something confusing?");\n}',
+    lineByLine: 'We trigger feedback requests based on specific user behaviors to get context-rich data.',
+    commonMistakes: ['Asking leading questions (e.g., "Don\'t you love our app?")', 'Asking too many questions in one survey', 'Ignoring negative feedback'],
+    practice: 'Write 3 non-leading questions for a survey about a "Food Delivery App".',
+    challenge: 'What is the "Net Promoter Score" (NPS) and how is it calculated?',
+    quiz: [
+      {
+        question: 'Which type of data tells you "Why" a user is doing something?',
+        options: ['Quantitative (Numbers)', 'Qualitative (Reasons/Feelings)', 'Binary Data', 'Metadata'],
+        correctIndex: 1,
+        explanation: 'Qualitative data, like interview answers, provides the "why" behind user behavior.'
+      }
+    ],
+    recap: 'Listen to your users. They have the answers you need.'
+  },
+  'figma-prototyping-basics': {
+    id: 'figma-prototyping-basics',
+    title: 'Figma Prototyping Basics',
+    todayYouAreLearning: 'Making your static designs interactive.',
+    whyItMatters: 'Prototypes allow you to test the flow and feel of an app without writing a single line of code.',
+    explanation: 'You\'ll learn how to connect screens using "Noodles", set triggers (On Click, On Hover), and use basic transitions (Dissolve, Slide In).',
+    analogy: 'A prototype is like a movie set. It looks real from the front, and you can walk through the doors, even if there\'s nothing behind them yet.',
+    codeExample: '// Prototyping logic in code (React Router)\n<Link to="/profile">\n  <Button label="View Profile" />\n</Link>',
+    lineByLine: 'The "Noodle" in Figma is equivalent to a "Link" in code—it defines where the user goes next.',
+    commonMistakes: ['Making the prototype too complex too early', 'Broken links that lead nowhere', 'Not testing the prototype on a real device'],
+    practice: 'Connect two screens in Figma: a "Login" screen and a "Home" screen.',
+    challenge: 'What is the difference between a "Low-Fidelity" and "High-Fidelity" prototype?',
+    quiz: [
+      {
+        question: 'What is the main goal of a prototype?',
+        options: ['To show the final code', 'To test the flow and interactions', 'To store user data', 'To make the app faster'],
+        correctIndex: 1,
+        explanation: 'Prototypes are for testing how the app feels and flows before it\'s built.'
+      }
+    ],
+    recap: 'Bring your designs to life. Start with simple connections.'
+  },
+  'advanced-transitions': {
+    id: 'advanced-transitions',
+    title: 'Advanced Transitions & Smart Animate',
+    todayYouAreLearning: 'Creating smooth, app-like animations in Figma.',
+    whyItMatters: 'Smooth transitions make an app feel premium and polished. "Smart Animate" is Figma\'s most powerful feature.',
+    explanation: 'Smart Animate automatically animates between two layers with the same name. You\'ll learn about Easing (Linear, Ease In/Out) and timing.',
+    analogy: 'Smart Animate is like "Tweening" in old animation. You show the start and the end, and Figma fills in the middle for you.',
+    codeExample: '/* CSS equivalent of Smart Animate */\n.box {\n  transition: all 0.3s ease-in-out;\n}\n.box.active {\n  transform: scale(1.2);\n  background: blue;\n}',
+    lineByLine: 'We define the transition properties and the "active" state, and the browser animates the change.',
+    commonMistakes: ['Using too many flashy animations', 'Animations that are too slow and waste the user\'s time', 'Not naming layers identically (Smart Animate will fail!)'],
+    practice: 'Create a "Toggle Switch" that slides smoothly when clicked using Smart Animate.',
+    challenge: 'What is "Staggered Animation" and why is it used?',
+    quiz: [
+      {
+        question: 'What is required for Figma\'s "Smart Animate" to work between two screens?',
+        options: ['The screens must have different colors', 'The layers must have the same name on both screens', 'You must use the Pen tool', 'You must be a Pro user'],
+        correctIndex: 1,
+        explanation: 'Figma uses the layer name to track which elements to animate between screens.'
+      }
+    ],
+    recap: 'Master Smart Animate to create prototypes that look like real apps.'
+  },
+  'mobile-first-design': {
+    id: 'mobile-first-design',
+    title: 'Mobile-First Design',
+    todayYouAreLearning: 'Designing for the smallest screen first to prioritize content.',
+    whyItMatters: 'Most people use the web on their phones. Designing for mobile first forces you to focus on what\'s truly important.',
+    explanation: 'Mobile-first design involves starting with the mobile layout and then "scaling up" to tablet and desktop. It ensures a great experience on the most constrained device.',
+    analogy: 'Mobile-first is like packing a small suitcase for a trip. You only take the essentials. If you have a bigger suitcase later (Desktop), you can add more, but the essentials are already there.',
+    codeExample: '/* Mobile-First CSS */\n.container { width: 100%; }\n\n@media (min-width: 768px) {\n  .container { width: 50%; } /* Desktop scale up */\n}',
+    lineByLine: 'We start with the 100% width (mobile) and only change it for larger screens (min-width: 768px).',
+    commonMistakes: ['Designing for desktop first and "shrinking" it for mobile', 'Touch targets (buttons) being too small for fingers', 'Too much text for a small screen'],
+    practice: 'Take a desktop website you like and sketch how it would look on a phone.',
+    challenge: 'What is the recommended minimum size for a touch target (button) on mobile? (Hint: 44x44px)',
+    quiz: [
+      {
+        question: 'Why do we design for mobile first?',
+        options: ['Because mobile phones are more expensive', 'To force prioritization of the most important content', 'Because coding for mobile is easier', 'To avoid using images'],
+        correctIndex: 1,
+        explanation: 'Small screens force you to remove clutter and focus on the core user goals.'
+      }
+    ],
+    recap: 'Think small to win big. Start with mobile.'
+  },
+  'responsive-ui-layouts': {
+    id: 'responsive-ui-layouts',
+    title: 'Responsive UI Layouts',
+    todayYouAreLearning: 'Creating designs that adapt perfectly to any screen size.',
+    whyItMatters: 'Users switch between devices constantly. Your design must look great on a phone, a laptop, and a giant monitor.',
+    explanation: 'We use Breakpoints, Fluid Grids, and Flexible Images. In Figma, we use "Constraints" and "Auto Layout" to make our designs responsive.',
+    analogy: 'A responsive layout is like water. It takes the shape of whatever container (device) you pour it into.',
+    codeExample: '.grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\n}',
+    lineByLine: 'This CSS automatically adjusts the number of columns based on the available screen width.',
+    commonMistakes: ['Using fixed pixel widths (e.g., width: 1200px)', 'Not testing on different screen sizes', 'Hiding important content on mobile'],
+    practice: 'Use Figma Constraints to make a header that stays at the top and stretches to full width.',
+    challenge: 'What is a "Breakpoint" in responsive design?',
+    quiz: [
+      {
+        question: 'Which Figma feature helps make elements responsive within a frame?',
+        options: ['Pen Tool', 'Constraints', 'Masking', 'Effects'],
+        correctIndex: 1,
+        explanation: 'Constraints tell Figma how an element should behave when its parent frame is resized.'
+      }
+    ],
+    recap: 'Design for flexibility. Your UI should be like water.'
+  },
+  'landing-page-design': {
+    id: 'landing-page-design',
+    title: 'Landing Page Design',
+    todayYouAreLearning: 'Designing high-converting pages that sell a product or service.',
+    whyItMatters: 'A landing page is often the first impression a user has. Its job is to convert visitors into customers.',
+    explanation: 'Key elements include the Hero Section (Headline, Subheadline, CTA), Social Proof (Testimonials), Features/Benefits, and a final CTA.',
+    analogy: 'A landing page is like a professional salesperson. It needs to grab attention, build trust, explain the value, and close the deal.',
+    codeExample: '<!-- Hero Section Structure -->\n<section class="hero">\n  <h1>The Best App Ever</h1>\n  <p>Solve all your problems today.</p>\n  <button>Get Started Free</button>\n</section>',
+    lineByLine: 'The hierarchy is clear: Big headline, supporting text, and a prominent "Call to Action" (CTA) button.',
+    commonMistakes: ['No clear Call to Action (CTA)', 'Too much text above the fold', 'Slow-loading images that frustrate users'],
+    practice: 'Design the "Hero Section" for a new "AI Coffee Maker" landing page.',
+    challenge: 'What does "Above the Fold" mean in web design?',
+    quiz: [
+      {
+        question: 'What is the most important element of a landing page?',
+        options: ['The footer', 'The Call to Action (CTA)', 'The copyright notice', 'The background pattern'],
+        correctIndex: 1,
+        explanation: 'The CTA is the primary action you want the user to take (e.g., Sign Up, Buy Now).'
+      }
+    ],
+    recap: 'Focus on the goal. Every element should lead to the CTA.'
+  },
+  'dashboard-ui-design': {
+    id: 'dashboard-ui-design',
+    title: 'Dashboard UI Design',
+    todayYouAreLearning: 'Organizing complex data into a clean, actionable interface.',
+    whyItMatters: 'Dashboards are used for work. If they are messy, users can\'t do their jobs effectively.',
+    explanation: 'We focus on Data Visualization (charts, graphs), Navigation (sidebars), and Information Density. The goal is to show the most important data at a glance.',
+    analogy: 'A dashboard is like the cockpit of an airplane. The pilot needs to see the most critical info (altitude, speed) clearly, with secondary controls easily accessible.',
+    codeExample: '// Dashboard Layout Component\n<div class="flex h-screen">\n  <Sidebar />\n  <main class="flex-1 p-8">\n    <StatsGrid />\n    <MainChart />\n  </main>\n</div>',
+    lineByLine: 'We use a flexbox layout with a fixed sidebar and a flexible main content area for the data.',
+    commonMistakes: ['Overwhelming the user with too much data', 'Using the wrong type of chart for the data', 'Poor navigation that makes it hard to find deep pages'],
+    practice: 'Design a "Daily Activity" widget for a fitness dashboard.',
+    challenge: 'When should you use a Bar Chart vs. a Line Chart?',
+    quiz: [
+      {
+        question: 'What is the primary goal of a dashboard?',
+        options: ['To show as much data as possible', 'To help users make quick, data-driven decisions', 'To use many different colors', 'To hide the navigation'],
+        correctIndex: 1,
+        explanation: 'Dashboards should prioritize actionable insights over raw data volume.'
+      }
+    ],
+    recap: 'Clarity is king. Simplify the complex.'
+  },
+  // LEVEL 3: REAL-WORLD
+  'case-study-approach': {
+    id: 'case-study-approach',
+    title: 'The Case Study Approach',
+    todayYouAreLearning: 'How to document your design process to show your value to employers.',
+    whyItMatters: 'Employers don\'t just want to see pretty pictures; they want to see how you think and solve problems.',
+    explanation: 'A case study follows a structure: The Problem, The Research, The Solution, The Design, and The Results. It tells the story of your project.',
+    analogy: 'A case study is like a science fair project. You don\'t just show the volcano; you show the hypothesis, the experiment, and what you learned.',
+    codeExample: '// Case Study Structure\n# Project Title\n## The Problem\n## User Research\n## Wireframes\n## Final Design\n## Impact & Results',
+    lineByLine: 'This structure guides the reader through your logical process from start to finish.',
+    commonMistakes: ['Only showing the final screens', 'Writing too much text that no one reads', 'Not explaining the "Why" behind your decisions'],
+    practice: 'Pick a small project you\'ve done. Write down the "Problem" it solved in 3 sentences.',
+    challenge: 'Find a professional UI/UX case study on Medium or Behance and analyze its structure.',
+    quiz: [
+      {
+        question: 'What is the most important part of a design case study for an employer?',
+        options: ['The final high-fidelity screens', 'The explanation of your problem-solving process', 'The fonts you used', 'The number of pages'],
+        correctIndex: 1,
+        explanation: 'Employers hire you for your thinking and process, not just your ability to use Figma.'
+      }
+    ],
+    recap: 'Tell a story. Show your work, but more importantly, show your thoughts.'
+  },
+  'solving-real-problems': {
+    id: 'solving-real-problems',
+    title: 'Solving Real-World Problems',
+    todayYouAreLearning: 'Applying design thinking to actual business and user challenges.',
+    whyItMatters: 'Real-world design is messy. You need to balance user needs with business goals and technical constraints.',
+    explanation: 'We look at real scenarios: "Our checkout abandonment is 70%, how do we fix it?" or "Users can\'t find the search bar on mobile." We use data and empathy to find solutions.',
+    analogy: 'Solving real problems is like being a detective. You look for clues (data), interview witnesses (users), and find the culprit (the design flaw).',
+    codeExample: '// Problem: High Abandonment\n// Solution: One-page checkout\nconst Checkout = () => (\n  <form>\n    <ShippingInfo />\n    <PaymentInfo />\n    <SubmitButton label="Pay Now" />\n  </form>\n);',
+    lineByLine: 'We simplify the process into a single, clear flow to reduce friction and abandonment.',
+    commonMistakes: ['Ignoring business goals', 'Not considering technical limitations', 'Solving the wrong problem'],
+    practice: 'Identify a problem in a local business\'s website (e.g., a restaurant menu that is a PDF). How would you fix it?',
+    challenge: 'What is "Design Thinking" and what are its 5 stages?',
+    quiz: [
+      {
+        question: 'When solving a design problem, whose needs should come first?',
+        options: ['The designer\'s', 'The CEO\'s', 'The user\'s', 'The developer\'s'],
+        correctIndex: 2,
+        explanation: 'User-centered design means the user\'s needs are the primary focus, balanced with business goals.'
+      }
+    ],
+    recap: 'Design is about impact. Solve the right problems.'
+  },
+  'presenting-designs': {
+    id: 'presenting-designs',
+    title: 'Presenting Your Designs',
+    todayYouAreLearning: 'How to explain and defend your design choices to stakeholders.',
+    whyItMatters: 'If you can\'t sell your design, it will never get built. Communication is a core design skill.',
+    explanation: 'We learn how to use "Design Rationale" (explaining the why), handle criticism gracefully, and use storytelling to engage your audience.',
+    analogy: 'Presenting is like being a lawyer. You have your evidence (research) and you are making a case for your client (the user).',
+    codeExample: '// Design Rationale Example\n"I chose a bottom navigation bar because our research showed that users primarily use the app with one hand while walking."',
+    lineByLine: 'This statement links a design choice (bottom nav) to a specific user insight (one-handed use).',
+    commonMistakes: ['Getting defensive when receiving feedback', 'Using too much design jargon', 'Not linking design choices to user needs or data'],
+    practice: 'Record a 2-minute video of yourself explaining one screen you designed.',
+    challenge: 'How do you handle a stakeholder who says "I just don\'t like the color blue"?',
+    quiz: [
+      {
+        question: 'What is "Design Rationale"?',
+        options: ['A type of design software', 'The logical reasoning behind your design choices', 'A list of all the colors used', 'A contract for design work'],
+        correctIndex: 1,
+        explanation: 'Design rationale explains the "why" behind your "what".'
+      }
+    ],
+    recap: 'Be a confident communicator. Back your choices with data.'
+  },
+  'behance-portfolio-setup': {
+    id: 'behance-portfolio-setup',
+    title: 'Behance & Portfolio Setup',
+    todayYouAreLearning: 'Building a professional presence on design platforms.',
+    whyItMatters: 'Your portfolio is your resume. Behance is where the design community and recruiters look for talent.',
+    explanation: 'We cover how to create high-quality "Mockups" (putting your design on a phone/laptop), writing engaging project descriptions, and networking.',
+    analogy: 'Your portfolio is your storefront. It needs to look inviting, show your best products, and tell people who you are.',
+    codeExample: '// Portfolio Metadata\nconst portfolio = {\n  platform: "Behance",\n  projects: 3,\n  status: "Looking for opportunities",\n  specialization: "Mobile UI/UX"\n};',
+    lineByLine: 'We define our professional identity and focus to attract the right opportunities.',
+    commonMistakes: ['Quantity over quality (too many mediocre projects)', 'No way to contact you', 'Using low-quality or blurry images'],
+    practice: 'Create a Behance account and follow 5 designers whose work you admire.',
+    challenge: 'What are "Mockups" and why are they important for a portfolio?',
+    quiz: [
+      {
+        question: 'What is the primary purpose of a design portfolio?',
+        options: ['To store all your files', 'To showcase your skills and thinking to potential employers', 'To get likes from friends', 'To practice using Figma'],
+        correctIndex: 1,
+        explanation: 'A portfolio is a tool to get you hired by proving your capabilities.'
+      }
+    ],
+    recap: 'Your portfolio is a living document. Keep it fresh and high-quality.'
+  },
+  'developer-handoff': {
+    id: 'developer-handoff',
+    title: 'Developer Handoff',
+    todayYouAreLearning: 'Preparing your designs so developers can build them perfectly.',
+    whyItMatters: 'A design is useless if it can\'t be built. Good handoff prevents "Design vs. Reality" gaps.',
+    explanation: 'We learn how to organize Figma files, export assets (SVG, PNG), provide redlines (specs), and document animations.',
+    analogy: 'Handoff is like a relay race. You need to pass the baton (the design) smoothly so the next runner (the developer) can keep the momentum.',
+    codeExample: '/* Developer Handoff Specs */\n- Button Height: 48px\n- Border Radius: 8px\n- Font: Inter SemiBold 16px\n- Color: #3B82F6',
+    lineByLine: 'We provide the exact values developers need to recreate the design in code.',
+    commonMistakes: ['Sending a messy Figma file with no instructions', 'Not exporting assets correctly', 'Ignoring technical constraints (e.g., "This animation is impossible")'],
+    practice: 'Prepare one screen in Figma for handoff. Name all layers and mark assets for export.',
+    challenge: 'What is "Inspect Mode" in Figma and how do developers use it?',
+    quiz: [
+      {
+        question: 'What is a "Design Handoff"?',
+        options: ['Giving your computer to a developer', 'The process of transferring design specs and assets to developers', 'A type of design meeting', 'When a designer quits a project'],
+        correctIndex: 1,
+        explanation: 'Handoff is the critical bridge between design and code.'
+      }
+    ],
+    recap: 'Be a developer\'s favorite designer. Make their job easy.'
+  },
+  'frontend-for-designers': {
+    id: 'frontend-for-designers',
+    title: 'Frontend Basics for Designers',
+    todayYouAreLearning: 'Understanding HTML, CSS, and JS to design better products.',
+    whyItMatters: 'Knowing how the web works helps you design things that are technically feasible and easier to build.',
+    explanation: 'We cover the Box Model, Flexbox/Grid concepts, and how CSS handles colors and fonts. You don\'t need to be a pro coder, but you need to speak the language.',
+    analogy: 'Learning frontend is like an architect learning about bricks and steel. You don\'t have to lay the bricks, but you need to know what they can and can\'t do.',
+    codeExample: '.box {\n  width: 100px;\n  height: 100px;\n  padding: 10px;\n  border: 5px solid black;\n  margin: 20px;\n} /* Total width = 130px */',
+    lineByLine: 'Understanding the Box Model (content + padding + border + margin) is essential for layout design.',
+    commonMistakes: ['Designing things that are impossible to code', 'Not understanding how responsive design works in code', 'Ignoring accessibility standards (WCAG)'],
+    practice: 'Try to build a simple button in HTML and CSS using a tool like CodePen.',
+    challenge: 'What is the difference between "Padding" and "Margin" in the CSS Box Model?',
+    quiz: [
+      {
+        question: 'Why should a UI/UX designer learn basic HTML/CSS?',
+        options: ['To replace the developers', 'To understand technical constraints and communicate better', 'To get paid more for doing two jobs', 'To build their own computer'],
+        correctIndex: 1,
+        explanation: 'Technical knowledge makes you a more effective and realistic designer.'
+      }
+    ],
+    recap: 'Code is the medium of your design. Understand your medium.'
+  },
+  'getting-clients': {
+    id: 'getting-clients',
+    title: 'Getting Clients & Freelancing',
+    todayYouAreLearning: 'How to find work as an independent designer.',
+    whyItMatters: 'Freelancing offers freedom and variety, but it requires business skills that aren\'t taught in design school.',
+    explanation: 'We cover platforms (Upwork, Toptal), cold outreach, networking, and building a personal brand.',
+    analogy: 'Freelancing is like running your own small shop. You are the designer, the salesperson, the accountant, and the janitor.',
+    codeExample: '// Freelance Outreach Template\n"Hi [Name], I saw your website and noticed [Problem]. I\'d love to help you fix it by [Solution]. Here is my portfolio..." ',
+    lineByLine: 'A good outreach message is personalized, identifies a problem, and offers a specific solution.',
+    commonMistakes: ['Underpricing your work', 'Not having a contract', 'Taking on "Nightmare Clients" who don\'t respect your time'],
+    practice: 'Write a cold email to a local business offering to redesign their homepage.',
+    challenge: 'What is a "Retainer" in freelancing?',
+    quiz: [
+      {
+        question: 'What is the most important thing to have before starting as a freelance designer?',
+        options: ['A fancy office', 'A solid portfolio of work', 'A very expensive laptop', 'A 10-page business plan'],
+        correctIndex: 1,
+        explanation: 'Your portfolio is your primary tool for convincing clients to hire you.'
+      }
+    ],
+    recap: 'Freelancing is a business. Treat it like one.'
+  },
+  'pricing-and-interviews': {
+    id: 'pricing-and-interviews',
+    title: 'Pricing and Job Interviews',
+    todayYouAreLearning: 'Valuing your work and acing the design interview.',
+    whyItMatters: 'You deserve to be paid fairly. Interviews are your chance to show you are the right fit for a team.',
+    explanation: 'We cover Hourly vs. Project-based pricing, and common interview questions like "Walk me through a project" or "How do you handle feedback?"',
+    analogy: 'Pricing is like a menu. You need to know the value of your ingredients and your skill. An interview is like a first date—both sides are seeing if they want a long-term relationship.',
+    codeExample: '// Pricing Formula\n(Desired Annual Salary + Expenses) / Billable Hours = Hourly Rate',
+    lineByLine: 'We use a simple formula to ensure our freelance rate covers our needs and business costs.',
+    commonMistakes: ['Not researching salary ranges before an interview', 'Being afraid to talk about money', 'Not asking questions back to the interviewer'],
+    practice: 'Research the average salary for a "Junior UI/UX Designer" in your city or country.',
+    challenge: 'How would you answer the question: "What is your biggest weakness as a designer?"',
+    quiz: [
+      {
+        question: 'When asked about your design process in an interview, what should you focus on?',
+        options: ['The software you use', 'How you solve problems for users', 'How fast you can work', 'Your favorite colors'],
+        correctIndex: 1,
+        explanation: 'Interviewer want to see your problem-solving mindset and user-centered approach.'
+      }
+    ],
+    recap: 'Know your value. Be prepared. Be professional.'
+  },
+  'usability-testing': {
+    id: 'usability-testing',
+    title: 'Usability Testing',
+    todayYouAreLearning: 'Watching real users use your product to find where it fails.',
+    whyItMatters: 'You are not the user. Usability testing reveals the "blind spots" in your design.',
+    explanation: 'We cover Moderated vs. Unmoderated testing, creating a test plan, and how to synthesize findings into actionable improvements.',
+    analogy: 'Usability testing is like a dress rehearsal for a play. You see where the actors trip and where the audience gets bored before the big opening night.',
+    codeExample: '// Usability Test Task\n"Try to find a pair of red running shoes under $50 and add them to your cart."',
+    lineByLine: 'We give the user a specific goal and observe their behavior without helping them.',
+    commonMistakes: ['Helping the user when they get stuck', 'Testing with too many people (5 is often enough!)', 'Ignoring the results because they "hurt your feelings"'],
+    practice: 'Ask a family member to perform a task on an app you designed. Don\'t say a word while they do it.',
+    challenge: 'What is the "Think Aloud" method in usability testing?',
+    quiz: [
+      {
+        question: 'How many users are typically needed to find 80% of usability issues?',
+        options: ['100+', '50', '5', '1'],
+        correctIndex: 2,
+        explanation: 'Research by Jakob Nielsen shows that testing with just 5 users reveals the majority of usability problems.'
+      }
+    ],
+    recap: 'Test early, test often. Let the users guide your design.'
+  },
+  'ab-testing-ux': {
+    id: 'ab-testing-ux',
+    title: 'A/B Testing for UX',
+    todayYouAreLearning: 'Comparing two versions of a design to see which performs better.',
+    whyItMatters: 'A/B testing takes the guesswork out of design. It provides hard data on what users prefer.',
+    explanation: 'Version A (Control) vs. Version B (Variant). We change one variable (e.g., button color or headline) and measure the conversion rate.',
+    analogy: 'A/B testing is like a taste test between two sodas. You give both to a large group and see which one more people prefer.',
+    codeExample: '// A/B Testing Logic\nif (userGroup === "A") {\n  showBlueButton();\n} else {\n  showGreenButton();\n}',
+    lineByLine: 'We split our audience and show them different versions to measure the impact of a single change.',
+    commonMistakes: ['Testing too many things at once', 'Not running the test long enough to get significant data', 'Ignoring the qualitative "Why" behind the "What"'],
+    practice: 'Design two versions of a "Sign Up" button. What one variable did you change?',
+    challenge: 'What is "Statistical Significance" in A/B testing?',
+    quiz: [
+      {
+        question: 'What is the main advantage of A/B testing?',
+        options: ['It makes the app look better', 'It provides data-driven proof of which design works better', 'It is faster than wireframing', 'It replaces the need for UX research'],
+        correctIndex: 1,
+        explanation: 'A/B testing uses real user behavior to decide between design options.'
+      }
+    ],
+    recap: 'Data-driven design is powerful. Test your assumptions.'
+  },
+  'browser-internals': {
+    id: 'browser-internals',
+    title: 'Browser Internals',
+    todayYouAreLearning: 'How browsers like Chrome and Safari actually turn code into pixels.',
+    whyItMatters: 'Understanding the rendering engine helps you build faster, smoother websites.',
+    explanation: 'A browser has two main engines: the Rendering Engine (for HTML/CSS) and the JavaScript Engine (like V8). It goes through a process: 1. Parsing HTML to build the DOM. 2. Parsing CSS to build the CSSOM. 3. Combining them into a Render Tree. 4. Layout (calculating positions). 5. Painting (drawing pixels).',
+    analogy: 'Think of a browser like a construction crew. The HTML is the blueprint, the CSS is the interior design plan, and the JS is the electrician. They all work together to build the house (the website) from the ground up.',
+    visualExplanation: 'Imagine a tree structure where the trunk is the <html> and every branch is a tag like <div> or <p>. This is the DOM (Document Object Model).',
+    codeExample: '// The browser uses the DOM API to interact with the page\nconsole.log(document.body);',
+    lineByLine: 'The "document" object represents the entire web page. Accessing ".body" gives us the main content area.',
+    commonMistakes: ['Thinking the browser is just a window—it is a complex operating system for web apps.', 'Ignoring the "Critical Rendering Path" which affects loading speed.'],
+    practice: 'Open Chrome DevTools, go to the "Performance" tab, and record a page load to see the rendering steps.',
+    challenge: 'What is the difference between "Reflow" and "Repaint"?',
+    quiz: [
+      {
+        question: 'What are the two main engines inside a browser?',
+        options: ['HTML and CSS', 'Rendering and JavaScript', 'Storage and Network', 'Graphics and Sound'],
+        correctIndex: 1,
+        explanation: 'Browsers use a rendering engine for visuals and a JS engine for logic.'
+      }
+    ],
+    recap: 'Browsers are powerful engines that transform text files into interactive visual experiences.'
+  },
+  'dev-tools-setup': {
+    id: 'dev-tools-setup',
+    title: 'Dev Tools Setup',
+    todayYouAreLearning: 'Setting up your professional development environment for frontend mastery.',
+    whyItMatters: 'A professional setup makes you 10x faster and helps you catch bugs before they reach users.',
+    explanation: 'Every frontend dev needs three main tools: 1. A powerful code editor (VS Code). 2. A modern browser (Chrome/Firefox). 3. The Terminal. We use extensions like Prettier for formatting, ESLint for catching errors, and Live Server for instant previews.',
+    analogy: 'A developer without good tools is like a carpenter without a level or a saw. You might build something, but it will be slow and crooked.',
+    visualExplanation: 'Your screen should be split: Code on the left, Browser on the right. This "Live Feedback Loop" is the secret to fast learning.',
+    codeExample: '// No code here, but try this in your terminal:\nnode --version\ngit --version',
+    lineByLine: 'Checking versions ensures your tools are installed correctly and ready for work.',
+    commonMistakes: ['Using a simple text editor instead of an IDE like VS Code.', 'Not learning keyboard shortcuts early on.'],
+    practice: 'Install VS Code and the "Prettier" extension. Set it to "Format on Save".',
+    challenge: 'Find and learn 5 essential VS Code keyboard shortcuts.',
+    quiz: [
+      {
+        question: 'Which tool is used for catching code errors as you type?',
+        options: ['Prettier', 'ESLint', 'Live Server', 'Terminal'],
+        correctIndex: 1,
+        explanation: 'ESLint analyzes your code to find and report on patterns that might lead to bugs.'
+      }
+    ],
+    recap: 'A clean, professional setup is the foundation of your development career.'
+  },
+  'html-media': {
+    id: 'html-media',
+    title: 'HTML Media',
+    todayYouAreLearning: 'Adding images, videos, and audio to your web pages correctly.',
+    whyItMatters: 'Media makes the web engaging. Doing it wrong makes your site slow and inaccessible.',
+    explanation: 'We use the `<img>` tag for images, `<video>` for movies, and `<audio>` for sound. Crucially, we must provide "alt text" for images so screen readers can describe them to visually impaired users.',
+    analogy: 'Media tags are like frames in a gallery. The tag is the frame, and the "src" attribute is the actual painting you put inside it.',
+    visualExplanation: 'The "alt" attribute is like a label on the back of a photo. If the photo is lost, the label still tells you what was there.',
+    codeExample: '<img src="profile.jpg" alt="A professional headshot of a developer">\n<video controls>\n  <source src="demo.mp4" type="video/mp4">\n</video>',
+    lineByLine: 'The "src" points to the file. "alt" provides a description. "controls" adds play/pause buttons to the video.',
+    commonMistakes: ['Forgetting the "alt" attribute.', 'Using massive image files that slow down the page.'],
+    practice: 'Add an image to your profile page and give it a descriptive alt tag.',
+    challenge: 'What is the "poster" attribute used for in a <video> tag?',
+    quiz: [
+      {
+        question: 'Which attribute is essential for accessibility in an <img> tag?',
+        options: ['src', 'width', 'alt', 'title'],
+        correctIndex: 2,
+        explanation: 'The "alt" attribute provides a text description for users who cannot see the image.'
+      }
+    ],
+    recap: 'Media brings your site to life, but always prioritize performance and accessibility.'
+  },
+  'accessibility-basics': {
+    id: 'accessibility-basics',
+    title: 'Accessibility Basics',
+    todayYouAreLearning: 'Building websites that everyone can use, regardless of their abilities.',
+    whyItMatters: 'Accessibility (a11y) is a human right. It also improves SEO and makes your site better for everyone.',
+    explanation: 'Web accessibility means ensuring people with disabilities can perceive, understand, and interact with the web. This includes using semantic HTML, providing enough color contrast, and making sure the site is keyboard-navigable.',
+    analogy: 'Building an inaccessible website is like building a public library with only stairs and no ramps. You are excluding people from accessing information.',
+    visualExplanation: 'Imagine using your computer with only a keyboard. Can you reach every button? This is a core test of accessibility.',
+    codeExample: '<!-- Good: Semantic and Accessible -->\n<button aria-label="Close Menu">X</button>\n\n<!-- Bad: Not accessible -->\n<span onclick="close()">X</span>',
+    lineByLine: 'The button is naturally focusable and has a clear label for screen readers. The span is invisible to non-mouse users.',
+    commonMistakes: ['Using color alone to convey meaning.', 'Using non-semantic tags like <div> for buttons.'],
+    practice: 'Try to navigate your favorite website using only the "Tab" and "Enter" keys.',
+    challenge: 'What does "ARIA" stand for in web development?',
+    quiz: [
+      {
+        question: 'What is the primary goal of web accessibility?',
+        options: ['To make sites look better', 'To ensure everyone can use the web regardless of ability', 'To make code run faster', 'To reduce the number of tags used'],
+        correctIndex: 1,
+        explanation: 'Accessibility ensures that people with disabilities have equal access to information and functionality on the web.'
+      }
+    ],
+    recap: 'Accessibility is not a feature; it is a fundamental requirement of professional web development.'
+  },
+  'css-selectors': {
+    id: 'css-selectors',
+    title: 'CSS Selectors',
+    todayYouAreLearning: 'How to target specific HTML elements to apply styles.',
+    whyItMatters: 'Mastering selectors allows you to write clean, efficient CSS without repeating yourself.',
+    explanation: 'Selectors are the "who" of CSS. You can target elements by their tag name (h1), their class (.btn), or their unique ID (#header). You can also combine them to be more specific, like ".card h2" (all h2s inside a card).',
+    analogy: 'Selectors are like a guest list for a party. You can invite "Everyone" (tag selector), "People wearing blue" (class selector), or "The Guest of Honor" (ID selector).',
+    visualExplanation: 'Specificity is like a ranking system. An ID is more powerful than a class, and a class is more powerful than a tag.',
+    codeExample: '/* Tag Selector */\np { color: gray; }\n\n/* Class Selector */\n.highlight { background: yellow; }\n\n/* ID Selector */\n#main-title { font-size: 32px; }',
+    lineByLine: 'All paragraphs become gray. Any element with the "highlight" class gets a yellow background. The unique "main-title" gets a large font.',
+    commonMistakes: ['Using IDs for everything (IDs should be unique!).', 'Making selectors too complex and hard to maintain.'],
+    practice: 'Create a list of items and use a class to style only the "active" item.',
+    challenge: 'What is a "Pseudo-class" in CSS? Give an example.',
+    quiz: [
+      {
+        question: 'Which selector is used to target an element with a specific class?',
+        options: ['#', '.', '@', '$'],
+        correctIndex: 1,
+        explanation: 'The dot (.) is used for classes, while the hash (#) is used for IDs.'
+      }
+    ],
+    recap: 'Selectors are the bridge between your structure and your style.'
+  },
+  'flexbox-mastery': {
+    id: 'flexbox-mastery',
+    title: 'Flexbox Mastery',
+    todayYouAreLearning: 'The most powerful way to align items in a row or column.',
+    whyItMatters: 'Flexbox solved almost all the layout problems of the old web. It is essential for modern UI.',
+    explanation: 'Flexbox is a one-dimensional layout model. You make a container a "flex container" with `display: flex`. You can then control how items are spaced (justify-content) and aligned (align-items).',
+    analogy: 'Think of Flexbox like a flexible shelf. You can tell the items to sit at the start, the end, the middle, or spread out evenly to fill the space.',
+    visualExplanation: 'The "Main Axis" is the direction items flow (usually horizontal). The "Cross Axis" is the perpendicular direction.',
+    codeExample: '.container {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}',
+    lineByLine: 'Enables flexbox. Spreads items to the edges. Centers items vertically.',
+    commonMistakes: ['Confusing justify-content with align-items.', 'Forgetting that flexbox only affects direct children.'],
+    practice: 'Build a navigation bar with a logo on the left and links on the right using Flexbox.',
+    challenge: 'What does "flex-grow: 1" do to a flex item?',
+    quiz: [
+      {
+        question: 'Which property aligns items along the main axis in Flexbox?',
+        options: ['align-items', 'justify-content', 'flex-direction', 'display'],
+        correctIndex: 1,
+        explanation: 'justify-content handles spacing and alignment along the main axis (usually horizontal).'
+      }
+    ],
+    recap: 'Flexbox makes complex layouts simple and responsive.'
+  },
+  'css-grid-layout': {
+    id: 'css-grid-layout',
+    title: 'CSS Grid Layout',
+    todayYouAreLearning: 'Building complex two-dimensional layouts with rows and columns.',
+    whyItMatters: 'Grid is the ultimate layout tool for entire page structures and complex components.',
+    explanation: 'Unlike Flexbox (1D), Grid is 2D. You define a grid with `display: grid` and then specify your columns and rows using `grid-template-columns` and `grid-template-rows`. You can then place items exactly where you want them.',
+    analogy: 'Grid is like a piece of graph paper. You define the columns and rows first, then you decide which boxes your content will occupy.',
+    visualExplanation: 'Imagine a newspaper layout. You have a header across the top, a sidebar, and a main content area. Grid makes this easy to build.',
+    codeExample: '.grid-container {\n  display: grid;\n  grid-template-columns: 1fr 2fr;\n  gap: 20px;\n}',
+    lineByLine: 'Enables grid. Creates two columns: one taking 1 part and the other 2 parts of space. Adds 20px of space between items.',
+    commonMistakes: ['Using Grid for simple one-row layouts where Flexbox would be easier.', 'Not using the "fr" (fractional) unit for flexible sizing.'],
+    practice: 'Create a 3x3 grid of cards using CSS Grid.',
+    challenge: 'What is the "grid-area" property used for?',
+    quiz: [
+      {
+        question: 'How many dimensions does CSS Grid handle?',
+        options: ['One (Rows only)', 'One (Columns only)', 'Two (Rows and Columns)', 'Three (3D space)'],
+        correctIndex: 2,
+        explanation: 'CSS Grid is a two-dimensional layout system, handling both rows and columns simultaneously.'
+      }
+    ],
+    recap: 'Grid gives you total control over the layout of your web pages.'
+  },
+  'css-variables': {
+    id: 'css-variables',
+    title: 'CSS Variables',
+    todayYouAreLearning: 'Using variables to store and reuse values across your CSS.',
+    whyItMatters: 'Variables make your CSS easier to maintain. Change one color in one place, and it updates everywhere.',
+    explanation: 'CSS Variables (Custom Properties) allow you to store values like colors, spacing, or font sizes. You define them with a double dash (--primary-color) and use them with the `var()` function.',
+    analogy: 'Variables are like a "Find and Replace" tool that is always active. Instead of writing "#3498db" 50 times, you name it "--brand-blue" and use that name instead.',
+    visualExplanation: 'Think of a theme switcher. By changing the values of a few variables, you can switch an entire site from Light Mode to Dark Mode.',
+    codeExample: ':root {\n  --primary: #00ff00;\n}\n\n.btn {\n  background-color: var(--primary);\n}',
+    lineByLine: '":root" is the highest level, making the variable global. We define "--primary". Then we use "var(--primary)" to apply it.',
+    commonMistakes: ['Forgetting the double dash (--) when defining a variable.', 'Not providing a fallback value in the var() function.'],
+    practice: 'Define a set of theme colors as variables and use them to style a simple page.',
+    challenge: 'Can you change a CSS variable using JavaScript?',
+    quiz: [
+      {
+        question: 'How do you access a CSS variable in your styles?',
+        options: ['$', 'var()', '--', 'get()'],
+        correctIndex: 1,
+        explanation: 'The var() function is used to retrieve the value of a custom property.'
+      }
+    ],
+    recap: 'Variables bring logic and maintainability to your stylesheets.'
+  },
+  'branching-merging': {
+    id: 'branching-merging',
+    title: 'Branching & Merging',
+    todayYouAreLearning: 'How to work on new features without breaking the main code.',
+    whyItMatters: 'Branching allows multiple developers to work on the same project simultaneously without interference.',
+    explanation: 'A "Branch" is a separate version of your code. You create a branch to work on a feature, then "Merge" it back into the main branch once it is finished and tested.',
+    analogy: 'Think of a tree. The trunk is the main code. A branch grows out to develop a new leaf. Once the leaf is grown, it becomes part of the tree\'s overall structure.',
+    visualExplanation: 'Imagine a timeline that splits into two. You do work on the second line, then bring those changes back to the first line.',
+    codeExample: 'git checkout -b feature-login\n// ... do work ...\ngit checkout main\ngit merge feature-login',
+    lineByLine: 'Creates and switches to a new branch. Switches back to main. Combines the changes from the feature branch.',
+    commonMistakes: ['Working directly on the "main" branch for new features.', 'Forgetting to pull the latest changes before merging.'],
+    practice: 'Create a new branch called "style-updates" and make a small CSS change.',
+    challenge: 'What is a "Merge Conflict" and how do you fix it?',
+    quiz: [
+      {
+        question: 'What command is used to create and switch to a new branch?',
+        options: ['git branch', 'git checkout -b', 'git merge', 'git push'],
+        correctIndex: 1,
+        explanation: 'The "-b" flag with "git checkout" creates a new branch and switches to it immediately.'
+      }
+    ],
+    recap: 'Branching is the key to safe and collaborative development.'
+  },
+  'github-workflow': {
+    id: 'github-workflow',
+    title: 'GitHub Workflow',
+    todayYouAreLearning: 'The professional process of contributing code via Pull Requests.',
+    whyItMatters: 'This is the industry standard for how teams build software together.',
+    explanation: 'The GitHub workflow involves: 1. Forking/Cloning a repo. 2. Creating a branch. 3. Committing changes. 4. Pushing to GitHub. 5. Opening a Pull Request (PR) for review. 6. Merging after approval.',
+    analogy: 'It is like a suggestion box. You don\'t just change the company rules; you write your suggestion on a paper (PR), others discuss it, and if it is good, it becomes the new rule.',
+    visualExplanation: 'A Pull Request is a "Compare and Review" screen where you can see exactly what lines of code changed.',
+    codeExample: 'git push origin feature-branch\n// Then go to GitHub.com to open the PR',
+    lineByLine: 'Sends your local branch to the remote server (GitHub).',
+    commonMistakes: ['Pushing sensitive data (like API keys) to GitHub.', 'Writing vague commit messages like "fixed stuff".'],
+    practice: 'Push your profile page project to a new GitHub repository.',
+    challenge: 'What is the difference between "git push" and "git pull"?',
+    quiz: [
+      {
+        question: 'What is a Pull Request?',
+        options: ['A request to download code', 'A request to merge your changes into another branch', 'A way to delete a repository', 'A type of bug report'],
+        correctIndex: 1,
+        explanation: 'A Pull Request is a way to notify team members that you have completed a feature and want it reviewed and merged.'
+      }
+    ],
+    recap: 'GitHub is more than hosting; it is a platform for collaboration and code quality.'
+  },
+  'collaboration-tools': {
+    id: 'collaboration-tools',
+    title: 'Collaboration Tools',
+    todayYouAreLearning: 'Using Issues, Projects, and Wikis to manage a codebase.',
+    whyItMatters: 'Coding is a team sport. These tools keep everyone organized and on the same page.',
+    explanation: 'GitHub provides "Issues" for tracking bugs and tasks, "Projects" (Kanban boards) for managing workflow, and "Wikis" for documentation. Using these effectively makes you a great teammate.',
+    analogy: 'Issues are like a "To-Do" list for the whole team. Projects are the "Status Board" that shows what is being worked on right now.',
+    visualExplanation: 'A Kanban board has columns like "To Do", "In Progress", and "Done". You move cards (tasks) between them.',
+    codeExample: '# Issue #42: Fix navigation bug on mobile\n// Reference issues in your commit messages!',
+    lineByLine: 'Using the "#" followed by a number links your code change to a specific task or bug report.',
+    commonMistakes: ['Not documenting your code or process.', 'Ignoring open issues or PR comments.'],
+    practice: 'Create an "Issue" in your GitHub repo for a feature you want to add later.',
+    challenge: 'What is a "README.md" file and why is it important?',
+    quiz: [
+      {
+        question: 'Which tool is best for tracking bugs in a project?',
+        options: ['Pull Requests', 'Issues', 'Wikis', 'Actions'],
+        correctIndex: 1,
+        explanation: 'Issues are designed to track tasks, enhancements, and bugs.'
+      }
+    ],
+    recap: 'Great developers communicate as well as they code.'
+  },
+  'js-variables': {
+    id: 'js-variables',
+    title: 'JavaScript Variables',
+    todayYouAreLearning: 'Storing and managing data using let, const, and var.',
+    whyItMatters: 'Variables are the containers for all the data your app will use.',
+    explanation: 'In modern JS, we use `const` for values that don\'t change and `let` for values that do. We avoid `var` because it has confusing rules. Variables can store strings, numbers, booleans, and more.',
+    analogy: 'A variable is like a labeled box. You put something inside, and you can use the label to find it later.',
+    visualExplanation: 'Think of a score in a game. It starts at 0 (let score = 0) and increases as you play (score = score + 10).',
+    codeExample: 'const name = "Alice";\nlet score = 0;\nscore = 10;',
+    lineByLine: 'Defines a constant that cannot be changed. Defines a variable that can be updated. Updates the value of score.',
+    commonMistakes: ['Using "const" for a value you need to change later.', 'Forgetting to use a keyword (let/const) when defining a variable.'],
+    practice: 'Create variables for your name, age, and whether you are a student.',
+    challenge: 'What happens if you try to reassign a "const" variable?',
+    quiz: [
+      {
+        question: 'Which keyword should you use for a value that will NOT change?',
+        options: ['let', 'var', 'const', 'set'],
+        correctIndex: 2,
+        explanation: 'const (constant) is for values that remain the same throughout the program.'
+      }
+    ],
+    recap: 'Choose the right container for your data to write safer code.'
+  },
+  'js-functions': {
+    id: 'js-functions',
+    title: 'JavaScript Functions',
+    todayYouAreLearning: 'Writing reusable blocks of code to perform specific tasks.',
+    whyItMatters: 'Functions allow you to write code once and use it many times, making your app modular.',
+    explanation: 'A function is a set of instructions that you "call" by name. It can take "parameters" (inputs) and "return" a result (output).',
+    analogy: 'A function is like a blender. You put in fruit (input), press a button (call the function), and get a smoothie (output).',
+    visualExplanation: 'Imagine a "Like" button. Every time it is clicked, the same "incrementLike" function runs.',
+    codeExample: 'function greet(name) {\n  return "Hello, " + name;\n}\n\nconst message = greet("Bob");',
+    lineByLine: 'Defines a function named greet that takes one input. Returns a combined string. Calls the function and stores the result.',
+    commonMistakes: ['Forgetting to "return" a value from a function.', 'Confusing parameters (placeholders) with arguments (actual values).'],
+    practice: 'Write a function that takes two numbers and returns their sum.',
+    challenge: 'What is an "Arrow Function" in JavaScript?',
+    quiz: [
+      {
+        question: 'What do we call the inputs passed into a function?',
+        options: ['Outputs', 'Returns', 'Parameters', 'Variables'],
+        correctIndex: 2,
+        explanation: 'Parameters are the placeholders defined in the function, and arguments are the actual values passed in.'
+      }
+    ],
+    recap: 'Functions are the building blocks of logic in your application.'
+  },
+  'js-objects-arrays': {
+    id: 'js-objects-arrays',
+    title: 'Objects & Arrays',
+    todayYouAreLearning: 'Managing collections of data using lists and key-value pairs.',
+    whyItMatters: 'Most real-world data (like user profiles or product lists) is stored in objects and arrays.',
+    explanation: 'An Array is an ordered list of items `[1, 2, 3]`. An Object is a collection of properties `{ name: "Alice", age: 25 }`. We use them together to build complex data structures.',
+    analogy: 'An Array is like a shopping list (items in order). An Object is like a contact card (specific info for specific labels).',
+    visualExplanation: 'Think of a list of users. Each user is an Object, and the whole list is an Array of those Objects.',
+    codeExample: 'const fruits = ["apple", "banana"];\nconst user = {\n  name: "Alice",\n  age: 25\n};',
+    lineByLine: 'Creates a list of strings. Creates an object with two properties: name and age.',
+    commonMistakes: ['Using an object when an ordered list (array) is needed.', 'Forgetting commas between properties in an object.'],
+    practice: 'Create an object representing your favorite movie with title, year, and director.',
+    challenge: 'How do you add a new item to the end of an array?',
+    quiz: [
+      {
+        question: 'Which data structure uses key-value pairs?',
+        options: ['Array', 'Object', 'String', 'Boolean'],
+        correctIndex: 1,
+        explanation: 'Objects store data in pairs of keys (labels) and values.'
+      }
+    ],
+    recap: 'Mastering data structures is essential for handling real-world information.'
+  },
+  'js-control-flow': {
+    id: 'js-control-flow',
+    title: 'Control Flow',
+    todayYouAreLearning: 'Making decisions in your code using if/else and loops.',
+    whyItMatters: 'Control flow allows your app to react differently to different situations.',
+    explanation: 'We use `if` statements to run code only when a condition is true. We use `loops` (like for/while) to run the same code multiple times.',
+    analogy: 'Control flow is like a "Choose Your Own Adventure" book. If you have a key, turn to page 10. If not, turn to page 20.',
+    visualExplanation: 'Imagine a login screen. IF the password is correct, show the dashboard. ELSE, show an error message.',
+    codeExample: 'if (age >= 18) {\n  console.log("Welcome!");\n} else {\n  console.log("Access Denied");\n}',
+    lineByLine: 'Checks if age is 18 or older. Runs if true. Runs if false.',
+    commonMistakes: ['Forgetting the "else" block when needed.', 'Creating an "infinite loop" that crashes the browser.'],
+    practice: 'Write a loop that prints the numbers 1 to 10 to the console.',
+    challenge: 'What is a "Switch" statement and when should you use it?',
+    quiz: [
+      {
+        question: 'Which statement is used to repeat code multiple times?',
+        options: ['if', 'else', 'for', 'const'],
+        correctIndex: 2,
+        explanation: 'A "for" loop is used to iterate over a block of code a specific number of times.'
+      }
+    ],
+    recap: 'Logic and repetition are what make programs powerful.'
+  },
+  'dom-selection': {
+    id: 'dom-selection',
+    title: 'DOM Selection',
+    todayYouAreLearning: 'How to find and target HTML elements using JavaScript.',
+    whyItMatters: 'To change a website with code, you first have to tell JavaScript exactly which part to change.',
+    explanation: 'The DOM (Document Object Model) is how JS sees your HTML. We use methods like `querySelector` and `getElementById` to "grab" elements so we can manipulate them.',
+    analogy: 'DOM selection is like using a remote control. You have to point it at the right device (element) before you can change the channel (style/content).',
+    visualExplanation: 'Think of the DOM as a map of your house. Selection is like saying "Go to the kitchen" or "Find the blue chair".',
+    codeExample: 'const title = document.querySelector("h1");\nconst btn = document.getElementById("submit-btn");',
+    lineByLine: 'Finds the first <h1> tag on the page. Finds the specific element with the ID "submit-btn".',
+    commonMistakes: ['Trying to select an element that doesn\'t exist yet.', 'Confusing querySelector (uses CSS syntax) with getElementById.'],
+    practice: 'Select the main heading of your profile page and log it to the console.',
+    challenge: 'What is the difference between querySelector and querySelectorAll?',
+    quiz: [
+      {
+        question: 'Which method can select an element using any CSS selector?',
+        options: ['getElementById', 'querySelector', 'getElementsByClassName', 'select()'],
+        correctIndex: 1,
+        explanation: 'querySelector is the most versatile selection method as it accepts any valid CSS selector string.'
+      }
+    ],
+    recap: 'Selection is the first step to making your web pages interactive.'
+  },
+  'event-listeners': {
+    id: 'event-listeners',
+    title: 'Event Listeners',
+    todayYouAreLearning: 'Making your website react to user actions like clicks and typing.',
+    whyItMatters: 'Events are what make a website "interactive" rather than just a static document.',
+    explanation: 'An Event Listener "listens" for a specific action (like a "click") on an element and runs a function when it happens.',
+    analogy: 'An event listener is like a doorbell. It waits silently until someone presses it (the event), then it rings (runs the function).',
+    visualExplanation: 'Imagine a "Dark Mode" toggle. When you click it, an event listener triggers the code that changes the background color.',
+    codeExample: 'btn.addEventListener("click", function() {\n  alert("Button Clicked!");\n});',
+    lineByLine: 'Attaches a listener to the button. Specifies the "click" event. The function to run when the click happens.',
+    commonMistakes: ['Forgetting to select the element before adding the listener.', 'Typing the event name wrong (e.g., "onclick" instead of "click").'],
+    practice: 'Add a click listener to a button that changes the text of a paragraph.',
+    challenge: 'What is "Event Bubbling" in JavaScript?',
+    quiz: [
+      {
+        question: 'Which method is used to attach an event handler to an element?',
+        options: ['attachEvent()', 'addEventListener()', 'listen()', 'onClick()'],
+        correctIndex: 1,
+        explanation: 'addEventListener is the standard modern way to handle events in JavaScript.'
+      }
+    ],
+    recap: 'Events turn your users from passive readers into active participants.'
+  },
+  'dynamic-ui-updates': {
+    id: 'dynamic-ui-updates',
+    title: 'Dynamic UI Updates',
+    todayYouAreLearning: 'Changing HTML content and CSS styles on the fly with JavaScript.',
+    whyItMatters: 'This is how modern apps update without refreshing the whole page.',
+    explanation: 'Once you select an element, you can change its text (`innerText`), its HTML (`innerHTML`), or its styles (`style.color`). You can also add or remove CSS classes.',
+    analogy: 'Dynamic updates are like a digital scoreboard. The board stays the same, but the numbers change instantly as points are scored.',
+    visualExplanation: 'Think of a "Loading" spinner. When you click a button, JS adds a "loading" class that makes the spinner appear.',
+    codeExample: 'const el = document.querySelector(".box");\nel.innerText = "Updated!";\nel.style.backgroundColor = "blue";',
+    lineByLine: 'Selects the element. Changes the text content. Changes the CSS background color directly.',
+    commonMistakes: ['Overusing inline styles instead of toggling CSS classes.', 'Using innerHTML with untrusted user input (security risk!).'],
+    practice: 'Create a button that changes its own color every time it is clicked.',
+    challenge: 'What is the difference between innerText and textContent?',
+    quiz: [
+      {
+        question: 'Which property is used to change the CSS of an element directly?',
+        options: ['css', 'style', 'attr', 'class'],
+        correctIndex: 1,
+        explanation: 'The .style property allows you to access and modify the inline CSS of an element.'
+      }
+    ],
+    recap: 'JavaScript gives you total control over the appearance and content of your page.'
+  },
+  'local-storage-api': {
+    id: 'local-storage-api',
+    title: 'Local Storage API',
+    todayYouAreLearning: 'Saving data in the user\'s browser so it persists after a refresh.',
+    whyItMatters: 'Local storage allows you to build apps that "remember" user settings or data without a backend.',
+    explanation: 'LocalStorage is a simple key-value store in the browser. Data stays there even if you close the tab or restart the computer. We use `setItem` to save and `getItem` to retrieve.',
+    analogy: 'LocalStorage is like a sticky note on the user\'s monitor. Your app writes something down, and it is still there the next time the user looks.',
+    visualExplanation: 'Think of a "Dark Mode" preference. If the user picks dark mode, you save that choice in LocalStorage so the site stays dark on their next visit.',
+    codeExample: 'localStorage.setItem("theme", "dark");\nconst theme = localStorage.getItem("theme");',
+    lineByLine: 'Saves the value "dark" under the key "theme". Retrieves the value stored under "theme".',
+    commonMistakes: ['Trying to store complex objects directly (you must use JSON.stringify!).', 'Exceeding the storage limit (usually around 5MB).'],
+    practice: 'Save the user\'s name in LocalStorage and display it when they return to the page.',
+    challenge: 'How do you remove an item from LocalStorage?',
+    quiz: [
+      {
+        question: 'Does data in LocalStorage disappear when the browser is closed?',
+        options: ['Yes, always', 'No, it persists', 'Only if the user is in Incognito mode', 'Only on mobile devices'],
+        correctIndex: 1,
+        explanation: 'LocalStorage is designed for persistent storage that survives browser restarts.'
+      }
+    ],
+    recap: 'LocalStorage is a powerful tool for building stateful frontend applications.'
+  },
+  'async-js-promises': {
+    id: 'async-js-promises',
+    title: 'Async JS & Promises',
+    todayYouAreLearning: 'Handling tasks that take time, like fetching data from a server.',
+    whyItMatters: 'The web is asynchronous. You can\'t wait for a slow server to finish before showing the rest of the page.',
+    explanation: 'A Promise is an object representing the eventual completion (or failure) of an asynchronous operation. It can be "Pending", "Fulfilled" (success), or "Rejected" (error).',
+    analogy: 'A Promise is like ordering a burger. You get a buzzer (the promise). You go sit down (continue other tasks). When the buzzer goes off, you get your burger (fulfillment).',
+    visualExplanation: 'Imagine a timeline where a "Fetch" starts, other code runs, and then the "Fetch" finishes and updates the UI.',
+    codeExample: 'const myPromise = new Promise((resolve, reject) => {\n  setTimeout(() => resolve("Success!"), 1000);\n});\n\nmyPromise.then(data => console.log(data));',
+    lineByLine: 'Creates a new promise. Simulates a 1-second delay then succeeds. Runs when the promise is fulfilled.',
+    commonMistakes: ['Forgetting to handle the "reject" (error) case.', 'Falling into "Callback Hell" instead of using Promises or Async/Await.'],
+    practice: 'Create a promise that resolves after 2 seconds and logs a message.',
+    challenge: 'What is the difference between .then() and async/await?',
+    quiz: [
+      {
+        question: 'What are the three states of a Promise?',
+        options: ['Start, Middle, End', 'Pending, Fulfilled, Rejected', 'Open, Closed, Waiting', 'Active, Inactive, Error'],
+        correctIndex: 1,
+        explanation: 'Promises start as Pending and eventually settle into either Fulfilled or Rejected.'
+      }
+    ],
+    recap: 'Asynchronous programming keeps your apps responsive and fast.'
+  },
+  'fetch-api-basics': {
+    id: 'fetch-api-basics',
+    title: 'Fetch API Basics',
+    todayYouAreLearning: 'How to request data from external APIs and use it in your app.',
+    whyItMatters: 'Most modern apps get their data (weather, news, user info) from external servers via APIs.',
+    explanation: 'The `fetch()` function allows you to make HTTP requests. It returns a Promise that resolves to the Response object. We usually convert this response to JSON.',
+    analogy: 'Fetch is like a waiter. You tell the waiter what you want (the URL), they go to the kitchen (the server), and bring back your food (the data).',
+    visualExplanation: 'Think of a weather app. It "fetches" the current temperature from a weather server and displays it on your screen.',
+    codeExample: 'fetch("https://api.example.com/data")\n  .then(response => response.json())\n  .then(data => console.log(data));',
+    lineByLine: 'Starts the request to the URL. Converts the raw response to a usable JSON object. Uses the final data.',
+    commonMistakes: ['Forgetting that fetch() only rejects on network errors, not 404s.', 'Not handling the second .then() correctly.'],
+    practice: 'Use fetch to get data from a public API (like JSONPlaceholder) and log it.',
+    challenge: 'How do you send data (a POST request) using fetch?',
+    quiz: [
+      {
+        question: 'What format is most commonly used for API data today?',
+        options: ['XML', 'HTML', 'JSON', 'CSV'],
+        correctIndex: 2,
+        explanation: 'JSON (JavaScript Object Notation) is the standard format for data exchange on the web.'
+      }
+    ],
+    recap: 'The Fetch API is your gateway to the world of external data.'
+  },
+  'es6-modules': {
+    id: 'es6-modules',
+    title: 'ES6 Modules',
+    todayYouAreLearning: 'Organizing your code into multiple files using import and export.',
+    whyItMatters: 'As your app grows, putting everything in one file becomes impossible to manage.',
+    explanation: 'Modules allow you to split your code into reusable pieces. You `export` functions or variables from one file and `import` them into another.',
+    analogy: 'Modules are like LEGO bricks. Each brick is separate, but they fit together to build a large structure.',
+    visualExplanation: 'Imagine a "utils.js" file with helper functions. You import only the ones you need into your "main.js".',
+    codeExample: '// math.js\nexport const add = (a, b) => a + b;\n\n// main.js\nimport { add } from "./math.js";',
+    lineByLine: 'Makes the function available to other files. Brings the function into the current file.',
+    commonMistakes: ['Forgetting the "./" when importing local files.', 'Confusing "default exports" with "named exports".'],
+    practice: 'Create a module that exports a greeting function and import it into another file.',
+    challenge: 'What is the benefit of using "import type" in TypeScript?',
+    quiz: [
+      {
+        question: 'Which keyword is used to make a function available to other files?',
+        options: ['import', 'export', 'require', 'module'],
+        correctIndex: 1,
+        explanation: 'The "export" keyword exposes code to be used in other modules.'
+      }
+    ],
+    recap: 'Modules keep your codebase clean, organized, and maintainable.'
+  },
+  'responsive-design-principles': {
+    id: 'responsive-design-principles',
+    title: 'Responsive Design Principles',
+    todayYouAreLearning: 'The core concepts of building websites that work on any screen size.',
+    whyItMatters: 'More people browse the web on mobile than on desktop. Your site must look great on both.',
+    explanation: 'Responsive design uses fluid grids, flexible images, and media queries to adapt the layout. The goal is "One site, every device".',
+    analogy: 'Responsive design is like water. If you put water into a cup, it becomes the cup. If you put it into a bottle, it becomes the bottle.',
+    visualExplanation: 'Think of a 3-column layout on desktop that stacks into a 1-column layout on mobile.',
+    codeExample: '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    lineByLine: 'This tag is essential! It tells the browser to match the screen width and not zoom out.',
+    commonMistakes: ['Using fixed widths (like width: 1200px) instead of percentages or relative units.', 'Forgetting to test on real mobile devices.'],
+    practice: 'Resize your browser window and see how your favorite websites adapt (or don\'t).',
+    challenge: 'What are "Breakpoints" in responsive design?',
+    quiz: [
+      {
+        question: 'What is the main goal of responsive design?',
+        options: ['To make sites faster', 'To make sites work on all screen sizes', 'To add more animations', 'To use less CSS'],
+        correctIndex: 1,
+        explanation: 'Responsive design ensures a good user experience regardless of the device being used.'
+      }
+    ],
+    recap: 'Responsiveness is a requirement, not a feature, in modern web development.'
+  },
+  'media-queries-deep-dive': {
+    id: 'media-queries-deep-dive',
+    title: 'Media Queries Deep Dive',
+    todayYouAreLearning: 'Using CSS to apply different styles based on screen width.',
+    whyItMatters: 'Media queries are the "If/Else" of CSS. They allow you to change styles for mobile, tablet, and desktop.',
+    explanation: 'A media query `@media` wraps a block of CSS. That CSS only applies if the condition (like `max-width: 600px`) is met.',
+    analogy: 'Media queries are like a dress code. If it is a wedding (mobile), wear a suit (stack columns). If it is a beach (desktop), wear shorts (side-by-side).',
+    visualExplanation: 'Imagine a sidebar that is visible on desktop but hidden behind a "hamburger menu" on mobile.',
+    codeExample: '@media (max-width: 768px) {\n  .sidebar {\n    display: none;\n  }\n}',
+    lineByLine: 'Starts the media query for screens 768px or smaller. Hides the sidebar element.',
+    commonMistakes: ['Using too many breakpoints, making the CSS hard to manage.', 'Not using a logical order (like mobile-first).'],
+    practice: 'Write a media query that changes the background color of the page when the screen is small.',
+    challenge: 'What is the difference between "min-width" and "max-width" in media queries?',
+    quiz: [
+      {
+        question: 'Which CSS rule is used to create a media query?',
+        options: ['@query', '@media', '@responsive', '@screen'],
+        correctIndex: 1,
+        explanation: 'The @media rule is the standard way to apply conditional CSS based on device characteristics.'
+      }
+    ],
+    recap: 'Media queries give you precise control over your layout across devices.'
+  },
+  'mobile-first-strategy': {
+    id: 'mobile-first-strategy',
+    title: 'Mobile-First Strategy',
+    todayYouAreLearning: 'Why and how to design for the smallest screens first.',
+    whyItMatters: 'Mobile-first leads to cleaner code, faster performance, and a better focus on core content.',
+    explanation: 'In mobile-first, you write the "default" CSS for mobile (no media queries). Then, you use `min-width` media queries to add complexity as the screen gets larger.',
+    analogy: 'It is like packing a suitcase. Start with the essentials (mobile). If you have a bigger suitcase (desktop), you can add more items.',
+    visualExplanation: 'Think of a simple list on mobile. As the screen grows, that list expands into a detailed table.',
+    codeExample: '.card { width: 100%; } /* Mobile default */\n@media (min-width: 1024px) {\n  .card { width: 30%; }\n}',
+    lineByLine: 'Default style for all screens (starting with mobile). Overrides the width only for large screens.',
+    commonMistakes: ['Designing for desktop first and then trying to "shrink" it for mobile.', 'Overloading mobile users with unnecessary images or features.'],
+    practice: 'Refactor a small project to use mobile-first CSS.',
+    challenge: 'Why is mobile-first better for performance?',
+    quiz: [
+      {
+        question: 'In mobile-first design, which media query type is most common?',
+        options: ['max-width', 'min-width', 'orientation', 'resolution'],
+        correctIndex: 1,
+        explanation: 'Mobile-first uses min-width to "layer on" styles as the screen size increases.'
+      }
+    ],
+    recap: 'Mobile-first is a mindset that prioritizes the most important user experience.'
+  },
+  'react-components-props': {
+    id: 'react-components-props',
+    title: 'React Components & Props',
+    todayYouAreLearning: 'Building reusable UI pieces and passing data between them.',
+    whyItMatters: 'Components are the heart of React. They allow you to build complex UIs from small, independent parts.',
+    explanation: 'A Component is a JavaScript function that returns HTML (JSX). "Props" (short for properties) are inputs you pass into components to make them dynamic.',
+    analogy: 'A Component is like a recipe. Props are the ingredients. You use the same recipe, but different ingredients make a different dish.',
+    visualExplanation: 'Imagine a "UserCard" component. You pass in a name and photo as props to show different users with the same layout.',
+    codeExample: 'function Welcome(props) {\n  return <h1>Hello, {props.name}</h1>;\n}\n\n<Welcome name="Alice" />',
+    lineByLine: 'Defines a component that accepts props. Uses a prop inside the JSX. Renders the component with a specific prop value.',
+    commonMistakes: ['Forgetting that props are read-only (you cannot change them inside the component).', 'Not capitalizing component names (React requires this!).'],
+    practice: 'Create a "Button" component that takes a "label" prop.',
+    challenge: 'What is "Prop Drilling" and how can it be avoided?',
+    quiz: [
+      {
+        question: 'What are "Props" in React?',
+        options: ['Internal component state', 'Inputs passed to a component', 'CSS styles', 'HTML attributes'],
+        correctIndex: 1,
+        explanation: 'Props are the mechanism for passing data from a parent component to a child component.'
+      }
+    ],
+    recap: 'Components and props make your UI modular and data-driven.'
+  },
+  'react-state-hooks': {
+    id: 'react-state-hooks',
+    title: 'React State & Hooks',
+    todayYouAreLearning: 'Managing data that changes over time using the useState hook.',
+    whyItMatters: 'State is what makes React "reactive". When state changes, React automatically updates the UI.',
+    explanation: 'The `useState` hook gives you a state variable and a function to update it. This is how you handle things like form inputs, counters, or toggles.',
+    analogy: 'State is like the current score in a basketball game. It changes constantly, and the scoreboard (the UI) must update immediately.',
+    visualExplanation: 'Think of a "Like" button. When clicked, the `count` state increases, and the number on the screen changes.',
+    codeExample: 'const [count, setCount] = useState(0);\n\n<button onClick={() => setCount(count + 1)}>\n  {count}\n</button>',
+    lineByLine: 'Initializes state at 0. Defines the variable and the updater function. Updates state when the button is clicked.',
+    commonMistakes: ['Trying to update state directly (e.g., count = 5) instead of using the setter function.', 'Using hooks inside loops or conditions (they must be at the top level).'],
+    practice: 'Build a simple counter component with "Increment" and "Decrement" buttons.',
+    challenge: 'What is the "useEffect" hook used for?',
+    quiz: [
+      {
+        question: 'Which hook is used to add state to a functional component?',
+        options: ['useEffect', 'useContext', 'useState', 'useReducer'],
+        correctIndex: 2,
+        explanation: 'useState is the primary hook for managing local component state.'
+      }
+    ],
+    recap: 'State is the "memory" of your components.'
+  },
+  'react-handling-events': {
+    id: 'react-handling-events',
+    title: 'Handling Events in React',
+    todayYouAreLearning: 'Connecting user actions to your React logic.',
+    whyItMatters: 'React events are similar to DOM events but have a cleaner, more consistent syntax.',
+    explanation: 'In React, we pass functions as event handlers directly to elements using camelCase names like `onClick` or `onChange`.',
+    analogy: 'It is like a light switch. You don\'t have to wire the whole house; you just connect the switch (the event) to the light (the function).',
+    visualExplanation: 'Imagine a search bar. Every time you type (onChange), a function runs to filter the list below.',
+    codeExample: '<button onClick={handleClick}>Click Me</button>',
+    lineByLine: 'Attaches the handleClick function to the click event of the button.',
+    commonMistakes: ['Calling the function immediately (onClick={handleClick()}) instead of passing it (onClick={handleClick}).', 'Forgetting to prevent default behavior in form submissions.'],
+    practice: 'Create a form that logs the input value to the console when submitted.',
+    challenge: 'How do you pass an argument to an event handler in React?',
+    quiz: [
+      {
+        question: 'How are event names written in React JSX?',
+        options: ['onclick', 'onClick', 'on-click', 'click'],
+        correctIndex: 1,
+        explanation: 'React uses camelCase for event handlers (e.g., onClick, onSubmit).'
+      }
+    ],
+    recap: 'React events bridge the gap between user interaction and your app\'s logic.'
+  },
+  'react-lists-keys': {
+    id: 'react-lists-keys',
+    title: 'Lists & Keys',
+    todayYouAreLearning: 'Rendering multiple components from an array of data.',
+    whyItMatters: 'Most apps display lists of things (emails, products, posts). React makes this efficient.',
+    explanation: 'We use the `.map()` method to transform an array of data into an array of JSX elements. Each element needs a unique `key` prop so React can track it.',
+    analogy: 'Keys are like social security numbers for your components. They help React identify which specific item in a list changed, was added, or removed.',
+    visualExplanation: 'Think of a "To-Do List". Each task is a component. If you delete one, React uses the key to know exactly which one to remove from the screen.',
+    codeExample: 'const items = ["Apple", "Banana"];\n{items.map(item => <li key={item}>{item}</li>)}',
+    lineByLine: 'Iterates over the array. Returns a list item for each fruit. Provides a unique key for React.',
+    commonMistakes: ['Forgetting the "key" prop, which leads to performance issues and bugs.', 'Using the array index as a key (only do this as a last resort).'],
+    practice: 'Render a list of your favorite books from an array of objects.',
+    challenge: 'Why is using a unique ID better than using the array index as a key?',
+    quiz: [
+      {
+        question: 'Which array method is most commonly used to render lists in React?',
+        options: ['forEach', 'filter', 'map', 'reduce'],
+        correctIndex: 2,
+        explanation: 'map() is ideal because it returns a new array of JSX elements.'
+      }
+    ],
+    recap: 'Lists and keys are the foundation of dynamic, data-driven interfaces.'
+  },
+  'react-conditional-rendering': {
+    id: 'react-conditional-rendering',
+    title: 'Conditional Rendering',
+    todayYouAreLearning: 'Showing or hiding parts of your UI based on certain conditions.',
+    whyItMatters: 'Your app needs to show different things at different times (e.g., "Login" vs "Logout" buttons).',
+    explanation: 'We use standard JavaScript logic like `if` statements, ternary operators (`? :`), or logical AND (`&&`) to decide what JSX to render.',
+    analogy: 'Conditional rendering is like a "Members Only" sign. If you have a membership, you see the club. If not, you see the sign.',
+    visualExplanation: 'Imagine a "Loading..." state. If data is still fetching, show a spinner. Once it is done, show the actual content.',
+    codeExample: '{isLoggedIn ? <LogoutBtn /> : <LoginBtn />}',
+    lineByLine: 'Checks the isLoggedIn variable. Renders Logout if true. Renders Login if false.',
+    commonMistakes: ['Making the logic too complex inside the JSX (better to move it to a variable or function).', 'Forgetting that 0 is "falsy" and might accidentally render a 0 on the screen.'],
+    practice: 'Create a component that shows a "Welcome" message only if a "name" prop is provided.',
+    challenge: 'How do you prevent a component from rendering at all?',
+    quiz: [
+      {
+        question: 'Which operator is often used for "if this, then show that" logic in React?',
+        options: ['||', '&&', '??', '=='],
+        correctIndex: 1,
+        explanation: 'The logical AND (&&) operator is a concise way to render an element only if a condition is true.'
+      }
+    ],
+    recap: 'Conditional rendering makes your UI adaptive and intelligent.'
+  },
+  'react-useeffect-hook': {
+    id: 'react-useeffect-hook',
+    title: 'The useEffect Hook',
+    todayYouAreLearning: 'Handling side effects like data fetching and manual DOM updates.',
+    whyItMatters: 'useEffect is how you synchronize your component with external systems (like an API or the browser window).',
+    explanation: 'The `useEffect` hook runs after every render by default. You can use the "dependency array" to control when it runs (e.g., only once on mount, or when a specific variable changes).',
+    analogy: 'useEffect is like a "Post-it" note you leave for yourself. "After you finish cleaning the room (rendering), remember to take out the trash (fetch data)".',
+    visualExplanation: 'Imagine a chat app. When the component "mounts", you connect to the chat server. When it "unmounts", you disconnect.',
+    codeExample: 'useEffect(() => {\n  console.log("Component mounted!");\n  return () => console.log("Cleanup!");\n}, []);',
+    lineByLine: 'Defines the effect function. The code to run. An optional cleanup function. Empty array means it only runs once.',
+    commonMistakes: ['Forgetting the dependency array, causing an infinite loop.', 'Not cleaning up subscriptions or timers, leading to memory leaks.'],
+    practice: 'Use useEffect to fetch data from an API when the component first loads.',
+    challenge: 'What happens if you omit the dependency array entirely?',
+    quiz: [
+      {
+        question: 'When does an effect with an empty dependency array [] run?',
+        options: ['Every render', 'Only on the first render', 'Never', 'Only when state changes'],
+        correctIndex: 1,
+        explanation: 'An empty array tells React that the effect doesn\'t depend on any values from props or state, so it only runs once.'
+      }
+    ],
+    recap: 'useEffect is the bridge between React and the outside world.'
+  },
+  'react-custom-hooks': {
+    id: 'react-custom-hooks',
+    title: 'Custom Hooks',
+    todayYouAreLearning: 'Extracting component logic into reusable functions.',
+    whyItMatters: 'Custom hooks allow you to share logic between components without duplicating code.',
+    explanation: 'A custom hook is just a JavaScript function whose name starts with "use" and that can call other hooks. It is a powerful way to organize complex logic.',
+    analogy: 'A custom hook is like a specialized tool you built yourself. Instead of carrying all your loose tools (useState, useEffect) everywhere, you put them in a custom toolbox.',
+    visualExplanation: 'Think of a "useWindowSize" hook. Any component can use it to get the current width and height of the browser.',
+    codeExample: 'function useCounter() {\n  const [count, setCount] = useState(0);\n  const increment = () => setCount(count + 1);\n  return { count, increment };\n}',
+    lineByLine: 'Defines the custom hook. Uses built-in state. Returns the state and the logic to update it.',
+    commonMistakes: ['Not starting the name with "use" (React won\'t recognize it as a hook).', 'Putting too much unrelated logic into a single custom hook.'],
+    practice: 'Create a "useToggle" hook that manages a boolean state (true/false).',
+    challenge: 'Can a custom hook return JSX?',
+    quiz: [
+      {
+        question: 'What is the naming convention for custom hooks?',
+        options: ['handleSomething', 'getSomething', 'useSomething', 'customSomething'],
+        correctIndex: 2,
+        explanation: 'React requires custom hooks to start with the prefix "use" to enforce hook rules.'
+      }
+    ],
+    recap: 'Custom hooks are the ultimate tool for code reuse in React.'
+  },
+  'react-context-api': {
+    id: 'react-context-api',
+    title: 'React Context API',
+    todayYouAreLearning: 'Managing global state without passing props through every level.',
+    whyItMatters: 'Context solves the problem of "Prop Drilling" for data that many components need (like theme or user info).',
+    explanation: 'Context provides a way to share values between components without having to explicitly pass a prop through every level of the tree.',
+    analogy: 'Context is like a radio broadcast. Any component that "tunes in" (uses the context) can hear the message, regardless of where they are in the house.',
+    visualExplanation: 'Imagine a "Dark Mode" setting. Instead of passing `theme` to every single component, you put it in Context and any component can grab it.',
+    codeExample: 'const ThemeContext = createContext("light");\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value="dark">\n      <Toolbar />\n    </ThemeContext.Provider>\n  );\n}',
+    lineByLine: 'Creates the context object. Wraps the app in a Provider. Sets the value that all children can access.',
+    commonMistakes: ['Using Context for state that only one or two components need (props are better for that).', 'Forgetting to wrap your app in the Provider.'],
+    practice: 'Create a UserContext to store and display a username across different components.',
+    challenge: 'What is the difference between Context and Redux?',
+    quiz: [
+      {
+        question: 'What problem does the Context API primarily solve?',
+        options: ['Slow performance', 'Prop drilling', 'Complex CSS', 'API fetching'],
+        correctIndex: 1,
+        explanation: 'Context allows data to be accessed by any component in the tree without passing props manually.'
+      }
+    ],
+    recap: 'Context is perfect for global data that "everyone needs to know".'
+  },
+  'react-performance-memo': {
+    id: 'react-performance-memo',
+    title: 'React Performance & Memo',
+    todayYouAreLearning: 'Optimizing your app to prevent unnecessary re-renders.',
+    whyItMatters: 'As apps get larger, small inefficiencies can lead to a sluggish user experience.',
+    explanation: 'We use `React.memo` to prevent a component from re-rendering if its props haven\'t changed. We use `useMemo` and `useCallback` to cache values and functions.',
+    analogy: 'Memoization is like writing down the answer to a hard math problem. If someone asks you again, you don\'t do the math; you just read the answer from your paper.',
+    visualExplanation: 'Think of a heavy list component. If the parent updates but the list data is the same, `React.memo` tells React: "Don\'t bother re-drawing this list".',
+    codeExample: 'const MemoizedComponent = React.memo(function MyComponent(props) {\n  /* render using props */\n});',
+    lineByLine: 'Wraps the component in memo. React will now skip rendering if props are identical.',
+    commonMistakes: ['Using memoization everywhere (it has its own cost!). Only use it when you actually have a performance problem.', 'Forgetting that objects and arrays are "new" on every render unless memoized.'],
+    practice: 'Use React.memo on a component and see if it stops re-rendering when parent state changes.',
+    challenge: 'What is the "Profiler" tool in React DevTools?',
+    quiz: [
+      {
+        question: 'Which hook is used to memoize a function?',
+        options: ['useMemo', 'useCallback', 'useEffect', 'useRef'],
+        correctIndex: 1,
+        explanation: 'useCallback returns a memoized version of the callback that only changes if one of the dependencies has changed.'
+      }
+    ],
+    recap: 'Optimization is about doing less work, more efficiently.'
+  },
+  'react-routing-basics': {
+    id: 'react-routing-basics',
+    title: 'React Routing Basics',
+    todayYouAreLearning: 'Navigating between different pages in a Single Page Application (SPA).',
+    whyItMatters: 'Users expect to use the back button and have unique URLs for different parts of your app.',
+    explanation: 'React Router is the standard library for routing. It allows you to define "Routes" that render different components based on the URL path.',
+    analogy: 'Routing is like a GPS. You tell it where you want to go (/about, /contact), and it shows you the right view without you having to buy a new car (refresh the page).',
+    visualExplanation: 'Think of a dashboard. Clicking "Settings" changes the main view to the settings component and updates the URL to /settings.',
+    codeExample: '<BrowserRouter>\n  <Routes>\n    <Route path="/" element={<Home />} />\n    <Route path="/about" element={<About />} />\n  </Routes>\n</BrowserRouter>',
+    lineByLine: 'The wrapper for routing. Container for all routes. Defines a specific path and the component to show.',
+    commonMistakes: ['Using standard <a> tags instead of React Router\'s <Link> component (which causes a full page refresh).', 'Forgetting to handle "404 Not Found" routes.'],
+    practice: 'Set up a basic 2-page app with "Home" and "About" using React Router.',
+    challenge: 'How do you handle dynamic parameters like /user/:id in React Router?',
+    quiz: [
+      {
+        question: 'Which component should you use for navigation in React Router?',
+        options: ['<a>', '<Nav>', '<Link>', '<Route>'],
+        correctIndex: 2,
+        explanation: 'The <Link> component allows for navigation without a full page reload.'
+      }
+    ],
+    recap: 'Routing turns your single-page app into a multi-page experience.'
+  },
+  'react-forms-validation': {
+    id: 'react-forms-validation',
+    title: 'React Forms & Validation',
+    todayYouAreLearning: 'Building secure and user-friendly forms with real-time feedback.',
+    whyItMatters: 'Forms are how users interact with your data. Good validation prevents bad data and improves UX.',
+    explanation: 'We use "Controlled Components" where React state manages the input values. We add validation logic to check for errors before the user submits.',
+    analogy: 'Form validation is like a bouncer at a club. If you don\'t have an ID (valid email) or you\'re too young (password too short), you can\'t get in.',
+    visualExplanation: 'Imagine a "Sign Up" form. As you type, a red message appears saying "Email is invalid" until you fix it.',
+    codeExample: '<input value={email} onChange={(e) => setEmail(e.target.value)} />\n{error && <p>{error}</p>}',
+    lineByLine: 'Connects the input to React state. Updates state on every keystroke. Conditionally shows an error message.',
+    commonMistakes: ['Not providing clear error messages to the user.', 'Only validating on the client side (you must also validate on the server!).'],
+    practice: 'Build a login form that requires the password to be at least 8 characters long.',
+    challenge: 'What are "Uncontrolled Components" in React?',
+    quiz: [
+      {
+        question: 'What is a "Controlled Component" in React?',
+        options: ['A component that uses CSS', 'A component whose value is driven by React state', 'A component that cannot be changed', 'A component that uses external libraries'],
+        correctIndex: 1,
+        explanation: 'In a controlled component, the form data is handled by a React component state.'
+      }
+    ],
+    recap: 'Great forms are the key to a professional user experience.'
+  },
+  'web-performance-metrics': {
+    id: 'web-performance-metrics',
+    title: 'Web Performance Metrics',
+    todayYouAreLearning: 'Measuring how fast your website feels to real users.',
+    whyItMatters: 'Fast sites have better SEO, higher conversion rates, and happier users.',
+    explanation: 'Core Web Vitals are the key metrics Google uses: LCP (Loading speed), FID (Interactivity), and CLS (Visual stability). Understanding these helps you focus your optimization efforts.',
+    analogy: 'Performance metrics are like a health check-up for your website. They tell you if your "heart" (loading) is strong and your "reflexes" (interactivity) are fast.',
+    visualExplanation: 'Think of a page where the text jumps around as images load. That is a bad "CLS" (Cumulative Layout Shift) score.',
+    codeExample: '// Use Lighthouse in Chrome DevTools to measure these!',
+    lineByLine: 'Lighthouse is a built-in tool that gives you a performance score from 0 to 100.',
+    commonMistakes: ['Only testing on a fast office computer instead of a slow mobile device.', 'Ignoring "Layout Shift" which frustrates users.'],
+    practice: 'Run a Lighthouse report on your favorite website and look at the scores.',
+    challenge: 'What is "First Contentful Paint" (FCP)?',
+    quiz: [
+      {
+        question: 'Which metric measures how much elements "jump around" during loading?',
+        options: ['LCP', 'FID', 'CLS', 'TTFB'],
+        correctIndex: 2,
+        explanation: 'CLS (Cumulative Layout Shift) measures visual stability.'
+      }
+    ],
+    recap: 'You can\'t improve what you don\'t measure.'
+  },
+  'image-optimization-techniques': {
+    id: 'image-optimization-techniques',
+    title: 'Image Optimization',
+    todayYouAreLearning: 'Reducing image file sizes without losing quality.',
+    whyItMatters: 'Images are usually the largest part of a website. Optimizing them is the fastest way to speed up your site.',
+    explanation: 'Techniques include: 1. Using modern formats (WebP). 2. Resizing images to the actual size they appear. 3. Lazy loading images that are "below the fold".',
+    analogy: 'Image optimization is like vacuum-sealing your clothes for a trip. They take up much less space, but they are still the same clothes when you unpack them.',
+    visualExplanation: 'Imagine a 5MB high-res photo being used as a small 200px profile icon. That is a huge waste of data!',
+    codeExample: '<img src="hero.webp" loading="lazy" alt="Hero Image">',
+    lineByLine: 'Uses the efficient WebP format. Tells the browser to wait to load this image until it is needed.',
+    commonMistakes: ['Using PNGs for photographs (JPEGs or WebP are much smaller).', 'Forgetting the "alt" attribute for accessibility.'],
+    practice: 'Convert a large JPEG image to WebP and compare the file sizes.',
+    challenge: 'What is a "Responsive Image" using the srcset attribute?',
+    quiz: [
+      {
+        question: 'Which image format is generally the most efficient for the web?',
+        options: ['PNG', 'BMP', 'WebP', 'TIFF'],
+        correctIndex: 2,
+        explanation: 'WebP provides superior lossless and lossy compression for images on the web.'
+      }
+    ],
+    recap: 'Small images lead to big performance gains.'
+  },
+  'code-splitting-lazy-loading': {
+    id: 'code-splitting-lazy-loading',
+    title: 'Code Splitting & Lazy Loading',
+    todayYouAreLearning: 'Loading only the code the user needs right now.',
+    whyItMatters: 'Why load the "Admin Dashboard" code for a regular user? Code splitting keeps your initial bundle small.',
+    explanation: 'Code splitting breaks your app into smaller "chunks". Lazy loading (using `React.lazy`) loads those chunks only when the user navigates to that part of the app.',
+    analogy: 'It is like a buffet. You don\'t put every dish on your plate at once. You only take what you are ready to eat right now.',
+    visualExplanation: 'Think of a "Contact" page. The code for the contact form only downloads when the user clicks the "Contact" link.',
+    codeExample: 'const OtherComponent = React.lazy(() => import("./OtherComponent"));',
+    lineByLine: 'Tells React to load this component dynamically when it is first rendered.',
+    commonMistakes: ['Lazy loading components that are visible immediately (this can cause a flicker).', 'Not providing a "Suspense" fallback (like a loading spinner).'],
+    practice: 'Implement React.lazy for one of the routes in your app.',
+    challenge: 'What is "Tree Shaking" in modern build tools?',
+    quiz: [
+      {
+        question: 'Which React feature is used alongside React.lazy?',
+        options: ['Fragment', 'Suspense', 'StrictMode', 'Profiler'],
+        correctIndex: 1,
+        explanation: 'Suspense allows you to show a fallback UI while the lazy-loaded component is being fetched.'
+      }
+    ],
+    recap: 'Load less, load faster.'
+  },
+  'deployment-basics-vercel': {
+    id: 'deployment-basics-vercel',
+    title: 'Deployment with Vercel',
+    todayYouAreLearning: 'Taking your app from your computer to the live internet.',
+    whyItMatters: 'A project isn\'t finished until it is live for the world to see.',
+    explanation: 'Vercel is a platform that makes deploying frontend apps incredibly easy. You connect your GitHub repo, and it automatically deploys every time you push code.',
+    analogy: 'Deployment is like publishing a book. Your code is the manuscript; Vercel is the printing press and the bookstore.',
+    visualExplanation: 'Imagine pushing code to GitHub and seeing your live website update automatically 30 seconds later.',
+    codeExample: '// No code needed! Just connect your GitHub to Vercel.com',
+    lineByLine: 'Vercel handles the build and hosting for you.',
+    commonMistakes: ['Forgetting to set environment variables in the Vercel dashboard.', 'Not checking the build logs when a deployment fails.'],
+    practice: 'Deploy your profile page or landing page project to Vercel.',
+    challenge: 'What is a "Custom Domain" and how do you add one?',
+    quiz: [
+      {
+        question: 'What happens when you push code to a GitHub repo connected to Vercel?',
+        options: ['Nothing', 'The repo is deleted', 'Vercel automatically redeploys the app', 'You get an email'],
+        correctIndex: 2,
+        explanation: 'Vercel uses "Continuous Deployment" to update your site whenever the source code changes.'
+      }
+    ],
+    recap: 'Deployment is the final step in the development lifecycle.'
+  },
+  'continuous-integration-cd': {
+    id: 'continuous-integration-cd',
+    title: 'CI/CD for Frontend',
+    todayYouAreLearning: 'Automating your testing and deployment process.',
+    whyItMatters: 'CI/CD prevents bugs from reaching production and makes releasing new features faster and safer.',
+    explanation: 'CI (Continuous Integration) runs tests automatically when you open a PR. CD (Continuous Deployment) pushes the code to production once it is merged.',
+    analogy: 'CI/CD is like an automated car wash. You drive in (push code), and it automatically soaps, scrubs, and dries (tests and deploys) without you doing anything.',
+    visualExplanation: 'Think of a "Green Checkmark" on your GitHub PR. That means the CI tests passed and it is safe to merge.',
+    codeExample: '# .github/workflows/main.yml\non: [push]\njobs:\n  test:\n    run: npm test',
+    lineByLine: 'Defines when the automation runs. The task to perform. The command to run your tests.',
+    commonMistakes: ['Having a slow CI process that frustrates developers.', 'Not having enough test coverage to catch real bugs.'],
+    practice: 'Look at the "Actions" tab in one of your GitHub repositories.',
+    challenge: 'What is the difference between "Continuous Delivery" and "Continuous Deployment"?',
+    quiz: [
+      {
+        question: 'What does "CI" stand for?',
+        options: ['Code Integration', 'Continuous Integration', 'Constant Improvement', 'Complete Installation'],
+        correctIndex: 1,
+        explanation: 'Continuous Integration is the practice of merging all developer working copies to a shared mainline several times a day.'
+      }
+    ],
+    recap: 'Automation is the secret to scaling high-quality software.'
+  },
+  'building-a-portfolio': {
+    id: 'building-a-portfolio',
+    title: 'Building a Portfolio',
+    todayYouAreLearning: 'How to showcase your skills and projects to potential employers.',
+    whyItMatters: 'Your portfolio is your real-world resume. It proves you can actually build things.',
+    explanation: 'A great portfolio should: 1. Show your best 3-5 projects. 2. Explain the "Why" and "How" behind each project. 3. Be easy to navigate and mobile-friendly.',
+    analogy: 'A portfolio is like a chef\'s tasting menu. You don\'t show every dish you\'ve ever made; you show the ones that prove your mastery.',
+    visualExplanation: 'Think of a clean, minimal site with large screenshots of your apps and links to the live versions and the code.',
+    codeExample: '// Focus on: Project Title, Tech Stack, Problem Solved, and Links.',
+    lineByLine: 'These are the key pieces of information every recruiter looks for.',
+    commonMistakes: ['Including unfinished or broken projects.', 'Not including a link to the source code on GitHub.'],
+    practice: 'Draft a list of the 3 projects you want to feature in your portfolio.',
+    challenge: 'Why is a "Case Study" better than just a screenshot?',
+    quiz: [
+      {
+        question: 'How many projects should you typically feature in a portfolio?',
+        options: ['1', '3-5', 'All of them', '20+'],
+        correctIndex: 1,
+        explanation: 'Quality over quantity. 3-5 high-quality projects are better than dozens of small ones.'
+      }
+    ],
+    recap: 'Your portfolio is your most important project.'
+  },
+  'job-search-strategies': {
+    id: 'job-search-strategies',
+    title: 'Job Search Strategies',
+    todayYouAreLearning: 'How to find and apply for the right frontend roles.',
+    whyItMatters: 'The best jobs aren\'t always on the big job boards. You need a strategy to stand out.',
+    explanation: 'Effective strategies include: 1. Networking on LinkedIn and Twitter. 2. Contributing to Open Source. 3. Reaching out directly to companies you admire.',
+    analogy: 'Job searching is like fishing. You can wait for a fish to bite (apply to ads), or you can go where the fish are (networking).',
+    visualExplanation: 'Imagine your LinkedIn profile as a billboard. It should clearly say who you are and what value you bring.',
+    codeExample: '// Update your LinkedIn: "Frontend Developer | React | TypeScript"',
+    lineByLine: 'Using keywords helps recruiters find you in searches.',
+    commonMistakes: ['Applying to 100 jobs with the same generic resume.', 'Ignoring the "hidden job market" (referrals and networking).'],
+    practice: 'Optimize your LinkedIn profile with a professional photo and a clear headline.',
+    challenge: 'What is an "Informational Interview"?',
+    quiz: [
+      {
+        question: 'What is the most effective way to get a job in tech?',
+        options: ['Applying to every job on Indeed', 'Networking and referrals', 'Waiting for recruiters to call', 'Printing your resume'],
+        correctIndex: 1,
+        explanation: 'Networking often leads to opportunities that aren\'t even posted publicly.'
+      }
+    ],
+    recap: 'Finding a job is a skill in itself. Practice it like you practice coding.'
+  },
+  'freelancing-fundamentals': {
+    id: 'freelancing-fundamentals',
+    title: 'Freelancing Fundamentals',
+    todayYouAreLearning: 'How to find clients and manage projects as an independent developer.',
+    whyItMatters: 'Freelancing gives you freedom and the ability to earn money while you continue to learn.',
+    explanation: 'Key steps: 1. Find your niche (e.g., Shopify sites for small businesses). 2. Learn how to price your work (value-based vs hourly). 3. Use contracts to protect yourself.',
+    analogy: 'Freelancing is like running your own small shop. You are the manager, the salesperson, and the worker all at once.',
+    visualExplanation: 'Think of a simple "Proposal" document that outlines exactly what you will build and how much it will cost.',
+    codeExample: '// Tools to learn: Upwork, Fiverr, Trello, and Invoice software.',
+    lineByLine: 'These tools help you manage the "business" side of freelancing.',
+    commonMistakes: ['Starting work without a signed contract.', 'Underpricing your services because you are "new".'],
+    practice: 'Research 3 potential niches for a frontend freelancer.',
+    challenge: 'What is a "Retainer" in freelancing?',
+    quiz: [
+      {
+        question: 'What is the most important thing to have before starting a freelance project?',
+        options: ['A fancy office', 'A signed contract', 'A new laptop', 'A business card'],
+        correctIndex: 1,
+        explanation: 'A contract protects both you and the client and ensures everyone knows the expectations.'
+      }
+    ],
+    recap: 'Freelancing is a business. Treat it like one.'
+  },
+  'interview-prep-frontend': {
+    id: 'interview-prep-frontend',
+    title: 'Frontend Interview Prep',
+    todayYouAreLearning: 'Mastering technical and behavioral interviews.',
+    whyItMatters: 'Even great developers need to practice for interviews. It is a specific skill set.',
+    explanation: 'Prep for: 1. Technical questions (JS closures, CSS specificity, React hooks). 2. Coding challenges (Whiteboarding). 3. Behavioral questions ("Tell me about a time you failed").',
+    analogy: 'An interview is like a performance. You\'ve practiced the music (coding), but you also need to practice how you present it to the audience (the interviewer).',
+    visualExplanation: 'Imagine a "Mock Interview" where a friend asks you hard questions and you practice explaining your thought process out loud.',
+    codeExample: '// Practice explaining: "How does the Virtual DOM work?"',
+    lineByLine: 'Being able to explain concepts clearly is just as important as writing the code.',
+    commonMistakes: ['Not asking questions back to the interviewer.', 'Pretending to know an answer when you don\'t (it is better to explain how you would find it).'],
+    practice: 'Record yourself explaining a technical concept (like Flexbox) in 2 minutes.',
+    challenge: 'What is the "STAR" method for answering behavioral questions?',
+    quiz: [
+      {
+        question: 'What should you do if you don\'t know the answer to a technical question?',
+        options: ['Guess randomly', 'Say "I don\'t know" and stop', 'Explain your thought process and how you would find the answer', 'Change the subject'],
+        correctIndex: 2,
+        explanation: 'Interviewers want to see how you think and solve problems, not just what you have memorized.'
+      }
+    ],
+    recap: 'Preparation is the antidote to interview anxiety.'
   },
 };
 

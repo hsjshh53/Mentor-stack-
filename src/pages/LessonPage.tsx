@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   ArrowLeft, BookOpen, Clock, Trophy, 
-  CheckCircle2, Zap, MessageSquare, Code,
+  CheckCircle2, Zap, MessageSquare, Code, Layout,
   ChevronRight, Play, HelpCircle, Terminal,
   AlertCircle, Lightbulb, Target, RefreshCcw,
   Bell, User, Menu, X, Sparkles, Star
@@ -118,7 +118,10 @@ export const LessonPage: React.FC = () => {
 
     await addXP(50);
     await updateProgress({
-      completedLessons: [...progress.completedLessons, lesson.title]
+      completedLessons: progress.completedLessons.includes(lesson.id) 
+        ? progress.completedLessons 
+        : [...progress.completedLessons, lesson.id],
+      currentLessonId: lesson.id
     });
 
     navigate('/dashboard');
@@ -256,6 +259,21 @@ export const LessonPage: React.FC = () => {
             </div>
             <p className="text-white/70 leading-relaxed italic">"{lesson?.analogy || 'Think of it like learning a new language.'}"</p>
           </Card>
+
+          {/* Visual Explanation */}
+          {lesson?.visualExplanation && (
+            <section className="space-y-6">
+              <div className="flex items-center gap-3 text-emerald-400">
+                <Layout size={20} />
+                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Visual & Design Explanation</h3>
+              </div>
+              <div className="p-8 border-2 border-emerald-500/10 bg-white/[0.02] rounded-3xl">
+                <p className="text-lg text-white/70 leading-relaxed italic">
+                  {lesson.visualExplanation}
+                </p>
+              </div>
+            </section>
+          )}
 
           {/* Code Block Section */}
           <section className="space-y-6">

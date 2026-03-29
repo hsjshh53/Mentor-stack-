@@ -15,11 +15,18 @@ import { TestPage } from './pages/TestPage';
 import { ExamPage } from './pages/ExamPage';
 import { VerificationPage } from './pages/VerificationPage';
 import { CertificatePage } from './pages/CertificatePage';
+import { AdminPage } from './pages/AdminPage';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   return user ? <>{children}</> : <Navigate to="/login" />;
+};
+
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isAdmin, loading } = useAuth();
+  if (loading) return null;
+  return user && isAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
 };
 
 export default function App() {
@@ -102,6 +109,12 @@ export default function App() {
             <PrivateRoute>
               <CertificatePage />
             </PrivateRoute>
+          } />
+
+          <Route path="/admin" element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
           } />
 
           <Route path="*" element={<Navigate to="/" />} />

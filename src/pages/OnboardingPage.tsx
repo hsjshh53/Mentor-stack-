@@ -46,17 +46,18 @@ export const OnboardingPage: React.FC = () => {
   const handleComplete = async () => {
     if (!selected) return;
     
+    // Find the first lesson of the selected path
+    const pathCurriculum = CURRICULUM[selected];
+    const firstLessonId = pathCurriculum?.levels?.beginner?.modules?.[0]?.lessons?.[0];
+
     // Update user data with onboarding info
     await updateProgress({ 
       selectedPath: selected,
       unlockedPaths: progress?.unlockedPaths ? [...new Set([...progress.unlockedPaths, selected])] : [selected],
       goal,
-      experienceLevel: experience
+      experienceLevel: experience,
+      currentLessonId: firstLessonId || null
     });
-
-    // Find the first lesson of the selected path
-    const pathCurriculum = CURRICULUM[selected];
-    const firstLessonId = pathCurriculum?.levels?.beginner?.modules?.[0]?.lessons?.[0];
 
     if (firstLessonId) {
       navigate(`/lesson/${firstLessonId}`);
@@ -82,7 +83,12 @@ export const OnboardingPage: React.FC = () => {
 
   if (loading) return <LoadingScreen />;
 
-  const allPaths = Object.values(CURRICULUM);
+  const allPaths = React.useMemo(() => {
+    return Object.entries(CURRICULUM).map(([key, value]) => ({
+      ...value,
+      key: key as CareerPath
+    }));
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0, x: 20 },
@@ -258,31 +264,31 @@ export const OnboardingPage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     {allPaths.filter(p => p.category === category).map((path) => (
                       <Card
-                        key={path.title}
-                        onClick={() => setSelected(path.title as CareerPath)}
+                        key={path.key}
+                        onClick={() => setSelected(path.key)}
                         className={`p-8 rounded-[2.5rem] cursor-pointer transition-all duration-500 group relative ${
-                          selected === path.title 
+                          selected === path.key 
                             ? 'border-emerald-500 bg-emerald-500/[0.05] ring-1 ring-emerald-500/30' 
                             : 'border-white/[0.08] hover:border-white/[0.2] bg-white/[0.02] hover:bg-white/[0.04]'
                         }`}
                       >
                         <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-500 ${
-                          selected === path.title ? 'bg-emerald-500 text-black' : 'bg-white/[0.05] text-white/40'
+                          selected === path.key ? 'bg-emerald-500 text-black' : 'bg-white/[0.05] text-white/40'
                         }`}>
                           <IconComponent name={path.icon} />
                         </div>
-                        <h4 className={`text-xl font-black mb-3 transition-colors ${selected === path.title ? 'text-emerald-400' : 'text-white'}`}>
+                        <h4 className={`text-xl font-black mb-3 transition-colors ${selected === path.key ? 'text-emerald-400' : 'text-white'}`}>
                           {path.title}
                         </h4>
                         <p className="text-sm text-white/30 font-medium line-clamp-2 mb-6">
                           {path.description}
                         </p>
                         <Button 
-                          variant={selected === path.title ? 'primary' : 'outline'}
+                          variant={selected === path.key ? 'primary' : 'outline'}
                           fullWidth
                           className="rounded-2xl font-black text-xs uppercase tracking-widest"
                         >
-                          {selected === path.title ? 'Selected' : 'Select Path'}
+                          {selected === path.key ? 'Selected' : 'Select Path'}
                         </Button>
                       </Card>
                     ))}

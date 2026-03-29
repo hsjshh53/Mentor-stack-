@@ -1,4 +1,4 @@
-import { ref, set, get, push, update } from 'firebase/database';
+import { doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Certificate, UserProgress, CareerPath, CertificateTier } from '../types';
 import { CURRICULUM, PROJECTS } from '../constants/curriculum';
@@ -45,16 +45,14 @@ export const generateCertificate = async (
   const pathData = CURRICULUM[path];
   
   // Check if user already has a certificate for this path
-  const userCertsRef = ref(db, `users/${userId}/progress/certificates`);
-  const userCertsSnapshot = await get(userCertsRef);
-  const userCertIds = userCertsSnapshot.exists() ? userCertsSnapshot.val() : [];
+  const userCerts = progress.certificates || [];
   
   // Fetch existing certificates to check for path
-  for (const certId of userCertIds) {
-    const certRef = ref(db, `certificates/${certId}`);
-    const certSnapshot = await get(certRef);
-    if (certSnapshot.exists() && certSnapshot.val().pathName === path) {
-      return certSnapshot.val();
+  for (const certId of userCerts) {
+    const certRef = doc(db, 'certificates', certId);
+    const certSnapshot = await getDoc(certRef);
+    if (certSnapshot.exists() && certSnapshot.data().pathName === path) {
+      return certSnapshot.data() as Certificate;
     }
   }
 
@@ -72,9 +70,9 @@ export const generateCertificate = async (
     };
   });
 
-  const certsRef = ref(db, 'certificates');
-  const newCertRef = push(certsRef);
-  const certId = newCertRef.key!;
+  const certsRef = collection(db, 'certificates');
+  const newCertRef = doc(certsRef);
+  const certId = newCertRef.id;
 
   const certificate: Certificate = {
     id: certId,
@@ -93,32 +91,29 @@ export const generateCertificate = async (
     issuedBy: "MentorStack AI by OLYNQ SOCIAL"
   };
 
-  await set(newCertRef, certificate);
+  await setDoc(newCertRef, certificate);
 
   // Update user progress with new certificate ID
-  await set(userCertsRef, [...userCertIds, certId]);
+  const userProgressRef = doc(db, 'users', userId, 'progress', 'data');
+  await updateDoc(userProgressRef, {
+    certificates: arrayUnion(certId)
+  });
 
   return certificate;
 };
 
 export const getCertificate = async (certId: string): Promise<Certificate | null> => {
-  const certRef = ref(db, `certificates/${certId}`);
-  const snapshot = await get(certRef);
-  return snapshot.exists() ? snapshot.val() : null;
+  const certRef = doc(db, 'certificates', certId);
+  const snapshot = await getDoc(certRef);
+  return snapshot.exists() ? snapshot.data() as Certificate : null;
 };
 
 export const getUserCertificates = async (userId: string): Promise<Certificate[]> => {
-  const userCertsRef = ref(db, `users/${userId}/progress/certificates`);
-  const snapshot = await get(userCertsRef);
-  if (!snapshot.exists()) return [];
-  
-  const certIds = snapshot.val();
+  const q = query(collection(db, 'certificates'), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
   const certificates: Certificate[] = [];
-  
-  for (const certId of certIds) {
-    const cert = await getCertificate(certId);
-    if (cert) certificates.push(cert);
-  }
-  
+  snapshot.forEach(doc => {
+    certificates.push(doc.data() as Certificate);
+  });
   return certificates;
 };

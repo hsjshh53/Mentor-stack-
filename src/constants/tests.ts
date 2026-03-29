@@ -798,5 +798,305 @@ export const STAGE_TESTS: StageTest[] = [
         explanation: 'Game engines provide the core functionality needed to build games, such as rendering, physics, and sound.'
       }
     ]
+  },
+  {
+    id: 'uiux-intro-test',
+    title: 'Introduction to UI/UX Test',
+    stage: 'Beginner',
+    path: 'UI/UX',
+    description: 'Test your understanding of UI vs UX and why design matters.',
+    minScoreToPass: 70,
+    xpReward: 200,
+    questions: [
+      {
+        question: 'What does UI stand for?',
+        options: ['User Interaction', 'User Interface', 'User Insight', 'User Integration'],
+        correctIndex: 1,
+        explanation: 'UI stands for User Interface, focusing on the visual elements of a product.'
+      },
+      {
+        question: 'What is the primary focus of UX design?',
+        options: ['Visual aesthetics', 'The overall experience and usability', 'Writing code', 'Marketing the product'],
+        correctIndex: 1,
+        explanation: 'UX focuses on how a user feels and interacts with a product, ensuring it is useful and easy to use.'
+      }
+    ]
+  },
+  {
+    id: 'design-principles-test',
+    title: 'Design Principles Test',
+    stage: 'Beginner',
+    path: 'UI/UX',
+    description: 'Verify your knowledge of color, typography, and layout.',
+    minScoreToPass: 75,
+    xpReward: 250,
+    questions: [
+      {
+        question: 'What is "Negative Space" in design?',
+        options: ['Space that looks bad', 'The empty space between design elements', 'A dark color palette', 'Space used for error messages'],
+        correctIndex: 1,
+        explanation: 'Negative space (or white space) helps create balance and focus in a layout.'
+      },
+      {
+        question: 'Which color scheme uses colors that are opposite each other on the color wheel?',
+        options: ['Analogous', 'Monochromatic', 'Complementary', 'Triadic'],
+        correctIndex: 2,
+        explanation: 'Complementary colors provide high contrast and are located opposite each other.'
+      }
+    ]
+  },
+  {
+    id: 'ux-basics-test',
+    title: 'UX Basics Test',
+    stage: 'Beginner',
+    path: 'UI/UX',
+    description: 'Test your knowledge of user journeys and pain points.',
+    minScoreToPass: 75,
+    xpReward: 250,
+    questions: [
+      {
+        question: 'What is a "User Journey"?',
+        options: ['A trip the user takes', 'A visual representation of the steps a user takes to achieve a goal', 'The user\'s browser history', 'A list of user complaints'],
+        correctIndex: 1,
+        explanation: 'A user journey maps out the entire experience a user has with a product.'
+      }
+    ]
+  },
+  {
+    id: 'wireframing-test',
+    title: 'Wireframing Test',
+    stage: 'Beginner',
+    path: 'UI/UX',
+    description: 'Verify your understanding of low-fidelity layouts.',
+    minScoreToPass: 70,
+    xpReward: 200,
+    questions: [
+      {
+        question: 'What is the main purpose of a wireframe?',
+        options: ['To show final colors and images', 'To define the structure and layout of a screen', 'To write the final code', 'To test the server speed'],
+        correctIndex: 1,
+        explanation: 'Wireframes focus on functionality and layout rather than visual details.'
+      }
+    ]
+  },
+  {
+    id: 'tools-test',
+    title: 'Design Tools Test',
+    stage: 'Beginner',
+    path: 'UI/UX',
+    description: 'Test your basic knowledge of Figma and Canva.',
+    minScoreToPass: 70,
+    xpReward: 200,
+    questions: [
+      {
+        question: 'Which tool is primarily used for professional UI/UX prototyping?',
+        options: ['Canva', 'Figma', 'Microsoft Word', 'Excel'],
+        correctIndex: 1,
+        explanation: 'Figma is the industry standard for UI/UX design and prototyping.'
+      }
+    ]
+  },
+  {
+    id: 'design-systems-test',
+    title: 'Design Systems Test',
+    stage: 'Intermediate',
+    path: 'UI/UX',
+    description: 'Verify your knowledge of components and consistency.',
+    minScoreToPass: 80,
+    xpReward: 350,
+    questions: [
+      {
+        question: 'What is a "Design System"?',
+        options: ['A single Figma file', 'A collection of reusable components and standards', 'A type of computer monitor', 'A marketing strategy'],
+        correctIndex: 1,
+        explanation: 'Design systems ensure consistency across large products by providing reusable building blocks.'
+      }
+    ]
+  },
+  {
+    id: 'ux-research-test',
+    title: 'UX Research Test',
+    stage: 'Intermediate',
+    path: 'UI/UX',
+    description: 'Test your knowledge of user personas and feedback.',
+    minScoreToPass: 80,
+    xpReward: 350,
+    questions: [
+      {
+        question: 'What is a "User Persona"?',
+        options: ['A real person using the app', 'A fictional character representing a user group', 'A list of user IDs', 'The CEO of the company'],
+        correctIndex: 1,
+        explanation: 'Personas help designers empathize with and design for specific target audiences.'
+      }
+    ]
+  },
+  {
+    id: 'prototyping-test',
+    title: 'Prototyping Test',
+    stage: 'Intermediate',
+    path: 'UI/UX',
+    description: 'Verify your understanding of interactive prototypes.',
+    minScoreToPass: 80,
+    xpReward: 400,
+    questions: [
+      {
+        question: 'What is "Smart Animate" in Figma?',
+        options: ['A way to generate code', 'A feature that automatically creates transitions between matching layers', 'An AI that designs for you', 'A tool for drawing icons'],
+        correctIndex: 1,
+        explanation: 'Smart Animate creates smooth, realistic transitions by interpolating changes between screens.'
+      }
+    ]
+  },
+  {
+    id: 'mobile-design-test',
+    title: 'Mobile Design Test',
+    stage: 'Intermediate',
+    path: 'UI/UX',
+    description: 'Test your knowledge of mobile-first design.',
+    minScoreToPass: 80,
+    xpReward: 350,
+    questions: [
+      {
+        question: 'What does "Mobile-First" design mean?',
+        options: ['Designing for desktop first, then mobile', 'Starting the design process with the smallest screen size', 'Only designing for mobile phones', 'Using a mobile phone to design'],
+        correctIndex: 1,
+        explanation: 'Mobile-first ensures the core experience works on small screens before expanding to larger ones.'
+      }
+    ]
+  },
+  {
+    id: 'web-design-test',
+    title: 'Web Design Test',
+    stage: 'Intermediate',
+    path: 'UI/UX',
+    description: 'Verify your knowledge of landing pages and dashboards.',
+    minScoreToPass: 80,
+    xpReward: 400,
+    questions: [
+      {
+        question: 'What is the primary goal of a Landing Page?',
+        options: ['To show all company information', 'To drive a specific user action (conversion)', 'To host a blog', 'To store user data'],
+        correctIndex: 1,
+        explanation: 'Landing pages are focused on a single call to action, like signing up or buying a product.'
+      }
+    ]
+  },
+  {
+    id: 'real-product-test',
+    title: 'Real Product Design Test',
+    stage: 'Advanced',
+    path: 'UI/UX',
+    description: 'Test your knowledge of the case study approach.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'Why is a "Case Study" important for a designer?',
+        options: ['To show they can use Figma', 'To demonstrate their problem-solving process and thinking', 'To list their hobbies', 'To show final pretty pictures only'],
+        correctIndex: 1,
+        explanation: 'Employers look for the "why" behind the design, which a case study explains in detail.'
+      }
+    ]
+  },
+  {
+    id: 'portfolio-test',
+    title: 'Portfolio Test',
+    stage: 'Advanced',
+    path: 'UI/UX',
+    description: 'Verify your knowledge of presenting designs.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'Which platform is most popular for showcasing UI/UX portfolios?',
+        options: ['GitHub', 'Behance', 'LinkedIn', 'Stack Overflow'],
+        correctIndex: 1,
+        explanation: 'Behance and Dribbble are the primary platforms for visual and product designers.'
+      }
+    ]
+  },
+  {
+    id: 'dev-handoff-test',
+    title: 'Developer Handoff Test',
+    stage: 'Advanced',
+    path: 'UI/UX',
+    description: 'Test your knowledge of the handoff process.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What should be included in a "Developer Handoff"?',
+        options: ['Just a PDF of the design', 'Assets, specs, and a walkthrough of interactions', 'The designer\'s phone number', 'A link to a YouTube video'],
+        correctIndex: 1,
+        explanation: 'Handoff requires clear documentation so developers can accurately build the design.'
+      }
+    ]
+  },
+  {
+    id: 'freelancing-test',
+    title: 'Freelancing & Jobs Test',
+    stage: 'Advanced',
+    path: 'UI/UX',
+    description: 'Verify your knowledge of the design industry.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is a common way to price freelance design work?',
+        options: ['By the number of pixels', 'Hourly rate or fixed project fee', 'By the number of colors used', 'By the size of the Figma file'],
+        correctIndex: 1,
+        explanation: 'Hourly and fixed-price are the standard models for freelance services.'
+      }
+    ]
+  },
+  {
+    id: 'advanced-ux-test',
+    title: 'Advanced UX Test',
+    stage: 'Advanced',
+    path: 'UI/UX',
+    description: 'Test your knowledge of usability and A/B testing.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is "Usability Testing"?',
+        options: ['Testing if the app crashes', 'Observing real users as they try to complete tasks with your product', 'Checking if the colors are pretty', 'Testing the internet speed'],
+        correctIndex: 1,
+        explanation: 'Usability testing identifies friction points and areas for improvement in the user experience.'
+      }
+    ]
+  },
+  {
+    id: 'uiux-final-exam',
+    title: 'UI/UX Professional Final Exam',
+    stage: 'Advanced',
+    path: 'UI/UX',
+    description: 'The final comprehensive exam for the UI/UX Designer career path.',
+    minScoreToPass: 90,
+    xpReward: 1000,
+    questions: [
+      {
+        question: 'Which of the following best describes the "Double Diamond" design process?',
+        options: [
+          'A way to cut diamonds',
+          'Discover, Define, Develop, Deliver',
+          'Design, Debug, Deploy, Done',
+          'A type of color palette'
+        ],
+        correctIndex: 1,
+        explanation: 'The Double Diamond is a popular framework for innovation and design thinking.'
+      },
+      {
+        question: 'What is "Accessibility" in UI design?',
+        options: [
+          'Making the app free to download',
+          'Ensuring the product can be used by everyone, including people with disabilities',
+          'Having a fast loading time',
+          'Using a lot of icons'
+        ],
+        correctIndex: 1,
+        explanation: 'Accessibility (a11y) is a core responsibility of design to ensure inclusivity.'
+      }
+    ]
   }
 ];

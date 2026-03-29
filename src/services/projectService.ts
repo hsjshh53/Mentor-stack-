@@ -1,11 +1,11 @@
-import { ref, set, get, update, onValue, off } from "firebase/database";
+import { doc, setDoc, getDoc, updateDoc, onSnapshot, query, collection, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { UserProjectProgress } from "../types";
 
 export const projectService = {
   // Initialize project progress
   startProject: async (userId: string, projectId: string, initialPhaseId: string) => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
     const now = Date.now();
     
     const initialProgress: UserProjectProgress = {
@@ -19,21 +19,21 @@ export const projectService = {
       completedAt: null
     };
     
-    await set(projectRef, initialProgress);
+    await setDoc(projectRef, initialProgress);
     return initialProgress;
   },
 
   // Get project progress
   getProjectProgress: async (userId: string, projectId: string): Promise<UserProjectProgress | null> => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
-    const snapshot = await get(projectRef);
-    return snapshot.exists() ? snapshot.val() : null;
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const snapshot = await getDoc(projectRef);
+    return snapshot.exists() ? snapshot.data() as UserProjectProgress : null;
   },
 
   // Update current phase
   updateCurrentPhase: async (userId: string, projectId: string, phaseId: string) => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
-    await update(projectRef, {
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    await updateDoc(projectRef, {
       currentPhaseId: phaseId,
       updatedAt: Date.now()
     });
@@ -41,11 +41,11 @@ export const projectService = {
 
   // Update phase progress
   updatePhaseProgress: async (userId: string, projectId: string, phaseId: string, isCompleted: boolean) => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
-    const snapshot = await get(projectRef);
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const snapshot = await getDoc(projectRef);
     if (!snapshot.exists()) return;
 
-    const progress: UserProjectProgress = snapshot.val();
+    const progress = snapshot.data() as UserProjectProgress;
     let completedPhases = progress.completedPhases || [];
     
     if (isCompleted && !completedPhases.includes(phaseId)) {
@@ -54,7 +54,7 @@ export const projectService = {
       completedPhases = completedPhases.filter(id => id !== phaseId);
     }
 
-    await update(projectRef, {
+    await updateDoc(projectRef, {
       completedPhases,
       updatedAt: Date.now()
     });
@@ -62,11 +62,11 @@ export const projectService = {
 
   // Update checkpoint progress
   updateCheckpointProgress: async (userId: string, projectId: string, checkpointId: string, isCompleted: boolean) => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
-    const snapshot = await get(projectRef);
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const snapshot = await getDoc(projectRef);
     if (!snapshot.exists()) return;
 
-    const progress: UserProjectProgress = snapshot.val();
+    const progress = snapshot.data() as UserProjectProgress;
     let completedCheckpoints = progress.completedCheckpoints || [];
     
     if (isCompleted && !completedCheckpoints.includes(checkpointId)) {
@@ -75,7 +75,7 @@ export const projectService = {
       completedCheckpoints = completedCheckpoints.filter(id => id !== checkpointId);
     }
 
-    await update(projectRef, {
+    await updateDoc(projectRef, {
       completedCheckpoints,
       updatedAt: Date.now()
     });
@@ -83,8 +83,8 @@ export const projectService = {
 
   // Complete project
   completeProject: async (userId: string, projectId: string) => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
-    await update(projectRef, {
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    await updateDoc(projectRef, {
       status: 'completed',
       completedAt: Date.now(),
       updatedAt: Date.now()
@@ -93,8 +93,8 @@ export const projectService = {
 
   // Save project draft (playground code)
   saveProjectDraft: async (userId: string, projectId: string, draft: any) => {
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
-    await update(projectRef, {
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    await updateDoc(projectRef, {
       draft,
       updatedAt: Date.now()
     });
@@ -102,10 +102,10 @@ export const projectService = {
 
   // Submit project
   submitProject: async (userId: string, projectId: string, submission: any) => {
-    const submissionRef = ref(db, `users/${userId}/submissions/${projectId}`);
-    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    const submissionRef = doc(db, 'users', userId, 'submissions', projectId);
+    const projectRef = doc(db, 'users', userId, 'projects', projectId);
     
-    await set(submissionRef, {
+    await setDoc(submissionRef, {
       ...submission,
       id: projectId,
       userId,
@@ -114,18 +114,27 @@ export const projectService = {
       status: 'pending'
     });
 
-    await update(projectRef, {
-      status: 'completed', // Or 'submitted' if we add that status
+    await updateDoc(projectRef, {
+      status: 'completed',
       updatedAt: Date.now()
     });
   },
 
   // Listen to all user projects
   subscribeToProjects: (userId: string, callback: (projects: Record<string, UserProjectProgress>) => void) => {
-    const projectsRef = ref(db, `users/${userId}/projects`);
-    onValue(projectsRef, (snapshot) => {
-      callback(snapshot.val() || {});
+    const q = query(
+      collection(db, 'users', userId, 'projects'),
+      orderBy('updatedAt', 'desc')
+    );
+    
+    return onSnapshot(q, (snapshot) => {
+      const projects: Record<string, UserProjectProgress> = {};
+      snapshot.forEach((doc) => {
+        projects[doc.id] = doc.data() as UserProjectProgress;
+      });
+      callback(projects);
+    }, (error) => {
+      console.error("Error subscribing to projects:", error);
     });
-    return () => off(projectsRef);
   }
 };

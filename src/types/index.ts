@@ -185,6 +185,7 @@ export interface UserProgress {
   weakAreas: string[];
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
+  currentLessonId?: string | null;
   isPremium: boolean;
   goal?: string;
   experienceLevel?: string;
@@ -205,6 +206,7 @@ export interface LessonContent {
   whyItMatters: string;
   explanation: string;
   analogy: string;
+  visualExplanation?: string;
   codeExample: string;
   lineByLine: string;
   commonMistakes: string[];
