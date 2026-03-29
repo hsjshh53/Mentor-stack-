@@ -5082,5 +5082,306 @@ print(report)`,
     ],
     recap: 'Preparation is the antidote to interview anxiety.'
   },
+  'tailwind-css-intro': {
+    id: 'tailwind-css-intro',
+    title: 'Introduction to Tailwind CSS',
+    todayYouAreLearning: 'Building modern interfaces rapidly with utility-first CSS.',
+    whyItMatters: 'Tailwind is the industry standard for modern frontend development, allowing for faster styling without leaving your HTML.',
+    explanation: 'Tailwind uses "utility classes" like `flex`, `pt-4`, `text-center`, and `rotate-90` to style elements directly. This eliminates the need for large, custom CSS files.',
+    analogy: 'Tailwind is like building with LEGO bricks. Instead of molding a custom piece (writing custom CSS), you pick pre-made bricks (utility classes) and snap them together.',
+    visualExplanation: 'Imagine a button. Instead of `.btn { padding: 10px; background: blue; }`, you write `<button class="p-4 bg-blue-500">`. It is instant and predictable.',
+    codeExample: '<div class="flex items-center justify-between p-6 bg-white rounded-xl shadow-lg">\n  <h1 class="text-2xl font-bold text-gray-800">Hello Tailwind</h1>\n  <button class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">Click Me</button>\n</div>',
+    lineByLine: '`flex items-center justify-between` handles the layout. `p-6 bg-white rounded-xl shadow-lg` handles the styling. `hover:bg-indigo-700` handles the interaction.',
+    commonMistakes: ['Overusing custom CSS when a Tailwind class exists.', 'Creating long, unreadable class strings (use components or `@apply` if needed).'],
+    practice: 'Create a simple card component using only Tailwind utility classes.',
+    challenge: 'How does Tailwind handle responsive design (e.g., mobile vs desktop)?',
+    quiz: [
+      {
+        question: 'What is the "Utility-First" approach in Tailwind?',
+        options: ['Writing all CSS in a separate file', 'Using pre-defined classes to style elements directly', 'Using a CSS-in-JS library', 'Only using Flexbox'],
+        correctIndex: 1,
+        explanation: 'Utility-first means you use small, single-purpose classes to build complex designs directly in your markup.'
+      }
+    ],
+    recap: 'Tailwind makes you a faster, more consistent designer.'
+  },
+  'animations-framer-motion': {
+    id: 'animations-framer-motion',
+    title: 'Animations with Framer Motion',
+    todayYouAreLearning: 'Adding life and motion to your React applications.',
+    whyItMatters: 'Motion guides users, provides feedback, and makes your app feel premium and polished.',
+    explanation: 'Framer Motion is a production-ready library for React. It uses the `motion` component to animate elements based on props like `initial`, `animate`, and `transition`.',
+    analogy: 'If your app is a movie, Framer Motion is the director telling the actors (components) how to move, fade, and slide into the scene.',
+    visualExplanation: 'Think of a list where items gently slide in one by one. This "staggered" animation feels much more natural than everything appearing at once.',
+    codeExample: '<motion.div\n  initial={{ opacity: 0, y: 20 }}\n  animate={{ opacity: 1, y: 0 }}\n  transition={{ duration: 0.5, ease: "easeOut" }}\n  whileHover={{ scale: 1.05 }}\n  whileTap={{ scale: 0.95 }}\n>\n  Animated Card\n</motion.div>',
+    lineByLine: '`initial` is the starting state. `animate` is the target state. `whileHover` and `whileTap` are interactive states.',
+    commonMistakes: ['Animating too many things at once (it becomes distracting).', 'Using long durations that make the app feel slow.'],
+    practice: 'Create a button that scales up slightly when hovered and shrinks when clicked.',
+    challenge: 'What is the purpose of the `AnimatePresence` component?',
+    quiz: [
+      {
+        question: 'Which prop defines the starting state of a motion component?',
+        options: ['start', 'initial', 'begin', 'from'],
+        correctIndex: 1,
+        explanation: 'The `initial` prop sets the properties of the component before the animation begins.'
+      }
+    ],
+    recap: 'Motion is the "secret sauce" of great user experiences.'
+  },
+  'glassmorphism-ui': {
+    id: 'glassmorphism-ui',
+    title: 'Glassmorphism UI Design',
+    todayYouAreLearning: 'Creating the modern "frosted glass" aesthetic.',
+    whyItMatters: 'Glassmorphism is a popular design trend that adds depth and hierarchy to modern interfaces.',
+    explanation: 'Glassmorphism relies on four key properties: 1. Transparency (using RGBA). 2. Background Blur (using `backdrop-filter`). 3. Subtle Borders (to define edges). 4. Vivid Backgrounds (to show through the glass).',
+    analogy: 'It is like placing a sheet of frosted glass over a colorful painting. You can see the colors, but the details are blurred, making the glass stand out.',
+    visualExplanation: 'Imagine a dark background with a glowing orb. A glass card over it will pick up the glow while remaining sharp and readable.',
+    codeExample: '<div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">\n  <h2 class="text-white font-semibold">Glass Card</h2>\n  <p class="text-white/70">Modern, sleek, and elegant.</p>\n</div>',
+    lineByLine: '`bg-white/10` provides the transparency. `backdrop-blur-md` creates the frosted effect. `border-white/20` adds the subtle edge.',
+    commonMistakes: ['Using too much blur (it can look muddy).', 'Not having enough contrast between the text and the glass background.'],
+    practice: 'Build a login form with a glassmorphism background.',
+    challenge: 'Why is `backdrop-filter` better than just `filter: blur()` for this effect?',
+    quiz: [
+      {
+        question: 'Which CSS property is essential for the "frosted" look of glassmorphism?',
+        options: ['opacity', 'filter', 'backdrop-filter', 'blur'],
+        correctIndex: 2,
+        explanation: '`backdrop-filter` applies the blur to the area *behind* the element, creating the glass effect.'
+      }
+    ],
+    recap: 'Glassmorphism adds a layer of sophistication to your UI.'
+  },
+  'react-query-fetching': {
+    id: 'react-query-fetching',
+    title: 'Data Fetching with React Query',
+    todayYouAreLearning: 'Managing server state like a pro.',
+    whyItMatters: 'Handling loading states, caching, and re-fetching manually is hard. React Query automates it all.',
+    explanation: 'React Query (TanStack Query) provides hooks like `useQuery` and `useMutation`. It handles caching, background updates, and stale data out of the box.',
+    analogy: 'React Query is like a smart personal assistant for your data. Instead of you checking the mailbox every 5 minutes, the assistant does it for you and only tells you when there is something new.',
+    visualExplanation: 'Think of a "Loading..." spinner that only shows the first time you visit a page. After that, the data is instant because it is cached.',
+    codeExample: 'const { data, isLoading, error } = useQuery({\n  queryKey: ["todos"],\n  queryFn: fetchTodos,\n});\n\nif (isLoading) return <div>Loading...</div>;\nif (error) return <div>Error: {error.message}</div>;',
+    lineByLine: '`queryKey` is a unique identifier for the cache. `queryFn` is the function that actually fetches the data.',
+    commonMistakes: ['Not using unique query keys.', 'Manually managing loading states in `useEffect` when React Query can do it.'],
+    practice: 'Refactor a standard `useEffect` fetch to use `useQuery`.',
+    challenge: 'What does "Stale-While-Revalidate" mean in the context of caching?',
+    quiz: [
+      {
+        question: 'What is the primary benefit of using React Query?',
+        options: ['It makes the API faster', 'It handles caching and server state automatically', 'It replaces the `fetch` API', 'It styles your data'],
+        correctIndex: 1,
+        explanation: 'React Query simplifies data fetching by managing cache, loading states, and background updates.'
+      }
+    ],
+    recap: 'React Query is the missing piece of the React data-fetching puzzle.'
+  },
+  'netlify-setup': {
+    id: 'netlify-setup',
+    title: 'Deploying to Netlify',
+    todayYouAreLearning: 'Hosting your frontend apps with ease.',
+    whyItMatters: 'Netlify is one of the most popular platforms for hosting static sites and modern web apps.',
+    explanation: 'Netlify connects to your GitHub repository. Every time you push code, Netlify automatically builds and deploys your site to a global CDN.',
+    analogy: 'Netlify is like a high-speed printing press. You send it your manuscript (code), and it instantly prints and distributes it to every bookstore in the world.',
+    visualExplanation: 'Imagine a dashboard where you can see your build logs in real-time and get a unique URL for every "Deploy Preview" (pull request).',
+    codeExample: '// 1. Connect GitHub\n// 2. Select Repository\n// 3. Build Command: npm run build\n// 4. Publish Directory: dist',
+    lineByLine: 'These are the standard settings for a Vite or React project on Netlify.',
+    commonMistakes: ['Forgetting to set environment variables in the Netlify dashboard.', 'Not configuring "Redirects" for SPA routing (e.g., `_redirects` file).'],
+    practice: 'Deploy a simple HTML/CSS project to Netlify using the "Drag and Drop" feature.',
+    challenge: 'How do you handle React Router paths on Netlify so they don\'t return 404 on refresh?',
+    quiz: [
+      {
+        question: 'What happens when you push code to a GitHub repo connected to Netlify?',
+        options: ['Nothing', 'Netlify sends you an email', 'Netlify automatically builds and deploys the new version', 'The site goes offline'],
+        correctIndex: 2,
+        explanation: 'Netlify uses "Continuous Deployment" to keep your live site in sync with your code.'
+      }
+    ],
+    recap: 'Netlify makes deployment a non-event.'
+  },
+  'custom-domains': {
+    id: 'custom-domains',
+    title: 'Custom Domains & SSL',
+    todayYouAreLearning: 'Making your site professional with a custom URL.',
+    whyItMatters: 'A custom domain (e.g., `yourname.dev`) builds trust and makes your brand memorable.',
+    explanation: 'To use a custom domain, you need to: 1. Purchase a domain (e.g., Namecheap, Google Domains). 2. Update DNS records (A, CNAME, or ALIAS). 3. Enable HTTPS (SSL) for security.',
+    analogy: 'A domain name is like your home address. Without it, people have to use GPS coordinates (IP addresses) to find you. A custom domain is much easier to remember.',
+    visualExplanation: 'Think of the green padlock in the browser bar. That is SSL in action, telling users their connection is secure.',
+    codeExample: '// DNS Settings:\n// Type: CNAME\n// Name: www\n// Value: your-app.netlify.app',
+    lineByLine: 'This record tells the internet that `www.yourdomain.com` should point to your Netlify site.',
+    commonMistakes: ['Waiting until the last minute to set up a domain (DNS can take 24-48 hours to propagate).', 'Not setting up a redirect from `non-www` to `www` (or vice versa).'],
+    practice: 'Research the price of your preferred `.com` or `.dev` domain.',
+    challenge: 'What is "DNS Propagation"?',
+    quiz: [
+      {
+        question: 'What does SSL (HTTPS) do for your website?',
+        options: ['Makes it faster', 'Encrypts the connection between the user and the server', 'Changes the background color', 'Makes the domain cheaper'],
+        correctIndex: 1,
+        explanation: 'SSL ensures that data sent between the browser and the server is private and secure.'
+      }
+    ],
+    recap: 'A custom domain is the final touch on a professional project.'
+  },
+  'portfolio-seo': {
+    id: 'portfolio-seo',
+    title: 'SEO for Developers',
+    todayYouAreLearning: 'Getting your portfolio found on Google.',
+    whyItMatters: 'If recruiters can\'t find your portfolio, they can\'t hire you. SEO helps you appear in relevant searches.',
+    explanation: 'Frontend SEO involves: 1. Semantic HTML (using `<h1>`, `<header>`, etc.). 2. Meta Tags (title, description). 3. Open Graph tags (for social sharing). 4. Performance (Google loves fast sites).',
+    analogy: 'SEO is like putting your resume on the top of the pile instead of the bottom. It makes you more visible to the people looking for you.',
+    visualExplanation: 'Imagine a Google search result. The bold title and the description below it are controlled by your site\'s meta tags.',
+    codeExample: '<title>Jane Doe | Senior Frontend Developer | React & Node</title>\n<meta name="description" content="Portfolio of Jane Doe, a frontend developer specializing in building high-performance React applications.">',
+    lineByLine: 'The title should include your name and key skills. The description should be a brief, compelling summary of your work.',
+    commonMistakes: ['Using generic titles like "My Portfolio".', 'Forgetting to add `alt` text to images (which helps image search).'],
+    practice: 'Write a perfect meta title and description for your own portfolio.',
+    challenge: 'What is a "Sitemap" and why is it useful?',
+    quiz: [
+      {
+        question: 'Which HTML tag is most important for SEO on a page?',
+        options: ['<div>', '<span>', '<h1>', '<p>'],
+        correctIndex: 2,
+        explanation: 'The `<h1>` tag tells search engines what the primary topic of the page is.'
+      }
+    ],
+    recap: 'Good SEO is just good accessibility and performance.'
+  },
+  'personal-branding': {
+    id: 'personal-branding',
+    title: 'Personal Branding for Devs',
+    todayYouAreLearning: 'Defining your unique value in the tech industry.',
+    whyItMatters: 'In a crowded market, your "brand" is what makes people remember you and want to work with you.',
+    explanation: 'Your brand is the intersection of: 1. Your technical skills. 2. Your unique background/story. 3. How you communicate and share knowledge.',
+    analogy: 'Personal branding is like the "vibe" of a coffee shop. Some are cozy and quiet, others are loud and energetic. Your brand tells people what it\'s like to work with you.',
+    visualExplanation: 'Think of a consistent color palette and profile picture across GitHub, LinkedIn, and your portfolio. This "visual identity" makes you recognizable.',
+    codeExample: '// Your "Elevator Pitch":\n// "I am a frontend developer who loves building accessible tools for educators."',
+    lineByLine: 'A clear, one-sentence summary of who you are and what you do.',
+    commonMistakes: ['Trying to be "everything to everyone" (it is better to be an expert in one thing).', 'Being inconsistent across different platforms.'],
+    practice: 'Write your own 1-sentence elevator pitch.',
+    challenge: 'Why is "Building in Public" a great way to grow your brand?',
+    quiz: [
+      {
+        question: 'What is the core of a strong personal brand?',
+        options: ['A fancy logo', 'Consistency and a clear value proposition', 'Having 10,000 followers', 'Using the newest framework'],
+        correctIndex: 1,
+        explanation: 'Being consistent and clearly stating what you do helps people understand how you can help them.'
+      }
+    ],
+    recap: 'Your brand is what people say about you when you are not in the room.'
+  },
+  'networking-linkedin': {
+    id: 'networking-linkedin',
+    title: 'Networking & LinkedIn Mastery',
+    todayYouAreLearning: 'Building a professional network that opens doors.',
+    whyItMatters: 'Most jobs are found through referrals, not cold applications. LinkedIn is the place to build those connections.',
+    explanation: 'Effective networking means: 1. Optimizing your profile (headline, about section). 2. Sharing valuable content (not just "I\'m looking for a job"). 3. Reaching out with personalized, non-spammy messages.',
+    analogy: 'LinkedIn is like a 24/7 professional conference. You can walk up to anyone, listen to what they are saying, and join the conversation.',
+    visualExplanation: 'Imagine your "Featured" section on LinkedIn showing off your best portfolio projects. It is a mini-portfolio that recruiters see first.',
+    codeExample: '// Personalized Message Template:\n// "Hi [Name], I loved your recent post about [Topic]. I\'m a junior dev learning [Skill] and would love to connect!"',
+    lineByLine: 'This message is short, specific, and shows you actually read their content.',
+    commonMistakes: ['Using the default "I\'d like to add you to my professional network" message.', 'Only posting when you need something.'],
+    practice: 'Find 3 developers at companies you admire and send them a personalized connection request.',
+    challenge: 'What is the "Hidden Job Market"?',
+    quiz: [
+      {
+        question: 'What is the best way to get a recruiter\'s attention on LinkedIn?',
+        options: ['Messaging them "Hire me"', 'Having a clear, keyword-rich headline and an updated profile', 'Posting 50 times a day', 'Tagging them in random posts'],
+        correctIndex: 1,
+        explanation: 'A professional profile and a clear headline make it easy for recruiters to find and evaluate you.'
+      }
+    ],
+    recap: 'Your network is your net worth.'
+  },
+  'resume-for-devs': {
+    id: 'resume-for-devs',
+    title: 'The Developer Resume',
+    todayYouAreLearning: 'Crafting a resume that passes the "6-second test".',
+    whyItMatters: 'Recruiters spend very little time on each resume. Yours needs to be clear, concise, and impact-oriented.',
+    explanation: 'A great dev resume includes: 1. A clean, single-column layout. 2. Links to GitHub and Portfolio. 3. A clear "Skills" section. 4. Experience bullet points that focus on *results* (e.g., "Improved load time by 30%").',
+    analogy: 'A resume is like a landing page for a product (you). It needs to have a clear "Call to Action" (contact info) and highlight the "Key Features" (your skills).',
+    visualExplanation: 'Think of a clean document with plenty of white space. It should be easy to scan, with bold headings for each section.',
+    codeExample: '// Impact Bullet Point:\n// "Developed a responsive dashboard using React, reducing data entry time by 20% for 50+ users."',
+    lineByLine: 'This point shows the "What" (React dashboard), the "How" (developed), and the "Result" (20% time reduction).',
+    commonMistakes: ['Including irrelevant hobbies or high school info.', 'Using a complex, multi-column design that breaks ATS (Applicant Tracking Systems).'],
+    practice: 'Rewrite one of your project descriptions to focus on the impact/result.',
+    challenge: 'What is an "ATS" and why does it matter for your resume layout?',
+    quiz: [
+      {
+        question: 'What is the most important part of a developer resume?',
+        options: ['Your high school GPA', 'A list of every language you\'ve ever seen', 'Links to your work (GitHub/Portfolio) and clear evidence of your skills', 'A professional headshot'],
+        correctIndex: 2,
+        explanation: 'In tech, what you can build and how you solve problems is more important than anything else.'
+      }
+    ],
+    recap: 'Your resume gets you the interview; your skills get you the job.'
+  },
+  'writing-case-studies': {
+    id: 'writing-case-studies',
+    title: 'Writing Project Case Studies',
+    todayYouAreLearning: 'Telling the story behind your code.',
+    whyItMatters: 'A case study shows *how* you think, not just *what* you built. It is what separates "coders" from "engineers".',
+    explanation: 'A good case study follows this structure: 1. The Problem (What was the challenge?). 2. The Solution (How did you solve it?). 3. The Tech Stack (Why did you choose these tools?). 4. The Result (What did you learn/achieve?).',
+    analogy: 'A case study is like a "Behind the Scenes" documentary for a movie. It shows the hard work, the mistakes, and the clever solutions that went into the final product.',
+    visualExplanation: 'Imagine a blog post with screenshots of your "Work in Progress" or a diagram of your app\'s architecture. This makes the project feel real.',
+    codeExample: '// Case Study Section: "The Challenge"\n// "The main challenge was managing complex state across 10 different components without using a global store."',
+    lineByLine: 'This clearly identifies a specific technical problem you faced.',
+    commonMistakes: ['Only showing the final product without explaining the process.', 'Making it too long and technical (keep it readable for non-developers too).'],
+    practice: 'Pick one of your projects and write a 3-sentence "Problem" statement for it.',
+    challenge: 'Why is it important to talk about "Mistakes" or "Challenges" in a case study?',
+    quiz: [
+      {
+        question: 'What is the main goal of a project case study?',
+        options: ['To show off your code', 'To explain your problem-solving process and the "Why" behind your decisions', 'To list every library you used', 'To get more GitHub stars'],
+        correctIndex: 1,
+        explanation: 'Employers want to see that you can think critically and make informed technical decisions.'
+      }
+    ],
+    recap: 'The "Why" is just as important as the "How".'
+  },
+  'es6-plus-features': {
+    id: 'es6-plus-features',
+    title: 'Modern JavaScript (ES6+)',
+    todayYouAreLearning: 'Mastering the latest features of JavaScript.',
+    whyItMatters: 'Modern JavaScript is cleaner, more expressive, and more powerful than older versions.',
+    explanation: 'Key features include: 1. Arrow functions. 2. Template literals. 3. Destructuring. 4. Spread and rest operators. 5. Classes.',
+    analogy: 'ES6+ is like an upgrade to a newer, faster car. It has all the same basic parts, but everything is more efficient and easier to use.',
+    visualExplanation: 'Imagine a long, messy block of code. ES6+ features like arrow functions and destructuring can shrink it down to a few elegant lines.',
+    codeExample: 'const user = { name: "Jane", age: 25 };\nconst { name, age } = user;\nconst greet = (name) => `Hello, ${name}!`;\nconsole.log(greet(name));',
+    lineByLine: 'Destructuring extracts properties from objects. Arrow functions provide a shorter syntax for writing functions. Template literals allow for easy string interpolation.',
+    commonMistakes: ['Using `var` instead of `let` and `const`.', 'Not using arrow functions for simple callbacks.'],
+    practice: 'Refactor a standard function into an arrow function and use template literals.',
+    challenge: 'What is the "Spread Operator" and how is it used with arrays?',
+    quiz: [
+      {
+        question: 'Which keyword is used to declare a variable that cannot be reassigned?',
+        options: ['var', 'let', 'const', 'static'],
+        correctIndex: 2,
+        explanation: '`const` is used for variables that should remain constant after their initial assignment.'
+      }
+    ],
+    recap: 'Modern JavaScript is the foundation of modern frontend development.'
+  },
+  'lighthouse-audits': {
+    id: 'lighthouse-audits',
+    title: 'Lighthouse Performance Audits',
+    todayYouAreLearning: 'Measuring and improving your site\'s quality.',
+    whyItMatters: 'Lighthouse is an open-source tool from Google that helps you improve performance, accessibility, and SEO.',
+    explanation: 'Lighthouse provides scores in four categories: Performance, Accessibility, Best Practices, and SEO. It gives you a detailed list of "Opportunities" to improve.',
+    analogy: 'Lighthouse is like a health check-up for your website. It tells you what is working well and what needs attention.',
+    visualExplanation: 'Imagine a dashboard with four gauges. Your goal is to get all of them into the "green" (90-100).',
+    codeExample: '// Open Chrome DevTools -> Lighthouse -> Analyze page load',
+    lineByLine: 'Lighthouse is built directly into the Chrome browser.',
+    commonMistakes: ['Only running Lighthouse once (performance can vary).', 'Ignoring the "Accessibility" score.'],
+    practice: 'Run a Lighthouse audit on your favorite website and look at the "Opportunities" section.',
+    challenge: 'What is the difference between "Mobile" and "Desktop" audits in Lighthouse?',
+    quiz: [
+      {
+        question: 'Which tool is built into Chrome for auditing website quality?',
+        options: ['Postman', 'Lighthouse', 'Sass', 'Webpack'],
+        correctIndex: 1,
+        explanation: 'Lighthouse is the standard tool for auditing performance, accessibility, and SEO.'
+      }
+    ],
+    recap: 'Use Lighthouse to turn "good" sites into "great" ones.'
+  },
 };
+
+
 

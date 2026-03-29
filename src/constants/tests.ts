@@ -1098,5 +1098,236 @@ export const STAGE_TESTS: StageTest[] = [
         explanation: 'Accessibility (a11y) is a core responsibility of design to ensure inclusivity.'
       }
     ]
+  },
+  {
+    id: 'html-test',
+    title: 'HTML Mastery Test',
+    stage: 'Beginner',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of HTML structure, semantics, and forms.',
+    minScoreToPass: 80,
+    xpReward: 250,
+    questions: [
+      {
+        question: 'Which HTML element is used to define the main content of a document?',
+        options: ['<section>', '<main>', '<div>', '<article>'],
+        correctIndex: 1,
+        explanation: 'The <main> element represents the dominant content of the <body> of a document.'
+      },
+      {
+        question: 'What is the purpose of the <label> element in a form?',
+        options: ['To style the input', 'To provide a caption for an input element', 'To group inputs together', 'To submit the form'],
+        correctIndex: 1,
+        explanation: 'The <label> element provides a caption for an item in a user interface, improving accessibility.'
+      }
+    ]
+  },
+  {
+    id: 'css-test',
+    title: 'CSS Mastery Test',
+    stage: 'Beginner',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of CSS selectors, layout, and variables.',
+    minScoreToPass: 80,
+    xpReward: 250,
+    questions: [
+      {
+        question: 'What is the "Box Model" in CSS?',
+        options: ['A way to draw boxes', 'A model representing content, padding, border, and margin', 'A type of grid layout', 'A JavaScript function'],
+        correctIndex: 1,
+        explanation: 'The CSS box model is the foundation of layout on the web.'
+      },
+      {
+        question: 'Which property is used to create a Flexbox container?',
+        options: ['display: grid', 'display: flex', 'layout: flex', 'flex: true'],
+        correctIndex: 1,
+        explanation: 'Setting display to flex turns an element into a flex container.'
+      }
+    ]
+  },
+  {
+    id: 'git-test',
+    title: 'Git & GitHub Test',
+    stage: 'Beginner',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of version control and collaboration.',
+    minScoreToPass: 80,
+    xpReward: 250,
+    questions: [
+      {
+        question: 'Which command is used to save changes to the local repository?',
+        options: ['git push', 'git commit', 'git add', 'git save'],
+        correctIndex: 1,
+        explanation: 'git commit records changes to the repository.'
+      },
+      {
+        question: 'What is a "Branch" in Git?',
+        options: ['A copy of the repository', 'A separate line of development', 'A way to delete code', 'A type of folder'],
+        correctIndex: 1,
+        explanation: 'Branches allow you to work on different features or fixes independently.'
+      }
+    ]
+  },
+  {
+    id: 'dom-test',
+    title: 'DOM & Events Test',
+    stage: 'Intermediate',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of DOM manipulation and event handling.',
+    minScoreToPass: 80,
+    xpReward: 350,
+    questions: [
+      {
+        question: 'How do you add a click event listener to an element?',
+        options: ['element.onclick()', 'element.addEventListener("click", callback)', 'element.click(callback)', 'element.on("click", callback)'],
+        correctIndex: 1,
+        explanation: 'addEventListener is the standard way to attach event handlers in modern JavaScript.'
+      },
+      {
+        question: 'What is the "DOM"?',
+        options: ['Data Object Model', 'Document Object Model', 'Digital Object Model', 'Document Oriented Model'],
+        correctIndex: 1,
+        explanation: 'The DOM is a programming interface for web documents, representing the page as a tree of objects.'
+      }
+    ]
+  },
+  {
+    id: 'js-advanced-test',
+    title: 'Advanced JavaScript Test',
+    stage: 'Intermediate',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of async JS, ES6+, and modules.',
+    minScoreToPass: 80,
+    xpReward: 400,
+    questions: [
+      {
+        question: 'What does a Promise represent in JavaScript?',
+        options: ['A guaranteed value', 'The eventual completion or failure of an asynchronous operation', 'A type of function', 'A syntax error'],
+        correctIndex: 1,
+        explanation: 'Promises are used to handle asynchronous operations more cleanly than callbacks.'
+      },
+      {
+        question: 'Which keyword is used to export a function from a module?',
+        options: ['send', 'share', 'export', 'public'],
+        correctIndex: 2,
+        explanation: 'The export statement is used to make functions, objects, or values available to other modules.'
+      }
+    ]
+  },
+  {
+    id: 'modern-ui-test',
+    title: 'Modern UI & Responsive Design Test',
+    stage: 'Intermediate',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of responsive design and modern UI trends.',
+    minScoreToPass: 80,
+    xpReward: 400,
+    questions: [
+      {
+        question: 'What is "Mobile-First" design?',
+        options: ['Designing for mobile only', 'Designing for the smallest screen first and adding complexity for larger screens', 'Making the site look like an app', 'Using only mobile fonts'],
+        correctIndex: 1,
+        explanation: 'Mobile-first is a strategy that prioritizes the mobile experience and scales up.'
+      },
+      {
+        question: 'Which CSS property is essential for Glassmorphism?',
+        options: ['opacity', 'blur', 'backdrop-filter', 'filter'],
+        correctIndex: 2,
+        explanation: 'backdrop-filter allows you to apply effects like blur to the area behind an element.'
+      }
+    ]
+  },
+  {
+    id: 'react-basics-test',
+    title: 'React Basics Test',
+    stage: 'Advanced',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of React components, props, and state.',
+    minScoreToPass: 85,
+    xpReward: 450,
+    questions: [
+      {
+        question: 'What is the purpose of "State" in React?',
+        options: ['To store global data', 'To manage data that changes over time within a component', 'To pass data to children', 'To style components'],
+        correctIndex: 1,
+        explanation: 'State allows components to keep track of information and re-render when it changes.'
+      },
+      {
+        question: 'What are "Props" in React?',
+        options: ['Private state', 'Properties passed from a parent to a child component', 'A type of hook', 'A CSS framework'],
+        correctIndex: 1,
+        explanation: 'Props are used to pass data and configuration down the component tree.'
+      }
+    ]
+  },
+  {
+    id: 'performance-test',
+    title: 'Performance Optimization Test',
+    stage: 'Advanced',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of web performance and optimization.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is "Code Splitting"?',
+        options: ['Dividing code into multiple files', 'Loading only the code needed for the current page', 'Minifying JavaScript', 'Removing unused CSS'],
+        correctIndex: 1,
+        explanation: 'Code splitting improves initial load time by sending smaller bundles to the browser.'
+      },
+      {
+        question: 'What does "Lighthouse" measure?',
+        options: ['Server uptime', 'Performance, Accessibility, SEO, and Best Practices', 'Database speed', 'Code quality'],
+        correctIndex: 1,
+        explanation: 'Lighthouse is an automated tool for improving the quality of web pages.'
+      }
+    ]
+  },
+  {
+    id: 'deployment-test',
+    title: 'Deployment & CI/CD Test',
+    stage: 'Advanced',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of deployment and continuous integration.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is "Continuous Deployment"?',
+        options: ['Deploying code manually every day', 'Automatically deploying code to production after passing tests', 'Writing code that never stops', 'A type of cloud hosting'],
+        correctIndex: 1,
+        explanation: 'CD automates the release process, ensuring that new code is delivered to users quickly and safely.'
+      },
+      {
+        question: 'What is the purpose of a CNAME record?',
+        options: ['To set the site title', 'To map a custom domain to another domain name', 'To encrypt the connection', 'To store user data'],
+        correctIndex: 1,
+        explanation: 'CNAME records are used to alias one domain name to another, common for custom domains on hosting platforms.'
+      }
+    ]
+  },
+  {
+    id: 'career-test',
+    title: 'Career & Professional Prep Test',
+    stage: 'Advanced',
+    path: 'Frontend Developer',
+    description: 'Test your knowledge of job searching, resumes, and interviews.',
+    minScoreToPass: 85,
+    xpReward: 500,
+    questions: [
+      {
+        question: 'What is the "STAR" method used for in interviews?',
+        options: ['Solving coding challenges', 'Answering behavioral questions', 'Designing UI layouts', 'Writing clean code'],
+        correctIndex: 1,
+        explanation: 'STAR (Situation, Task, Action, Result) is a framework for providing structured answers to behavioral questions.'
+      },
+      {
+        question: 'What should be the focus of a developer portfolio?',
+        options: ['Quantity of projects', 'Quality of projects and clear explanations of your process', 'Personal hobbies', 'A list of every tool you\'ve ever used'],
+        correctIndex: 1,
+        explanation: 'A portfolio should showcase your best work and demonstrate your problem-solving abilities.'
+      }
+    ]
   }
 ];
+

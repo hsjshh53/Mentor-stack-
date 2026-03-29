@@ -43,6 +43,15 @@ export const OnboardingPage: React.FC = () => {
   const { updateProgress, loading, progress } = useUserData();
   const navigate = useNavigate();
 
+  const allPaths = React.useMemo(() => {
+    return Object.entries(CURRICULUM).map(([key, value]) => ({
+      ...value,
+      key: key as CareerPath
+    }));
+  }, []);
+
+  if (loading) return <LoadingScreen />;
+
   const handleComplete = async () => {
     if (!selected) return;
     
@@ -80,15 +89,6 @@ export const OnboardingPage: React.FC = () => {
       }
     }, 40);
   };
-
-  if (loading) return <LoadingScreen />;
-
-  const allPaths = React.useMemo(() => {
-    return Object.entries(CURRICULUM).map(([key, value]) => ({
-      ...value,
-      key: key as CareerPath
-    }));
-  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0, x: 20 },

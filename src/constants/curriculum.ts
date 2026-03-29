@@ -298,21 +298,21 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
             id: 'fe-foundations',
             title: '1. Foundations (Internet + Tools)',
             description: 'The absolute basics of programming and the web.',
-            lessons: ['what-is-coding', 'how-websites-work', 'internet-basics', 'browser-internals', 'dev-tools-setup'],
+            lessons: ['what-is-coding', 'how-computers-work', 'how-websites-work', 'internet-basics', 'browser-internals', 'dev-tools-setup'],
             testId: 'foundations-test'
           },
           {
             id: 'fe-html',
             title: '2. HTML',
             description: 'The skeleton of every website.',
-            lessons: ['html-structure', 'semantic-html', 'html-forms', 'html-media', 'accessibility-basics'],
+            lessons: ['html-structure', 'tags-elements', 'links-images', 'html-forms', 'semantic-html', 'html-media', 'accessibility-basics'],
             testId: 'html-test'
           },
           {
             id: 'fe-css',
             title: '3. CSS',
             description: 'Making the web beautiful.',
-            lessons: ['css-selectors', 'box-model', 'flexbox-mastery', 'css-grid-layout', 'css-variables'],
+            lessons: ['css-basics', 'colors-typography', 'css-selectors', 'box-model', 'flexbox-mastery', 'css-grid-layout', 'css-variables'],
             testId: 'css-test'
           },
           {
@@ -334,7 +334,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
             id: 'fe-js-basics',
             title: '5. JavaScript Basics',
             description: 'The engine of the web.',
-            lessons: ['js-variables', 'js-functions', 'js-objects-arrays', 'js-control-flow'],
+            lessons: ['js-intro', 'js-variables', 'js-functions', 'js-objects-arrays', 'js-control-flow'],
             testId: 'js-basics-test'
           },
           {
@@ -348,14 +348,14 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
             id: 'fe-js-advanced',
             title: '7. Advanced JavaScript',
             description: 'Mastering complex logic.',
-            lessons: ['async-await', 'promises-api', 'es6-plus-features', 'js-modules'],
+            lessons: ['async-js-promises', 'fetch-api-basics', 'es6-modules', 'es6-plus-features'],
             testId: 'js-advanced-test'
           },
           {
             id: 'fe-modern-ui',
             title: '8. Modern UI & Responsive Design',
             description: 'Building for every screen.',
-            lessons: ['mobile-first-design', 'tailwind-css-intro', 'animations-framer-motion', 'glassmorphism-ui'],
+            lessons: ['responsive-design-principles', 'media-queries-deep-dive', 'mobile-first-strategy', 'tailwind-css-intro', 'animations-framer-motion', 'glassmorphism-ui'],
             testId: 'modern-ui-test'
           }
         ],
@@ -370,42 +370,42 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
             id: 'fe-react-basics',
             title: '9. React Basics',
             description: 'Modern UI library basics.',
-            lessons: ['react-components', 'props-state', 'react-hooks-intro', 'handling-forms-react'],
+            lessons: ['react-components-props', 'react-state-hooks', 'react-handling-events', 'react-lists-keys', 'react-conditional-rendering'],
             testId: 'react-basics-test'
           },
           {
             id: 'fe-react-advanced',
             title: '10. Advanced React',
             description: 'Mastering React ecosystem.',
-            lessons: ['react-router-v6', 'context-api', 'custom-hooks', 'react-query-fetching'],
+            lessons: ['react-useeffect-hook', 'react-custom-hooks', 'react-context-api', 'react-routing-basics', 'react-forms-validation', 'react-query-fetching'],
             testId: 'react-advanced-test'
           },
           {
             id: 'fe-performance',
             title: '11. Performance Optimization',
             description: 'Making apps lightning fast.',
-            lessons: ['code-splitting', 'memoization-react', 'image-optimization', 'lighthouse-audits'],
+            lessons: ['web-performance-metrics', 'image-optimization-techniques', 'code-splitting-lazy-loading', 'react-performance-memo', 'lighthouse-audits'],
             testId: 'performance-test'
           },
           {
             id: 'fe-deployment',
             title: '12. Deployment',
             description: 'Going live with your projects.',
-            lessons: ['vercel-deployment', 'netlify-setup', 'custom-domains', 'ci-cd-basics'],
+            lessons: ['deployment-basics-vercel', 'netlify-setup', 'custom-domains', 'continuous-integration-cd'],
             testId: 'deployment-test'
           },
           {
             id: 'fe-portfolio',
             title: '13. Portfolio Building',
             description: 'Showcasing your work.',
-            lessons: ['writing-case-studies', 'portfolio-seo', 'personal-branding'],
+            lessons: ['building-a-portfolio', 'writing-case-studies', 'portfolio-seo', 'personal-branding'],
             projectId: 'fe-final-portfolio'
           },
           {
             id: 'fe-career',
             title: '14. Job & Freelancing Preparation',
             description: 'Getting hired as a developer.',
-            lessons: ['resume-for-devs', 'technical-interviews', 'freelancing-platforms', 'networking-linkedin'],
+            lessons: ['job-search-strategies', 'resume-for-devs', 'interview-prep-frontend', 'freelancing-fundamentals', 'networking-linkedin'],
             testId: 'career-test'
           }
         ],
