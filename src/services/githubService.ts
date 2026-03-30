@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { GithubConnection, GithubRepoMetadata } from "../types";
 
@@ -47,8 +47,8 @@ export const githubService = {
               connectedAt: Date.now()
             };
             
-            // 4. Save connection to Firestore
-            const connectionRef = doc(db, 'users', userId, 'github', 'connection');
+            // 4. Save connection to Firebase
+            const connectionRef = doc(db, "users", userId, "github", "connection");
             await setDoc(connectionRef, connection);
             
             resolve(connection);
@@ -73,14 +73,14 @@ export const githubService = {
 
   // Get GitHub connection
   getGithubConnection: async (userId: string): Promise<GithubConnection | null> => {
-    const connectionRef = doc(db, 'users', userId, 'github', 'connection');
+    const connectionRef = doc(db, "users", userId, "github", "connection");
     const snapshot = await getDoc(connectionRef);
     return snapshot.exists() ? snapshot.data() as GithubConnection : null;
   },
 
   // Disconnect GitHub
   disconnectGithub: async (userId: string) => {
-    const connectionRef = doc(db, 'users', userId, 'github', 'connection');
+    const connectionRef = doc(db, "users", userId, "github", "connection");
     await deleteDoc(connectionRef);
   },
 
@@ -131,8 +131,8 @@ export const githubService = {
 
     const data = await response.json();
 
-    // Save metadata to Firestore
-    const metadataRef = doc(db, 'users', userId, 'projects', projectId);
+    // Save metadata to Firebase
+    const metadataRef = doc(db, "users", userId, "projects", projectId);
     const metadata: GithubRepoMetadata = {
       repoName,
       repoUrl: `https://github.com/` + connection.username + `/` + repoName,
@@ -141,13 +141,13 @@ export const githubService = {
       publishStatus: 'published'
     };
     
-    await updateDoc(metadataRef, { githubMetadata: metadata });
+    await setDoc(metadataRef, { githubMetadata: metadata }, { merge: true });
     return metadata;
   },
 
   // Subscribe to connection
   subscribeToConnection: (userId: string, callback: (connection: GithubConnection | null) => void) => {
-    const connectionRef = doc(db, 'users', userId, 'github', 'connection');
+    const connectionRef = doc(db, "users", userId, "github", "connection");
     return onSnapshot(connectionRef, (snapshot) => {
       callback(snapshot.exists() ? snapshot.data() as GithubConnection : null);
     });

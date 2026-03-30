@@ -1,11 +1,11 @@
-import { doc, setDoc, getDoc, updateDoc, onSnapshot, query, collection, orderBy } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { UserProjectProgress } from "../types";
 
 export const projectService = {
   // Initialize project progress
   startProject: async (userId: string, projectId: string, initialPhaseId: string) => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     const now = Date.now();
     
     const initialProgress: UserProjectProgress = {
@@ -25,14 +25,14 @@ export const projectService = {
 
   // Get project progress
   getProjectProgress: async (userId: string, projectId: string): Promise<UserProjectProgress | null> => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     const snapshot = await getDoc(projectRef);
     return snapshot.exists() ? snapshot.data() as UserProjectProgress : null;
   },
 
   // Update current phase
   updateCurrentPhase: async (userId: string, projectId: string, phaseId: string) => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     await updateDoc(projectRef, {
       currentPhaseId: phaseId,
       updatedAt: Date.now()
@@ -41,11 +41,11 @@ export const projectService = {
 
   // Update phase progress
   updatePhaseProgress: async (userId: string, projectId: string, phaseId: string, isCompleted: boolean) => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     const snapshot = await getDoc(projectRef);
     if (!snapshot.exists()) return;
 
-    const progress = snapshot.data() as UserProjectProgress;
+    const progress: UserProjectProgress = snapshot.data() as UserProjectProgress;
     let completedPhases = progress.completedPhases || [];
     
     if (isCompleted && !completedPhases.includes(phaseId)) {
@@ -62,11 +62,11 @@ export const projectService = {
 
   // Update checkpoint progress
   updateCheckpointProgress: async (userId: string, projectId: string, checkpointId: string, isCompleted: boolean) => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     const snapshot = await getDoc(projectRef);
     if (!snapshot.exists()) return;
 
-    const progress = snapshot.data() as UserProjectProgress;
+    const progress: UserProjectProgress = snapshot.data() as UserProjectProgress;
     let completedCheckpoints = progress.completedCheckpoints || [];
     
     if (isCompleted && !completedCheckpoints.includes(checkpointId)) {
@@ -83,7 +83,7 @@ export const projectService = {
 
   // Complete project
   completeProject: async (userId: string, projectId: string) => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     await updateDoc(projectRef, {
       status: 'completed',
       completedAt: Date.now(),
@@ -93,7 +93,7 @@ export const projectService = {
 
   // Save project draft (playground code)
   saveProjectDraft: async (userId: string, projectId: string, draft: any) => {
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     await updateDoc(projectRef, {
       draft,
       updatedAt: Date.now()
@@ -102,8 +102,8 @@ export const projectService = {
 
   // Submit project
   submitProject: async (userId: string, projectId: string, submission: any) => {
-    const submissionRef = doc(db, 'users', userId, 'submissions', projectId);
-    const projectRef = doc(db, 'users', userId, 'projects', projectId);
+    const submissionRef = doc(db, "users", userId, "submissions", projectId);
+    const projectRef = doc(db, "users", userId, "projects", projectId);
     
     await setDoc(submissionRef, {
       ...submission,
@@ -115,26 +115,20 @@ export const projectService = {
     });
 
     await updateDoc(projectRef, {
-      status: 'completed',
+      status: 'completed', // Or 'submitted' if we add that status
       updatedAt: Date.now()
     });
   },
 
   // Listen to all user projects
   subscribeToProjects: (userId: string, callback: (projects: Record<string, UserProjectProgress>) => void) => {
-    const q = query(
-      collection(db, 'users', userId, 'projects'),
-      orderBy('updatedAt', 'desc')
-    );
-    
-    return onSnapshot(q, (snapshot) => {
+    const projectsRef = collection(db, "users", userId, "projects");
+    return onSnapshot(projectsRef, (snapshot) => {
       const projects: Record<string, UserProjectProgress> = {};
       snapshot.forEach((doc) => {
         projects[doc.id] = doc.data() as UserProjectProgress;
       });
       callback(projects);
-    }, (error) => {
-      console.error("Error subscribing to projects:", error);
     });
   }
 };

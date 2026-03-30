@@ -185,8 +185,12 @@ export interface UserProgress {
   weakAreas: string[];
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
-  currentLessonId?: string | null;
   isPremium: boolean;
+  dailyGoalMinutes: number;
+  dailyMinutesLearned: number;
+  lastLessonId: string | null;
+  lastLessonTitle: string | null;
+  lastActiveDate: string | null;
   goal?: string;
   experienceLevel?: string;
 }
@@ -206,12 +210,14 @@ export interface LessonContent {
   whyItMatters: string;
   explanation: string;
   analogy: string;
-  visualExplanation?: string;
+  stepByStep?: string;
+  lineByLine?: string;
   codeExample: string;
-  lineByLine: string;
+  visualExplanation?: string;
   commonMistakes: string[];
   practice: string;
   challenge: string;
+  reflectionQuestion?: string;
   proTip?: string;
   quiz: {
     question: string;

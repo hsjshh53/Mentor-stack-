@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, addDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Certificate, UserProgress, CareerPath, CertificateTier } from '../types';
 import { CURRICULUM, PROJECTS } from '../constants/curriculum';
@@ -45,14 +45,15 @@ export const generateCertificate = async (
   const pathData = CURRICULUM[path];
   
   // Check if user already has a certificate for this path
-  const userCerts = progress.certificates || [];
+  const userProgressRef = doc(db, "users", userId, "progress", "data");
+  const userProgressSnapshot = await getDoc(userProgressRef);
+  const userCertIds = userProgressSnapshot.exists() ? (userProgressSnapshot.data().certificates || []) : [];
   
   // Fetch existing certificates to check for path
-  for (const certId of userCerts) {
-    const certRef = doc(db, 'certificates', certId);
-    const certSnapshot = await getDoc(certRef);
-    if (certSnapshot.exists() && certSnapshot.data().pathName === path) {
-      return certSnapshot.data() as Certificate;
+  for (const certId of userCertIds) {
+    const cert = await getCertificate(certId);
+    if (cert && cert.pathName === path) {
+      return cert;
     }
   }
 
@@ -71,8 +72,29 @@ export const generateCertificate = async (
   });
 
   const certsRef = collection(db, 'certificates');
-  const newCertRef = doc(certsRef);
-  const certId = newCertRef.id;
+  const newCertDoc = await addDoc(certsRef, {
+    userId,
+    fullName,
+    pathName: path,
+    tier,
+    level: 'Advanced',
+    issueDate: new Date().toISOString(),
+    finalScore: score,
+    skills: pathData.skills || [],
+    projectTitle: certProjects[certProjects.length - 1]?.title || 'Capstone Project',
+    projects: certProjects,
+    verificationUrl: '', // Will update after getting ID
+    isValid: true,
+    issuedBy: "MentorStack AI by OLYNQ SOCIAL"
+  });
+
+  const certId = newCertDoc.id;
+  const verificationUrl = `${window.location.origin}/verify/${certId}`;
+  
+  await updateDoc(newCertDoc, { 
+    id: certId,
+    verificationUrl 
+  });
 
   const certificate: Certificate = {
     id: certId,
@@ -80,23 +102,20 @@ export const generateCertificate = async (
     fullName,
     pathName: path,
     tier,
-    level: 'Advanced', // Defaulting to Advanced for path completion
+    level: 'Advanced',
     issueDate: new Date().toISOString(),
     finalScore: score,
     skills: pathData.skills || [],
     projectTitle: certProjects[certProjects.length - 1]?.title || 'Capstone Project',
     projects: certProjects,
-    verificationUrl: `${window.location.origin}/verify/${certId}`,
+    verificationUrl,
     isValid: true,
     issuedBy: "MentorStack AI by OLYNQ SOCIAL"
   };
 
-  await setDoc(newCertRef, certificate);
-
   // Update user progress with new certificate ID
-  const userProgressRef = doc(db, 'users', userId, 'progress', 'data');
   await updateDoc(userProgressRef, {
-    certificates: arrayUnion(certId)
+    certificates: [...userCertIds, certId]
   });
 
   return certificate;
@@ -109,11 +128,17 @@ export const getCertificate = async (certId: string): Promise<Certificate | null
 };
 
 export const getUserCertificates = async (userId: string): Promise<Certificate[]> => {
-  const q = query(collection(db, 'certificates'), where('userId', '==', userId));
-  const snapshot = await getDocs(q);
+  const userProgressRef = doc(db, "users", userId, "progress", "data");
+  const snapshot = await getDoc(userProgressRef);
+  if (!snapshot.exists()) return [];
+  
+  const certIds = snapshot.data().certificates || [];
   const certificates: Certificate[] = [];
-  snapshot.forEach(doc => {
-    certificates.push(doc.data() as Certificate);
-  });
+  
+  for (const certId of certIds) {
+    const cert = await getCertificate(certId);
+    if (cert) certificates.push(cert);
+  }
+  
   return certificates;
 };

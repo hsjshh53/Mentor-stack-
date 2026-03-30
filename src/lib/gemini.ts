@@ -196,11 +196,13 @@ const getFallbackLesson = (topic: string): LessonContent => {
     whyItMatters: 'Understanding the basics is the first step to becoming a professional developer.',
     explanation: 'We are currently in Offline Mentor Mode, but we can still learn! ' + (topic || 'Programming') + ' is about logic and problem solving.',
     analogy: 'Learning to code is like learning a new language. You start with words, then sentences, then stories.',
+    stepByStep: '1. Understand the problem. 2. Break it down. 3. Write the code. 4. Test it.',
     codeExample: '// Offline Mode Example\nconsole.log("Keep learning!");',
-    lineByLine: 'This is a simple console log to keep you motivated.',
+    visualExplanation: 'Imagine a flow chart where each step leads to the next.',
     commonMistakes: ['Giving up too early', 'Not practicing enough'],
     practice: 'Try to write down what you know about ' + (topic || 'this topic') + ' so far.',
     challenge: 'Can you explain this concept to a friend?',
+    reflectionQuestion: 'What was the most challenging part of this topic for you?',
     quiz: [
       {
         question: 'Is persistence key in coding?',
@@ -213,43 +215,66 @@ const getFallbackLesson = (topic: string): LessonContent => {
   };
 };
 
-export async function generateLesson(path: CareerPath, stage: Stage, topic: string): Promise<LessonContent | null> {
-  // 1. CHECK LOCAL CONTENT FIRST
-  if (LESSON_CONTENT[topic]) {
-    console.log("Gemini Service: Using local lesson content for:", topic);
-    return LESSON_CONTENT[topic];
-  }
-
-  console.log(`Gemini Service: Request started - Generate Lesson (${topic})`);
+export async function generateLesson(
+  skill: string, 
+  level: string, 
+  lessonNumber: number, 
+  previousLessonContext: string
+): Promise<LessonContent | null> {
+  console.log(`Gemini Service: Request started - Generate Lesson (${skill}, ${level}, #${lessonNumber})`);
 
   if (!ai) {
     console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
-    return getFallbackLesson(topic);
+    return getFallbackLesson(skill);
   }
 
   const prompt = `
-    Generate a structured lesson for a ${path} at the ${stage} stage.
-    Topic: "${topic}".
-    
-    IMPORTANT: You are MentorStack AI, part of OLYNQ SOCIAL LIMITED. 
-    The lesson content must be simple, clear, and beginner-friendly.
-    
+    Generate a HIGH-QUALITY, DEEP, STRUCTURED lesson for the following development skill:
+    Skill: "${skill}"
+    Level: "${level}"
+    Lesson Number: "${lessonNumber}"
+    Previous Lesson Context: "${previousLessonContext}"
+
+    DIFFICULTY RULES:
+    - Beginner: Assume zero knowledge, very slow, basic concepts.
+    - Intermediate: Build on basics, combine concepts.
+    - Advanced: Real-world problems, optimization.
+    - Expert: Industry-level thinking, best practices, architecture.
+
+    CRITICAL LESSON RULES:
+    - Do NOT generate shallow or fast content.
+    - Do NOT summarize.
+    - Each lesson must feel like a real class.
+    - Teach from beginner to expert level.
+    - Do NOT repeat previous lessons.
+    - Each lesson must build on previous ones.
+    - Lessons must feel progressive.
+    - Lessons must match the selected development skill.
+    - Frontend lessons must not look like backend lessons.
+    - HTML lessons must not look like Python lessons.
+    - UI/UX lessons must not look like cybersecurity lessons.
+
     Return the lesson in JSON format with the following keys:
-    'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine', 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
-    
-    Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
-    Follow this 7-step learning flow logic:
-    1. Simple explanation (beginner-friendly, max 3 lines)
-    2. Real example (real-world scenario)
-    3. Code example (if applicable, clean and commented)
-    4. Practice task (small, active command for the user)
-    5. AI guidance (a "pro-tip" or "mentor-secret")
-    6. Mini challenge (a small twist to the practice task)
-    7. THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
+    'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'stepByStep', 'codeExample', 'visualExplanation', 'commonMistakes' (array), 'practice', 'challenge', 'reflectionQuestion', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
+
+    OUTPUT REQUIREMENTS:
+    1. Lesson Title
+    2. Learning Objective (todayYouAreLearning)
+    3. Simple Explanation (beginner-friendly)
+    4. WHY this matters (real-world context)
+    5. Real-world analogy
+    6. Step-by-step explanation
+    7. Code example (if applicable)
+    8. Visual explanation (describe UI/behavior)
+    9. Common mistakes
+    10. Practice task
+    11. Mini challenge
+    12. Reflection question
+    13. Quiz (3–5 questions)
   `;
 
   try {
-    const apiCallPromise = ai.models.generateContent({
+    const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
       config: {
@@ -257,7 +282,6 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
       }
     });
 
-    const response = await apiCallPromise;
     console.log("Gemini Service: Response status - Success");
     
     const text = response.text;
@@ -266,23 +290,13 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
     const lesson = JSON.parse(text);
     return {
       ...lesson,
+      id: lesson.id || `lesson-${skill}-${level}-${lessonNumber}`,
       commonMistakes: lesson.commonMistakes || [],
       quiz: lesson.quiz || []
     };
   } catch (e: any) {
     console.error("Gemini Service: Error occurred", e.message);
-    
-    // Specific error handling
-    if (e.message?.includes("API_KEY_INVALID")) {
-      console.error("Gemini Service: Invalid API Key");
-    } else if (e.message?.includes("quota")) {
-      console.error("Gemini Service: Quota exceeded");
-    } else if (e.message?.includes("not enabled")) {
-      console.error("Gemini Service: API not enabled");
-    }
-
-    console.log("Gemini Service: Triggering fallback tutor");
-    return getFallbackLesson(topic);
+    return getFallbackLesson(skill);
   }
 }
 

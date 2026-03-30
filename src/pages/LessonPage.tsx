@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   ArrowLeft, BookOpen, Clock, Trophy, 
-  CheckCircle2, Zap, MessageSquare, Code, Layout,
+  CheckCircle2, Zap, MessageSquare, Code,
   ChevronRight, Play, HelpCircle, Terminal,
   AlertCircle, Lightbulb, Target, RefreshCcw,
   Bell, User, Menu, X, Sparkles, Star
@@ -13,6 +13,7 @@ import { useUserData } from '../hooks/useUserData';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { useAuth } from '../context/AuthContext';
 import { generateLesson } from '../lib/gemini';
+import { getSavedLesson } from '../services/curriculumService';
 import { LessonContent } from '../types/index';
 import { MentorChat } from '../components/MentorChat';
 import { AnimatePresence } from 'motion/react';
@@ -21,7 +22,7 @@ export const LessonPage: React.FC = () => {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
+  const { progress, loading: userLoading, updateProgress, addXP, completeLesson } = useUserData();
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,14 +62,25 @@ export const LessonPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        console.log("LessonPage: Fetching lesson content for", topic, "in path", progress.selectedPath);
-        const content = await generateLesson(progress.selectedPath, progress.currentStage, topic);
-        console.log("LessonPage: Lesson content received:", content);
+        const skill = progress.selectedPath;
+        const level = progress.currentStage;
+        const lessonNumber = (progress.skills?.[skill] || 0) + 1;
+        const previousLessonContext = progress.lastLessonTitle || '';
+
+        // 1. Check Firebase first
+        let content = await getSavedLesson(skill, level, lessonNumber);
+        
+        // 2. If not in Firebase, generate it
+        if (!content) {
+          console.log("LessonPage: No saved lesson found, generating with AI...");
+          content = await generateLesson(skill, level, lessonNumber, previousLessonContext);
+        } else {
+          console.log("LessonPage: Loaded saved lesson from Firebase");
+        }
         
         if (content) {
           setLesson(content);
         } else {
-          console.error("LessonPage: No content returned for", topic);
           setError("Could not load lesson content.");
         }
       } catch (error: any) {
@@ -116,13 +128,11 @@ export const LessonPage: React.FC = () => {
       return;
     }
 
+    const skill = progress.selectedPath;
+    const lessonId = topic || 'lesson-' + Date.now();
+    
     await addXP(50);
-    await updateProgress({
-      completedLessons: progress.completedLessons.includes(lesson.id) 
-        ? progress.completedLessons 
-        : [...progress.completedLessons, lesson.id],
-      currentLessonId: lesson.id
-    });
+    await completeLesson(skill, lessonId, lesson.title);
 
     navigate('/dashboard');
   };
@@ -224,10 +234,20 @@ export const LessonPage: React.FC = () => {
               <BookOpen size={20} />
               <h3 className="font-black uppercase text-xs tracking-[0.2em]">Simple Explanation</h3>
             </div>
-            <div className="prose prose-invert max-w-none">
+            <div className="prose prose-invert max-w-none space-y-6">
               <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
                 {lesson?.explanation || 'Loading explanation...'}
               </p>
+              
+              {lesson?.visualExplanation && (
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 italic text-white/40 text-sm">
+                  <div className="flex items-center gap-2 mb-2 text-emerald-400/50">
+                    <Sparkles size={14} />
+                    <span className="font-black uppercase tracking-widest text-[10px]">Visual Concept</span>
+                  </div>
+                  {lesson.visualExplanation}
+                </div>
+              )}
             </div>
           </section>
 
@@ -259,21 +279,6 @@ export const LessonPage: React.FC = () => {
             </div>
             <p className="text-white/70 leading-relaxed italic">"{lesson?.analogy || 'Think of it like learning a new language.'}"</p>
           </Card>
-
-          {/* Visual Explanation */}
-          {lesson?.visualExplanation && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 text-emerald-400">
-                <Layout size={20} />
-                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Visual & Design Explanation</h3>
-              </div>
-              <div className="p-8 border-2 border-emerald-500/10 bg-white/[0.02] rounded-3xl">
-                <p className="text-lg text-white/70 leading-relaxed italic">
-                  {lesson.visualExplanation}
-                </p>
-              </div>
-            </section>
-          )}
 
           {/* Code Block Section */}
           <section className="space-y-6">
@@ -311,10 +316,10 @@ export const LessonPage: React.FC = () => {
           <section className="space-y-6">
             <div className="flex items-center gap-3 text-emerald-400">
               <Code size={20} />
-              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Line-by-Line Explanation</h3>
+              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Step-by-Step Breakdown</h3>
             </div>
             <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
-              {lesson?.lineByLine || 'Loading breakdown...'}
+              {lesson?.stepByStep || 'Loading breakdown...'}
             </p>
           </section>
 
@@ -409,6 +414,19 @@ export const LessonPage: React.FC = () => {
               ))}
             </div>
           </section>
+
+          {/* Reflection Question */}
+          {lesson?.reflectionQuestion && (
+            <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 space-y-4">
+              <div className="flex items-center gap-3 text-emerald-400">
+                <MessageSquare size={20} />
+                <h4 className="font-black uppercase text-xs tracking-[0.2em]">Reflection Question</h4>
+              </div>
+              <p className="text-white/70 leading-relaxed font-medium italic">
+                "{lesson.reflectionQuestion}"
+              </p>
+            </Card>
+          )}
 
           {/* Recap */}
           <Card className="p-8 border-2 border-purple-500/20 bg-purple-500/10 space-y-4">
