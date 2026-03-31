@@ -1,216 +1,236 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { 
   BookOpen, 
   CheckCircle2, 
   Clock, 
   AlertCircle, 
-  Star, 
-  ArrowUp, 
-  ArrowDown,
-  Search,
-  Filter,
-  Save,
-  Layout
+  Search, 
+  Filter, 
+  MoreVertical,
+  ChevronRight,
+  Layout,
+  Database,
+  Globe,
+  Smartphone,
+  BarChart,
+  Cpu,
+  Shield,
+  Layers,
+  Activity,
+  Terminal,
+  Server,
+  Cloud,
+  Settings,
+  PenTool,
+  Box,
+  Zap,
+  Bot,
+  Brain,
+  Gamepad2,
+  Glasses,
+  Microchip,
+  Link2
 } from 'lucide-react';
-import { motion } from 'motion/react';
-import { ref, get, update } from 'firebase/database';
-import { db } from '../../lib/firebase';
-import { CURRICULUM } from '../../constants/curriculum';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { getSkills } from '../../services/adminService';
 
-interface SkillMetadata {
-  id: string;
-  status: 'active' | 'in_progress' | 'coming_soon';
-  isFeatured: boolean;
-  order: number;
-}
+const categoryIcons: Record<string, any> = {
+  'Core Software Development': Layout,
+  'Data & AI': Database,
+  'Security': Shield,
+  'Infrastructure & Systems': Server,
+  'Specialized Development': Box,
+  'Product & Design': PenTool,
+  'Emerging / High-Income Skills': Zap,
+};
+
+const statusColors: Record<string, string> = {
+  'active': 'text-green-400 bg-green-400/10 border-green-400/20',
+  'in progress': 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  'coming soon': 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  'completed': 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+};
 
 export const AdminCurriculum: React.FC = () => {
-  const [skillsMetadata, setSkillsMetadata] = useState<Record<string, SkillMetadata>>({});
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [curriculumList, setCurriculumList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchMetadata = async () => {
+    const fetchCurriculum = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const metaSnap = await get(ref(db, 'admin/curriculum'));
-        if (metaSnap.exists()) {
-          setSkillsMetadata(metaSnap.val());
-        } else {
-          // Initialize with default values from CURRICULUM constant
-          const initialMeta: Record<string, SkillMetadata> = {};
-          Object.keys(CURRICULUM).forEach((key, index) => {
-            const skill = CURRICULUM[key as any];
-            initialMeta[skill.id] = {
-              id: skill.id,
-              status: skill.status as any || 'coming_soon',
-              isFeatured: skill.recommended || false,
-              order: index
-            };
-          });
-          setSkillsMetadata(initialMeta);
-        }
-      } catch (error) {
-        console.error('Error fetching curriculum metadata:', error);
+        const data = await getSkills();
+        setCurriculumList(data);
+      } catch (err: any) {
+        console.error('Error fetching curriculum:', err);
+        setError(err.message || 'Failed to load curriculum data.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMetadata();
+    fetchCurriculum();
   }, []);
 
-  const handleStatusChange = (id: string, status: SkillMetadata['status']) => {
-    setSkillsMetadata(prev => ({
-      ...prev,
-      [id]: { ...prev[id], status }
-    }));
-  };
+  const categories = ['All', ...Array.from(new Set(curriculumList.map(c => c.category).filter(Boolean)))];
 
-  const handleToggleFeatured = (id: string) => {
-    setSkillsMetadata(prev => ({
-      ...prev,
-      [id]: { ...prev[id], isFeatured: !prev[id].isFeatured }
-    }));
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await update(ref(db, 'admin/curriculum'), skillsMetadata);
-      alert('Curriculum settings saved successfully!');
-    } catch (error) {
-      console.error('Error saving curriculum settings:', error);
-      alert('Failed to save settings.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const filteredSkills = Object.keys(CURRICULUM).filter(key => {
-    const skill = CURRICULUM[key as any];
-    return skill.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           skill.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredCurriculum = curriculumList.filter(item => {
+    const matchesSearch = (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         (item.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === 'All' || item.category === filterCategory;
+    return matchesSearch && matchesCategory;
   });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Curriculum Management</h1>
-          <p className="text-gray-400">Manage development skills, set availability, and feature paths.</p>
+    <AdminLayout>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Curriculum Management</h1>
+            <p className="text-gray-400 mt-2">Manage all 26+ development skills and learning paths.</p>
+            {error && (
+              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm flex items-center gap-2">
+                <AlertCircle size={16} />
+                {error}
+                <button onClick={() => window.location.reload()} className="ml-auto underline">Retry</button>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="px-4 py-2 bg-green-500 text-black font-bold rounded-xl hover:bg-green-400 transition-all flex items-center gap-2">
+              <BookOpen size={18} />
+              Bulk Generate
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
+
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
             <input 
-              type="text" 
-              placeholder="Search skills..."
+              type="text"
+              placeholder="Search skills, descriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/10 focus:border-blue-500/50 outline-none transition-all w-full md:w-64 text-sm"
+              className="w-full bg-[#121214] border border-white/5 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
             />
           </div>
-          <button 
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold transition-all shadow-lg shadow-blue-500/20"
-          >
-            {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-5 h-5" />}
-            Save Changes
-          </button>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setFilterCategory(cat)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all border ${
+                  filterCategory === cat 
+                    ? 'bg-green-500 text-black border-green-500' 
+                    : 'bg-[#121214] text-gray-400 border-white/5 hover:border-white/10 hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Skills Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {filteredSkills.map((key) => {
-          const skill = CURRICULUM[key as any];
-          const meta = skillsMetadata[skill.id] || { id: skill.id, status: 'coming_soon', isFeatured: false, order: 0 };
-          
-          return (
-            <motion.div
-              key={skill.id}
-              layout
-              className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md flex flex-col md:flex-row gap-6 group"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center border border-white/10 shrink-0">
-                <Layout className="w-8 h-8 text-blue-400" />
-              </div>
-
-              <div className="flex-1 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{skill.title}</h3>
-                    <p className="text-sm text-gray-500">{skill.category}</p>
+        {/* Curriculum Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredCurriculum.map((item, index) => {
+            const Icon = categoryIcons[item.category] || BookOpen;
+            const status = item.status || 'coming soon';
+            
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="bg-[#121214] border border-white/5 rounded-2xl p-6 hover:border-green-500/30 transition-all group relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                <div className="flex items-start justify-between relative z-10">
+                  <div className="p-3 rounded-xl bg-white/5 text-green-400 group-hover:scale-110 transition-transform">
+                    <Icon size={24} />
                   </div>
-                  <button 
-                    onClick={() => handleToggleFeatured(skill.id)}
-                    className={`p-2 rounded-lg transition-all ${meta.isFeatured ? 'bg-yellow-500/10 text-yellow-400' : 'bg-white/5 text-gray-500 hover:text-gray-400'}`}
-                  >
-                    <Star className={`w-5 h-5 ${meta.isFeatured ? 'fill-current' : ''}`} />
+                  <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColors[status] || statusColors['coming soon']}`}>
+                    {status}
+                  </div>
+                </div>
+
+                <div className="mt-6 space-y-2 relative z-10">
+                  <h3 className="text-xl font-bold group-hover:text-green-400 transition-colors">{item.name || item.title}</h3>
+                  <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between relative z-10">
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <BookOpen size={14} />
+                      <span>{item.lessonCount || 0} Lessons</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Layout size={14} />
+                      <span>{item.moduleCount || 0} Modules</span>
+                    </div>
+                  </div>
+                  <button className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white">
+                    <MoreVertical size={18} />
                   </button>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <button 
-                    onClick={() => handleStatusChange(skill.id, 'active')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${meta.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-white/5 text-gray-500 border-transparent hover:bg-white/10'}`}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Active
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(skill.id, 'in_progress')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${meta.status === 'in_progress' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-white/5 text-gray-500 border-transparent hover:bg-white/10'}`}
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    In Progress
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(skill.id, 'coming_soon')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${meta.status === 'coming_soon' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-white/5 text-gray-500 border-transparent hover:bg-white/10'}`}
-                  >
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    Coming Soon
-                  </button>
-                </div>
-
-                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 font-medium">
-                      Modules: {(() => {
-                        const levels = (skill as any).levels || {};
-                        return Object.values(levels as any).reduce((acc: number, level: any) => acc + (level.modules?.length || 0), 0) as any;
-                      })()}
+                <div className="mt-4 flex flex-wrap gap-1.5 relative z-10">
+                  {(item.tools || []).slice(0, 4).map((tool: string) => (
+                    <span key={tool} className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-gray-500 font-mono">
+                      {tool}
                     </span>
-                    <span className="w-1 h-1 rounded-full bg-gray-700" />
-                    <span className="text-xs text-gray-500 font-medium">Skills: {(skill as any).skills?.length || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button className="p-1.5 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors">
-                      <ArrowUp className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors">
-                      <ArrowDown className="w-4 h-4" />
-                    </button>
-                  </div>
+                  ))}
+                  {(item.tools || []).length > 4 && (
+                    <span className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-gray-500 font-mono">
+                      +{(item.tools || []).length - 4}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </motion.div>
-          );
-        })}
+
+                <button 
+                  onClick={() => navigate(`/admin/curriculum/${item.id}`)}
+                  className="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-white/5"
+                >
+                  Manage Curriculum
+                  <ChevronRight size={16} />
+                </button>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {filteredCurriculum.length === 0 && !loading && (
+          <div className="text-center py-20 bg-[#121214] border border-white/5 rounded-3xl">
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search size={32} className="text-gray-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-400">No results found</h3>
+            <p className="text-gray-500 mt-1">Try adjusting your search or filters.</p>
+          </div>
+        )}
+
+        {loading && (
+          <div className="text-center py-20">
+            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-gray-400 mt-4">Loading curriculum...</p>
+          </div>
+        )}
       </div>
-    </div>
+    </AdminLayout>
   );
 };

@@ -1,117 +1,124 @@
 {
   "entities": {
-    "UserProgress": {
-      "title": "User Progress",
-      "description": "Tracks the progress of a user in the curriculum.",
-      "type": "object",
-      "properties": {
-        "selectedPath": { "type": "string" },
-        "currentStage": { "type": "string" },
-        "xp": { "type": "number" },
-        "level": { "type": "number" },
-        "streak": { "type": "number" },
-        "lastActive": { "type": "string", "format": "date-time" },
-        "completedLessons": { "type": "array", "items": { "type": "string" } },
-        "completedTests": { "type": "array", "items": { "type": "string" } },
-        "completedExams": { "type": "array", "items": { "type": "string" } },
-        "completedProjects": { "type": "array", "items": { "type": "string" } },
-        "submissions": { "type": "object" },
-        "certificates": { "type": "array", "items": { "type": "string" } },
-        "weakAreas": { "type": "array", "items": { "type": "string" } },
-        "skills": { "type": "object" },
-        "unlockedPaths": { "type": "array", "items": { "type": "string" } },
-        "isPremium": { "type": "boolean" },
-        "dailyGoalMinutes": { "type": "number" },
-        "dailyMinutesLearned": { "type": "number" },
-        "lastLessonId": { "type": "string" },
-        "lastLessonTitle": { "type": "string" },
-        "lastActiveDate": { "type": "string", "format": "date" },
-        "followers": { "type": "array", "items": { "type": "string" } },
-        "following": { "type": "array", "items": { "type": "string" } },
-        "badges": { "type": "array", "items": { "type": "string" } }
-      }
-    },
-    "GithubConnection": {
-      "title": "GitHub Connection",
-      "description": "User's GitHub OAuth connection details.",
-      "type": "object",
-      "properties": {
-        "accessToken": { "type": "string" },
-        "username": { "type": "string" },
-        "avatarUrl": { "type": "string" },
-        "connectedAt": { "type": "number" }
-      }
-    },
-    "Project": {
-      "title": "Project",
-      "description": "A user's project in the playground.",
+    "AdminActivity": {
+      "title": "Admin Activity",
+      "description": "Logs of actions performed by administrators",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "userId": { "type": "string" },
+        "user": { "type": "string" },
+        "action": { "type": "string" },
+        "target": { "type": "string" },
+        "time": { "type": "number" }
+      },
+      "required": ["id", "user", "action", "target", "time"]
+    },
+    "User": {
+      "title": "User Profile",
+      "description": "User profile and progress data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "progress": {
+          "type": "object",
+          "properties": {
+            "completedLessons": { "type": "array", "items": { "type": "string" } },
+            "certificates": { "type": "array", "items": { "type": "string" } },
+            "lastActiveDate": { "type": "string" },
+            "status": { "type": "string" }
+          }
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "Skill": {
+      "title": "Skill",
+      "description": "A development skill or career path",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
         "title": { "type": "string" },
         "description": { "type": "string" },
-        "files": { "type": "object" },
-        "createdAt": { "type": "number" },
-        "updatedAt": { "type": "number" },
-        "githubMetadata": { "type": "object" }
-      }
+        "category": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "title"]
     },
-    "Activity": {
-      "title": "Activity",
-      "description": "Represents a social activity in the feed.",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "userPhoto": { "type": "string" },
-        "type": { "type": "string" },
-        "content": { "type": "string" },
-        "timestamp": { "type": "object" }
-      }
-    },
-    "Certificate": {
-      "title": "Certificate",
-      "description": "A certificate earned by a user.",
+    "Module": {
+      "title": "Module",
+      "description": "A learning module within a skill",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "fullName": { "type": "string" },
-        "pathName": { "type": "string" },
-        "tier": { "type": "string" },
-        "level": { "type": "string" },
-        "issueDate": { "type": "string" },
-        "finalScore": { "type": "number" },
-        "skills": { "type": "array" },
-        "projectTitle": { "type": "string" },
-        "projects": { "type": "array" },
-        "verificationUrl": { "type": "string" },
-        "isValid": { "type": "boolean" },
-        "issuedBy": { "type": "string" }
+        "skillId": { "type": "string" },
+        "title": { "type": "string" },
+        "order": { "type": "number" },
+        "lessons": { "type": "array", "items": { "type": "object" } }
+      },
+      "required": ["id", "skillId", "title", "order"]
+    },
+    "Lesson": {
+      "title": "Lesson Content",
+      "description": "Full content of a lesson",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "object" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "title", "updatedAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Platform-wide announcement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "time": { "type": "number" }
+      },
+      "required": ["id", "title", "content", "time"]
+    },
+    "Report": {
+      "title": "Moderation Report",
+      "description": "A report filed by a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "targetId": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string" },
+        "time": { "type": "number" }
+      },
+      "required": ["id", "reporterId", "reason", "status", "time"]
+    },
+    "Settings": {
+      "title": "Platform Settings",
+      "description": "Global configuration for the platform",
+      "type": "object",
+      "properties": {
+        "platformName": { "type": "string" },
+        "supportEmail": { "type": "string" },
+        "maintenanceMode": { "type": "boolean" },
+        "twoFactorAuth": { "type": "boolean" },
+        "sessionTimeout": { "type": "boolean" }
       }
     }
   },
   "firestore": {
-    "/users/{userId}/progress/data": {
-      "schema": "UserProgress",
-      "description": "User's progress in the curriculum."
-    },
-    "/users/{userId}/github/connection": {
-      "schema": "GithubConnection",
-      "description": "User's GitHub connection."
-    },
-    "/users/{userId}/projects/{projectId}": {
-      "schema": "Project",
-      "description": "User's projects."
-    },
-    "/activities": {
-      "schema": "Activity",
-      "description": "Global activity feed."
-    },
-    "/certificates": {
-      "schema": "Certificate",
-      "description": "Global certificates for verification."
-    }
+    "admin_activity": { "schema": "AdminActivity", "description": "Logs of admin actions" },
+    "users": { "schema": "User", "description": "User profiles and progress" },
+    "skills": { "schema": "Skill", "description": "Available career paths" },
+    "modules": { "schema": "Module", "description": "Curriculum modules" },
+    "lessons": { "schema": "Lesson", "description": "Full lesson content" },
+    "announcements": { "schema": "Announcement", "description": "Platform announcements" },
+    "reports": { "schema": "Report", "description": "User reports for moderation" },
+    "admin_settings": { "schema": "Settings", "description": "Global platform settings" }
   }
 }

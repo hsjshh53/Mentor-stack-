@@ -1,173 +1,112 @@
-import React, { useState } from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation, Navigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   Users, 
   BookOpen, 
-  FileText, 
-  Briefcase, 
-  Award, 
-  AlertTriangle, 
-  CreditCard, 
-  Megaphone, 
+  Wand2, 
+  Code2, 
   Settings, 
-  LogOut,
-  ChevronRight,
+  ShieldAlert, 
+  Award, 
+  MessageSquare, 
+  Megaphone,
+  ArrowLeft,
   Menu,
-  X,
-  Sparkles
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useAuth } from '../../context/AuthContext';
-import { auth } from '../../lib/firebase';
-import { signOut } from 'firebase/auth';
 
-const navItems = [
+const ADMIN_EMAIL = 'olynqsociallimited@gmail.com';
+
+const sidebarItems = [
   { icon: LayoutDashboard, label: 'Overview', path: '/admin' },
   { icon: Users, label: 'Users', path: '/admin/users' },
   { icon: BookOpen, label: 'Curriculum', path: '/admin/curriculum' },
-  { icon: FileText, label: 'Lessons', path: '/admin/lessons' },
-  { icon: Sparkles, label: 'Lesson Generator', path: '/admin/generator' },
-  { icon: Briefcase, label: 'Projects', path: '/admin/projects' },
+  { icon: Wand2, label: 'Lesson Generator', path: '/admin/lesson-generator' },
+  { icon: Code2, label: 'Skills & Tools', path: '/admin/skills' },
   { icon: Award, label: 'Certificates', path: '/admin/certificates' },
-  { icon: AlertTriangle, label: 'Reports', path: '/admin/reports' },
-  { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
+  { icon: ShieldAlert, label: 'Moderation', path: '/admin/moderation' },
   { icon: Megaphone, label: 'Announcements', path: '/admin/announcements' },
   { icon: Settings, label: 'Settings', path: '/admin/settings' },
 ];
 
-export const AdminLayout: React.FC = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const navigate = useNavigate();
+export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
+  if (loading) return null;
+  if (!user || user.email !== ADMIN_EMAIL) {
+    return <Navigate to="/dashboard" />;
+  }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex overflow-hidden">
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {!isSidebarOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsSidebarOpen(true)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          />
-        )}
-      </AnimatePresence>
-
+    <div className="min-h-screen bg-[#0A0A0B] text-white flex">
       {/* Sidebar */}
-      <motion.aside
+      <motion.aside 
         initial={false}
-        animate={{ 
-          width: isSidebarOpen ? '280px' : '80px',
-          x: 0
-        }}
-        className={`fixed lg:relative z-50 h-screen bg-[#111111]/80 backdrop-blur-xl border-r border-white/10 flex flex-col transition-all duration-300 ${!isSidebarOpen ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}`}
+        animate={{ width: isSidebarOpen ? 280 : 80 }}
+        className="fixed left-0 top-0 h-full bg-[#121214] border-r border-white/5 z-50 overflow-hidden"
       >
-        {/* Logo Area */}
         <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            {isSidebarOpen && (
-              <motion.span 
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 whitespace-nowrap"
-              >
-                MentorStack <span className="text-blue-500 text-xs uppercase tracking-widest ml-1">Admin</span>
-              </motion.span>
-            )}
-          </div>
+          {isSidebarOpen && (
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                <Code2 className="text-black w-5 h-5" />
+              </div>
+              <span className="font-bold text-xl tracking-tight">MentorStack</span>
+            </Link>
+          )}
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="lg:hidden p-2 hover:bg-white/5 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto custom-scrollbar">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/admin'}
-              className={({ isActive }) => `
-                flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group relative
-                ${isActive 
-                  ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' 
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white border border-transparent'}
-              `}
-            >
-              <item.icon className={`w-5 h-5 shrink-0 ${isSidebarOpen ? '' : 'mx-auto'}`} />
-              {isSidebarOpen && (
-                <span className="font-medium text-sm">{item.label}</span>
-              )}
-              {!isSidebarOpen && (
-                <div className="absolute left-full ml-4 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                  {item.label}
-                </div>
-              )}
-            </NavLink>
-          ))}
+        <nav className="mt-6 px-4 space-y-2">
+          {sidebarItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                  isActive 
+                    ? 'bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.3)]' 
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <Icon size={20} className={isActive ? 'text-black' : 'group-hover:scale-110 transition-transform'} />
+                {isSidebarOpen && <span className="font-medium">{item.label}</span>}
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Bottom Actions */}
-        <div className="p-4 border-t border-white/5 space-y-2">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all group"
+        <div className="absolute bottom-8 left-0 w-full px-4">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white transition-colors group"
           >
-            <ChevronRight className="w-5 h-5 shrink-0 rotate-180" />
-            {isSidebarOpen && <span className="text-sm font-medium">Back to App</span>}
-          </button>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all group"
-          >
-            <LogOut className="w-5 h-5 shrink-0" />
-            {isSidebarOpen && <span className="text-sm font-medium">Logout</span>}
-          </button>
+            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+            {isSidebarOpen && <span className="font-medium">Back to App</span>}
+          </Link>
         </div>
       </motion.aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        {/* Header */}
-        <header className="h-16 border-b border-white/5 bg-[#0a0a0a]/50 backdrop-blur-md flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <h2 className="text-lg font-semibold text-white/90">Control Center</h2>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">System Online</span>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-          <Outlet />
+      <main 
+        className="flex-1 transition-all duration-300"
+        style={{ marginLeft: isSidebarOpen ? 280 : 80 }}
+      >
+        <div className="max-w-7xl mx-auto p-8">
+          {children}
         </div>
       </main>
     </div>

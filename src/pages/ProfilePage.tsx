@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, Settings, Shield, Bell, 
@@ -12,7 +12,6 @@ import {
 import { Card, Button, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useUserData } from '../hooks/useUserData';
-import { useAdmin } from '../hooks/useAdmin';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
 import { LoadingScreen } from '../components/LoadingScreen';
@@ -24,7 +23,6 @@ import { Certificate } from '../types';
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { progress, loading } = useUserData();
-  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -37,6 +35,59 @@ export const ProfilePage: React.FC = () => {
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
+  const sections = useMemo(() => {
+    interface SectionItem {
+      id: string;
+      icon: React.ReactNode;
+      label: string;
+      desc: string;
+      path?: string;
+    }
+    
+    interface Section {
+      title: string;
+      items: SectionItem[];
+    }
+
+    const baseSections: Section[] = [
+      {
+        title: 'Account Settings',
+        items: [
+          { id: 'personal', icon: <User size={20} />, label: 'Personal Information', desc: 'Update your name and profile photo' },
+          { id: 'email', icon: <Mail size={20} />, label: 'Email & Password', desc: 'Manage your login credentials' },
+          { id: 'privacy', icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your data and account safety' }
+        ]
+      },
+      {
+        title: 'Preferences',
+        items: [
+          { id: 'notifications', icon: <Bell size={20} />, label: 'Notifications', desc: 'Manage your alerts and reminders' },
+          { id: 'goals', icon: <Target size={20} />, label: 'Learning Goals', desc: 'Set your daily study targets' },
+          { id: 'ide', icon: <Terminal size={20} />, label: 'IDE Settings', desc: 'Customize your coding environment' }
+        ]
+      },
+      {
+        title: 'Support',
+        items: [
+          { id: 'help', icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
+          { id: 'subscription', icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
+        ]
+      }
+    ];
+
+    const ADMIN_EMAIL = 'olynqsociallimited@gmail.com';
+    if (user?.email === ADMIN_EMAIL) {
+      baseSections.push({
+        title: 'Administration',
+        items: [
+          { id: 'admin', icon: <ShieldCheck size={20} />, label: 'Admin Panel', desc: 'Access platform management tools', path: '/admin' }
+        ]
+      });
+    }
+
+    return baseSections;
+  }, [user?.email]);
+
   if (loading || !progress) return <LoadingScreen />;
 
   const handleLogout = async () => {
@@ -48,32 +99,6 @@ export const ProfilePage: React.FC = () => {
     { label: 'Streak', value: `${progress.streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
     { label: 'XP', value: progress.xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
     { label: 'Level', value: progress.currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
-  ];
-
-  const sections = [
-    {
-      title: 'Account Settings',
-      items: [
-        { id: 'personal', icon: <User size={20} />, label: 'Personal Information', desc: 'Update your name and profile photo' },
-        { id: 'email', icon: <Mail size={20} />, label: 'Email & Password', desc: 'Manage your login credentials' },
-        { id: 'privacy', icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your data and account safety' }
-      ]
-    },
-    {
-      title: 'Preferences',
-      items: [
-        { id: 'notifications', icon: <Bell size={20} />, label: 'Notifications', desc: 'Manage your alerts and reminders' },
-        { id: 'goals', icon: <Target size={20} />, label: 'Learning Goals', desc: 'Set your daily study targets' },
-        { id: 'ide', icon: <Terminal size={20} />, label: 'IDE Settings', desc: 'Customize your coding environment' }
-      ]
-    },
-    {
-      title: 'Support',
-      items: [
-        { id: 'help', icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
-        { id: 'subscription', icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
-      ]
-    }
   ];
 
   return (
@@ -297,7 +322,13 @@ export const ProfilePage: React.FC = () => {
                   {section.items.map((item) => (
                     <Card 
                       key={item.id}
-                      onClick={() => setActiveModal(item.id)}
+                      onClick={() => {
+                        if ((item as any).path) {
+                          navigate((item as any).path);
+                        } else {
+                          setActiveModal(item.id);
+                        }
+                      }}
                       className="p-6 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-all border-white/5 active:scale-[0.98]"
                     >
                       <div className="flex gap-6 items-center">
@@ -316,19 +347,6 @@ export const ProfilePage: React.FC = () => {
               </div>
             ))}
           </div>
-
-          {/* Admin Access */}
-          {isAdmin && (
-            <div className="pt-8 border-t border-white/5">
-              <button 
-                onClick={() => navigate('/admin')}
-                className="w-full h-16 rounded-3xl border border-blue-500/20 bg-blue-500/5 text-blue-400 font-bold flex items-center justify-center gap-3 hover:bg-blue-500/10 transition-all active:scale-[0.98]"
-              >
-                <ShieldCheck size={20} />
-                Access Admin Control Center
-              </button>
-            </div>
-          )}
 
           {/* Danger Zone */}
           <div className="pt-8 border-t border-white/5">

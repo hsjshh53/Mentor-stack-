@@ -4,7 +4,6 @@ import { Card, Button, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useAdmin } from '../hooks/useAdmin';
 import { 
   Trophy, Flame, Star, Play, ChevronRight, 
   Menu, Bell, User, Zap, Clock, BrainCircuit, 
@@ -25,10 +24,25 @@ import { CareerPath, Certificate } from '../types';
 import { getUserCertificates } from '../services/certificateService';
 
 export const DashboardPage: React.FC = () => {
-  const { progress, loading, updateProgress } = useUserData();
+  const { progress, loading, isNewUser, updateProgress } = useUserData();
   const { user } = useAuth();
-  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (isNewUser) {
+      console.log("DashboardPage: New user detected, redirecting to onboarding");
+      navigate('/onboarding');
+      return;
+    }
+
+    if (!progress?.selectedPath || !CURRICULUM[progress.selectedPath as CareerPath]) {
+      console.warn("DashboardPage: Path missing for existing user, redirecting to onboarding");
+      navigate('/onboarding');
+    }
+  }, [loading, isNewUser, navigate, progress?.selectedPath]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPathSwitcherOpen, setIsPathSwitcherOpen] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -111,19 +125,47 @@ export const DashboardPage: React.FC = () => {
     return groups;
   }, []);
 
-  if (loading || !progress) return <LoadingScreen />;
+  const menuItems = useMemo(() => {
+    const items = [
+      { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true, path: '/dashboard' },
+      { icon: <BookOpen size={20} />, label: 'Lessons', path: '/dashboard' },
+      { icon: <Zap size={20} />, label: 'AI Tutor', path: '/ai-tutor' },
+      { icon: <Terminal size={20} />, label: 'Playground', path: '/playground' },
+      { icon: <Target size={20} />, label: 'Projects', path: '/projects' },
+      { icon: <User size={20} />, label: 'Profile', path: '/profile' },
+    ];
 
-  const xp = Number(progress.xp) || 0;
+    const ADMIN_EMAIL = 'olynqsociallimited@gmail.com';
+    if (user?.email === ADMIN_EMAIL) {
+      items.push({ icon: <ShieldCheck size={20} />, label: 'Admin Panel', path: '/admin' });
+    }
+
+    return items;
+  }, [user?.email]);
+
+  if (loading) return <LoadingScreen />;
+
+  // Use default values if progress is still null (shouldn't happen with updated useUserData but being safe)
+  const safeProgress = progress || {
+    xp: 0,
+    streak: 0,
+    currentStage: 'Beginner',
+    dailyGoalMinutes: 20,
+    dailyMinutesLearned: 0,
+    completedLessons: [],
+    selectedPath: null
+  };
+
+  const xp = Number(safeProgress.xp) || 0;
   const xpProgress = xp % 100;
-  const streak = Number(progress.streak) || 0;
-  const currentStage = progress.currentStage || 'Beginner';
-  const dailyGoal = progress.dailyGoalMinutes || 20;
-  const minutesLearned = progress.dailyMinutesLearned || 0;
+  const streak = Number(safeProgress.streak) || 0;
+  const currentStage = safeProgress.currentStage || 'Beginner';
+  const dailyGoal = safeProgress.dailyGoalMinutes || 20;
+  const minutesLearned = safeProgress.dailyMinutesLearned || 0;
   const goalProgress = Math.min(Math.round((minutesLearned / dailyGoal) * 100), 100);
 
-  if (!progress.selectedPath || !CURRICULUM[progress.selectedPath as CareerPath]) {
-    navigate('/onboarding');
-    return null;
+  if (!safeProgress.selectedPath || !CURRICULUM[safeProgress.selectedPath as CareerPath]) {
+    return <LoadingScreen />;
   }
 
   const getModuleProgress = (moduleId: string) => {
@@ -153,16 +195,6 @@ export const DashboardPage: React.FC = () => {
     await auth.signOut();
     navigate('/');
   };
-
-  const menuItems = [
-    { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true, path: '/dashboard' },
-    { icon: <BookOpen size={20} />, label: 'Lessons', path: '/dashboard' },
-    { icon: <Zap size={20} />, label: 'AI Tutor', path: '/ai-tutor' },
-    { icon: <Terminal size={20} />, label: 'Playground', path: '/playground' },
-    { icon: <Target size={20} />, label: 'Projects', path: '/projects' },
-    { icon: <User size={20} />, label: 'Profile', path: '/profile' },
-    ...(isAdmin ? [{ icon: <ShieldCheck size={20} />, label: 'Admin', path: '/admin' }] : []),
-  ];
 
   const featuredLessons = [
     { 

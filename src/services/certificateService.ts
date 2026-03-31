@@ -1,5 +1,15 @@
-import { doc, setDoc, getDoc, collection, addDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc, 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  getDocs 
+} from 'firebase/firestore';
+import { firestore as db } from '../lib/firebase';
 import { Certificate, UserProgress, CareerPath, CertificateTier } from '../types';
 import { CURRICULUM, PROJECTS } from '../constants/curriculum';
 
@@ -45,15 +55,17 @@ export const generateCertificate = async (
   const pathData = CURRICULUM[path];
   
   // Check if user already has a certificate for this path
-  const userProgressRef = doc(db, "users", userId, "progress", "data");
-  const userProgressSnapshot = await getDoc(userProgressRef);
-  const userCertIds = userProgressSnapshot.exists() ? (userProgressSnapshot.data().certificates || []) : [];
-  
-  // Fetch existing certificates to check for path
-  for (const certId of userCertIds) {
-    const cert = await getCertificate(certId);
-    if (cert && cert.pathName === path) {
-      return cert;
+  const userRef = doc(db, 'users', userId);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+    const userData = userSnap.data();
+    const existingCerts = userData.progress?.certificates || [];
+    
+    for (const certId of existingCerts) {
+      const certSnap = await getDoc(doc(db, 'certificates', certId));
+      if (certSnap.exists() && certSnap.data().pathName === path) {
+        return certSnap.data() as Certificate;
+      }
     }
   }
 
@@ -71,8 +83,8 @@ export const generateCertificate = async (
     };
   });
 
-  const certsRef = collection(db, 'certificates');
-  const newCertDoc = await addDoc(certsRef, {
+  const certRef = collection(db, 'certificates');
+  const newCertDoc = await addDoc(certRef, {
     userId,
     fullName,
     pathName: path,
@@ -83,7 +95,6 @@ export const generateCertificate = async (
     skills: pathData.skills || [],
     projectTitle: certProjects[certProjects.length - 1]?.title || 'Capstone Project',
     projects: certProjects,
-    verificationUrl: '', // Will update after getting ID
     isValid: true,
     issuedBy: "MentorStack AI by OLYNQ SOCIAL"
   });
@@ -91,34 +102,20 @@ export const generateCertificate = async (
   const certId = newCertDoc.id;
   const verificationUrl = `${window.location.origin}/verify/${certId}`;
   
-  await updateDoc(newCertDoc, { 
-    id: certId,
-    verificationUrl 
-  });
-
-  const certificate: Certificate = {
-    id: certId,
-    userId,
-    fullName,
-    pathName: path,
-    tier,
-    level: 'Advanced',
-    issueDate: new Date().toISOString(),
-    finalScore: score,
-    skills: pathData.skills || [],
-    projectTitle: certProjects[certProjects.length - 1]?.title || 'Capstone Project',
-    projects: certProjects,
-    verificationUrl,
-    isValid: true,
-    issuedBy: "MentorStack AI by OLYNQ SOCIAL"
-  };
+  await updateDoc(newCertDoc, { id: certId, verificationUrl });
 
   // Update user progress with new certificate ID
-  await updateDoc(userProgressRef, {
-    certificates: [...userCertIds, certId]
-  });
+  const userSnap2 = await getDoc(userRef);
+  if (userSnap2.exists()) {
+    const userData = userSnap2.data();
+    const certs = userData.progress?.certificates || [];
+    await updateDoc(userRef, {
+      'progress.certificates': [...certs, certId]
+    });
+  }
 
-  return certificate;
+  const finalCertSnap = await getDoc(newCertDoc);
+  return finalCertSnap.data() as Certificate;
 };
 
 export const getCertificate = async (certId: string): Promise<Certificate | null> => {
@@ -128,11 +125,12 @@ export const getCertificate = async (certId: string): Promise<Certificate | null
 };
 
 export const getUserCertificates = async (userId: string): Promise<Certificate[]> => {
-  const userProgressRef = doc(db, "users", userId, "progress", "data");
-  const snapshot = await getDoc(userProgressRef);
+  const userRef = doc(db, 'users', userId);
+  const snapshot = await getDoc(userRef);
   if (!snapshot.exists()) return [];
   
-  const certIds = snapshot.data().certificates || [];
+  const data = snapshot.data();
+  const certIds = data.progress?.certificates || [];
   const certificates: Certificate[] = [];
   
   for (const certId of certIds) {
