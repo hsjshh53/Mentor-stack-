@@ -11,6 +11,7 @@ import {
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { generateLesson } from '../lib/gemini';
 import { getSavedLesson } from '../services/curriculumService';
@@ -93,7 +94,7 @@ export const LessonPage: React.FC = () => {
     fetchLesson();
   }, [progress, topic, userLoading, navigate]);
 
-  if (userLoading || loading) return <LoadingScreen message="PREPARING LESSON..." />;
+  if (userLoading || loading) return <LoadingScreen />;
 
   if (error || !lesson) {
     return (
@@ -124,7 +125,7 @@ export const LessonPage: React.FC = () => {
     // Check if all quiz questions are answered correctly
     const allCorrect = lesson.quiz.every((q, idx) => selectedAnswers[idx] === q.correctIndex);
     if (!allCorrect) {
-      alert("Please complete the quiz correctly before finishing the lesson!");
+      toast.error("Please complete the quiz correctly before finishing the lesson!");
       return;
     }
 
@@ -132,7 +133,7 @@ export const LessonPage: React.FC = () => {
     const lessonId = topic || 'lesson-' + Date.now();
     
     await addXP(50);
-    await completeLesson(skill, lessonId, lesson.title);
+    await completeLesson(lessonId, lesson.title);
 
     navigate('/dashboard');
   };

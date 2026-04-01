@@ -5,8 +5,8 @@ import {
   updateDoc, 
   onSnapshot 
 } from "firebase/firestore";
-import { firestore as db } from "../lib/firebase";
-import { UserProjectProgress } from "../types";
+import { db } from "../lib/firebase";
+import { UserProjectProgress } from "../types/index";
 
 export const projectService = {
   // Initialize project progress

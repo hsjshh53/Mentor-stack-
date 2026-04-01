@@ -6,7 +6,7 @@ import {
   updateDoc, 
   getDoc 
 } from 'firebase/firestore';
-import { firestore as db } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { UserProgress, ProjectSubmission, ProjectStarterCode } from '../types/index';
 

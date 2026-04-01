@@ -1,6 +1,6 @@
 import { doc, setDoc, getDoc, onSnapshot, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { GithubConnection, GithubRepoMetadata } from "../types";
+import { GithubConnection, GithubRepoMetadata } from "../types/index";
 
 const FUNCTIONS_BASE_URL = "/.netlify/functions";
 

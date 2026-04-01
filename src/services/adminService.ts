@@ -15,7 +15,7 @@ import {
   Timestamp,
   increment
 } from "firebase/firestore";
-import { firestore as db } from "../lib/firebase";
+import { db } from "../lib/firebase";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -123,7 +123,7 @@ export async function generateLesson(
   `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-pro-preview",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -208,7 +208,7 @@ export async function generateRoadmap(skill: string): Promise<CurriculumRoadmap>
   `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-pro-preview",
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -515,23 +515,36 @@ export async function deleteModule(skillId: string, moduleId: string) {
 
 // Lessons
 export async function saveLesson(skillId: string, moduleId: string, lessonData: any) {
+  console.log(`AdminService: Saving lesson to skill: ${skillId}, module: ${moduleId}`);
   try {
     const lessonId = lessonData.id || `lesson-${Date.now()}`;
-    await setDoc(doc(db, 'lessons', lessonId), {
+    const lessonToSave = {
       ...lessonData,
+      id: lessonId,
+      skillId,
+      moduleId,
       updatedAt: Date.now()
-    });
+    };
+
+    await setDoc(doc(db, 'lessons', lessonId), lessonToSave);
+    console.log(`AdminService: Lesson ${lessonId} saved to 'lessons' collection.`);
 
     // Update module curriculum
     const moduleRef = doc(db, 'modules', moduleId);
     const moduleSnap = await getDoc(moduleRef);
+    
     if (moduleSnap.exists()) {
       const moduleData = moduleSnap.data();
       const lessons = moduleData.lessons || [];
       const lessonIndex = lessons.findIndex((l: any) => l.id === lessonId);
       
       if (lessonIndex > -1) {
-        lessons[lessonIndex] = { ...lessons[lessonIndex], ...lessonData };
+        lessons[lessonIndex] = { 
+          id: lessonId,
+          title: lessonData.title,
+          status: lessonData.status || 'draft',
+          order: lessonData.order || lessons[lessonIndex].order
+        };
       } else {
         lessons.push({
           id: lessonId,
@@ -542,9 +555,26 @@ export async function saveLesson(skillId: string, moduleId: string, lessonData: 
       }
       
       await updateDoc(moduleRef, { lessons });
+      console.log(`AdminService: Module ${moduleId} updated with lesson ${lessonId}.`);
+    } else {
+      // If module doesn't exist, create it
+      console.log(`AdminService: Module ${moduleId} not found. Creating it...`);
+      await setDoc(moduleRef, {
+        id: moduleId,
+        skillId,
+        title: lessonData.module || moduleId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        order: 1,
+        lessons: [{
+          id: lessonId,
+          title: lessonData.title,
+          status: lessonData.status || 'draft',
+          order: lessonData.order || 1
+        }]
+      });
+      console.log(`AdminService: Module ${moduleId} created and updated with lesson ${lessonId}.`);
     }
   } catch (error) {
-    console.error('Error saving lesson:', error);
+    console.error('AdminService: Error saving lesson:', error);
     throw error;
   }
 }

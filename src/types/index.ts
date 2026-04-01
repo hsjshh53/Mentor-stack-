@@ -1,4 +1,4 @@
-export type PathStatus = 'active' | 'partial' | 'locked';
+export type PathStatus = 'active' | 'in_progress' | 'coming_soon' | 'completed' | 'locked';
 
 export type CareerCategory = 
   | 'Core Software Development'
@@ -206,18 +206,16 @@ export interface UserProfile {
 export interface LessonContent {
   id: string;
   title: string;
+  status?: 'generated' | 'draft' | 'published';
   todayYouAreLearning: string;
   whyItMatters: string;
   explanation: string;
   analogy: string;
-  stepByStep?: string;
-  lineByLine?: string;
   codeExample: string;
-  visualExplanation?: string;
+  lineByLine: string;
   commonMistakes: string[];
   practice: string;
   challenge: string;
-  reflectionQuestion?: string;
   proTip?: string;
   quiz: {
     question: string;
@@ -226,6 +224,37 @@ export interface LessonContent {
     explanation: string;
   }[];
   recap: string;
+}
+
+export interface RoadmapModule {
+  id: string;
+  name: string;
+  description: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  lessonRange: string;
+  targetCount: number;
+}
+
+export interface Roadmap {
+  id: string;
+  skillId: string;
+  tool: string;
+  modules: RoadmapModule[];
+  createdAt: number;
+}
+
+export interface GenerationProgress {
+  id: string;
+  skillId: string;
+  tool: string;
+  status: 'idle' | 'generating_roadmap' | 'generating_lessons' | 'paused' | 'completed' | 'failed';
+  currentModuleIndex: number;
+  currentLessonIndex: number;
+  totalLessons: number;
+  completedLessons: number;
+  failedLessons: number;
+  errors: string[];
+  lastUpdated: number;
 }
 
 export interface Achievement {

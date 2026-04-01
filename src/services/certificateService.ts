@@ -9,23 +9,23 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore';
-import { firestore as db } from '../lib/firebase';
-import { Certificate, UserProgress, CareerPath, CertificateTier } from '../types';
+import { db } from '../lib/firebase';
+import { Certificate, UserProgress, CareerPath, CertificateTier, PathData, Level, Module } from '../types/index';
 import { CURRICULUM, PROJECTS } from '../constants/curriculum';
 
 export const checkCertificateEligibility = (progress: UserProgress, path: CareerPath): boolean => {
-  const pathData = CURRICULUM[path];
+  const pathData = CURRICULUM[path] as PathData;
   if (!pathData) return false;
 
   // 1. All lessons completed
-  const allLessons = Object.values(pathData.levels).flatMap(level => 
-    level.modules.flatMap(m => m.lessons)
+  const allLessons = Object.values(pathData.levels).flatMap((level: Level) => 
+    level.modules.flatMap((m: Module) => m.lessons)
   );
   const allLessonsCompleted = allLessons.every(id => progress.completedLessons?.includes(id));
 
   // 2. All module tests passed
-  const allTests = Object.values(pathData.levels).flatMap(level => 
-    level.modules.filter(m => m.testId).map(m => m.testId!)
+  const allTests = Object.values(pathData.levels).flatMap((level: Level) => 
+    level.modules.filter((m: Module) => m.testId).map((m: Module) => m.testId!)
   );
   const allTestsPassed = allTests.every(id => progress.completedTests?.includes(id));
 
@@ -33,8 +33,8 @@ export const checkCertificateEligibility = (progress: UserProgress, path: Career
   const examPassed = progress.completedExams?.includes(pathData.finalExamId);
 
   // 4. All projects in the path must be submitted with a GitHub link
-  const pathProjectIds = Object.values(pathData.levels).flatMap(level => 
-    level.modules.filter(m => m.projectId).map(m => m.projectId!)
+  const pathProjectIds = Object.values(pathData.levels).flatMap((level: Level) => 
+    level.modules.filter((m: any) => m.projectId).map((m: any) => m.projectId!)
   );
   const allProjectsSubmitted = pathProjectIds.every(id => {
     const submission = progress.submissions?.[id];
@@ -52,7 +52,7 @@ export const generateCertificate = async (
   progress: UserProgress,
   tier: CertificateTier = 'Professional'
 ): Promise<Certificate> => {
-  const pathData = CURRICULUM[path];
+  const pathData = CURRICULUM[path] as PathData;
   
   // Check if user already has a certificate for this path
   const userRef = doc(db, 'users', userId);
@@ -70,8 +70,8 @@ export const generateCertificate = async (
   }
 
   // Get project details from submissions
-  const pathProjectIds = Object.values(pathData.levels).flatMap(level => 
-    level.modules.filter(m => m.projectId).map(m => m.projectId!)
+  const pathProjectIds = Object.values(pathData.levels).flatMap((level: Level) => 
+    level.modules.filter((m: any) => m.projectId).map((m: any) => m.projectId!)
   );
   const certProjects = pathProjectIds.map(id => {
     const submission = progress.submissions[id];
@@ -92,7 +92,7 @@ export const generateCertificate = async (
     level: 'Advanced',
     issueDate: new Date().toISOString(),
     finalScore: score,
-    skills: pathData.skills || [],
+    skills: (pathData as any).skills || [],
     projectTitle: certProjects[certProjects.length - 1]?.title || 'Capstone Project',
     projects: certProjects,
     isValid: true,

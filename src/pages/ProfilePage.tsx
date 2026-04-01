@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, Settings, Shield, Bell, 
@@ -35,59 +35,6 @@ export const ProfilePage: React.FC = () => {
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
-  const sections = useMemo(() => {
-    interface SectionItem {
-      id: string;
-      icon: React.ReactNode;
-      label: string;
-      desc: string;
-      path?: string;
-    }
-    
-    interface Section {
-      title: string;
-      items: SectionItem[];
-    }
-
-    const baseSections: Section[] = [
-      {
-        title: 'Account Settings',
-        items: [
-          { id: 'personal', icon: <User size={20} />, label: 'Personal Information', desc: 'Update your name and profile photo' },
-          { id: 'email', icon: <Mail size={20} />, label: 'Email & Password', desc: 'Manage your login credentials' },
-          { id: 'privacy', icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your data and account safety' }
-        ]
-      },
-      {
-        title: 'Preferences',
-        items: [
-          { id: 'notifications', icon: <Bell size={20} />, label: 'Notifications', desc: 'Manage your alerts and reminders' },
-          { id: 'goals', icon: <Target size={20} />, label: 'Learning Goals', desc: 'Set your daily study targets' },
-          { id: 'ide', icon: <Terminal size={20} />, label: 'IDE Settings', desc: 'Customize your coding environment' }
-        ]
-      },
-      {
-        title: 'Support',
-        items: [
-          { id: 'help', icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
-          { id: 'subscription', icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
-        ]
-      }
-    ];
-
-    const ADMIN_EMAIL = 'olynqsociallimited@gmail.com';
-    if (user?.email === ADMIN_EMAIL) {
-      baseSections.push({
-        title: 'Administration',
-        items: [
-          { id: 'admin', icon: <ShieldCheck size={20} />, label: 'Admin Panel', desc: 'Access platform management tools', path: '/admin' }
-        ]
-      });
-    }
-
-    return baseSections;
-  }, [user?.email]);
-
   if (loading || !progress) return <LoadingScreen />;
 
   const handleLogout = async () => {
@@ -95,10 +42,45 @@ export const ProfilePage: React.FC = () => {
     navigate('/');
   };
 
+  const ADMIN_EMAIL = 'olynqsociallimited@gmail.com';
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
   const stats = [
     { label: 'Streak', value: `${progress.streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
     { label: 'XP', value: progress.xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
     { label: 'Level', value: progress.currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
+  ];
+
+  const sections = [
+    {
+      title: 'Account Settings',
+      items: [
+        { id: 'personal', icon: <User size={20} />, label: 'Personal Information', desc: 'Update your name and profile photo' },
+        { id: 'email', icon: <Mail size={20} />, label: 'Email & Password', desc: 'Manage your login credentials' },
+        { id: 'privacy', icon: <Shield size={20} />, label: 'Privacy & Security', desc: 'Control your data and account safety' }
+      ]
+    },
+    {
+      title: 'Preferences',
+      items: [
+        { id: 'notifications', icon: <Bell size={20} />, label: 'Notifications', desc: 'Manage your alerts and reminders' },
+        { id: 'goals', icon: <Target size={20} />, label: 'Learning Goals', desc: 'Set your daily study targets' },
+        { id: 'ide', icon: <Terminal size={20} />, label: 'IDE Settings', desc: 'Customize your coding environment' }
+      ]
+    },
+    {
+      title: 'Support',
+      items: [
+        { id: 'help', icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
+        { id: 'subscription', icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
+      ]
+    },
+    ...(isAdmin ? [{
+      title: 'Administration',
+      items: [
+        { id: 'admin', icon: <Shield size={20} />, label: 'Admin Console', desc: 'Manage platform curriculum and users' }
+      ]
+    }] : [])
   ];
 
   return (
@@ -323,8 +305,8 @@ export const ProfilePage: React.FC = () => {
                     <Card 
                       key={item.id}
                       onClick={() => {
-                        if ((item as any).path) {
-                          navigate((item as any).path);
+                        if (item.id === 'admin') {
+                          navigate('/admin');
                         } else {
                           setActiveModal(item.id);
                         }

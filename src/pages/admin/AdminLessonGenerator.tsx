@@ -1,1013 +1,846 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Wand2, 
-  Sparkles, 
+  Zap, 
   Save, 
-  Eye, 
-  Trash2, 
+  Send, 
+  Loader2, 
   CheckCircle2, 
   AlertCircle,
-  Loader2,
   ChevronRight,
-  Code2,
-  BookOpen,
+  Sparkles,
+  Eye,
+  Edit3,
+  Trash2,
   Plus,
-  Settings2,
+  BookOpen,
+  Code,
+  Lightbulb,
+  Target,
+  HelpCircle,
+  Check,
   Play,
   Pause,
   Square,
-  RefreshCcw,
-  ListOrdered,
-  Layers,
-  Zap
+  RefreshCw,
+  List
 } from 'lucide-react';
-import { AdminLayout } from '../../components/admin/AdminLayout';
-import { 
-  generateLesson, 
-  GeneratedLesson, 
-  saveLesson, 
-  getSkillById, 
-  getModuleById,
-  generateRoadmap,
-  getRoadmap,
-  CurriculumRoadmap,
-  GenerationProgress,
-  updateGenerationProgress,
-  getGenerationProgress,
-  getDraftLessons,
-  publishLesson
-} from '../../services/adminService';
-import { TECH_TOOLS } from '../../constants/techStack';
-import ReactMarkdown from 'react-markdown';
-
-const SKILLS = [
-  'Frontend Development',
-  'Backend Development',
-  'Full-Stack Development',
-  'Mobile App Development',
-  'Data Analyst',
-  'AI Engineer',
-  'Cybersecurity',
-  'DevOps Engineer',
-  'UI/UX Design',
-  'Blockchain/Web3 Development',
-  'Game Development',
-  'AR/VR Development',
-  'Embedded Systems (IoT)',
-  'Product Design',
-  'Interaction Design',
-  'Web3 Developer',
-  'AI Automation Engineer',
-  'Prompt Engineer',
-  'Robotics Engineer'
-];
-
-const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+import { curriculumService } from '../../services/curriculumService';
+import { aiService } from '../../services/aiService';
+import { PathCurriculum, LessonContent, Roadmap, GenerationProgress, RoadmapModule } from '../../types';
+import { Badge } from '../../components/ui';
+import Markdown from 'react-markdown';
 
 export const AdminLessonGenerator: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<'single' | 'module' | 'full'>('single');
-  const [skill, setSkill] = useState(SKILLS[0]);
+  const [paths, setPaths] = useState<PathCurriculum[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Mode State
+  const [isAutoMode, setIsAutoMode] = useState(false);
+
+  // Form State
+  const [selectedPath, setSelectedPath] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
+  const [selectedModule, setSelectedModule] = useState('');
   const [tool, setTool] = useState('');
-  const [level, setLevel] = useState(LEVELS[0]);
-  const [module, setModule] = useState('');
   const [lessonNumber, setLessonNumber] = useState(1);
   const [context, setContext] = useState('');
-  
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [generatedLesson, setGeneratedLesson] = useState<GeneratedLesson | null>(null);
-  const [previewMode, setPreviewMode] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'saving' | 'saved' | 'timeout'>('idle');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Auto-generation state
-  const [roadmap, setRoadmap] = useState<CurriculumRoadmap | null>(null);
+  // Auto Mode State
+  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [progress, setProgress] = useState<GenerationProgress | null>(null);
-  const [isAutoGenerating, setIsAutoGenerating] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [shouldStop, setShouldStop] = useState(false);
-  const [selectedModuleIndex, setSelectedModuleIndex] = useState<number | null>(null);
-  const [drafts, setDrafts] = useState<(GeneratedLesson & { id: string })[]>([]);
-  const [isReviewing, setIsReviewing] = useState(false);
+  const generationRef = useRef<boolean>(false);
+  const pauseRef = useRef<boolean>(false);
 
-  const isPausedRef = useRef(false);
-  const shouldStopRef = useRef(false);
+  // Generated Lesson State
+  const [generatedLesson, setGeneratedLesson] = useState<LessonContent | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(true);
 
   useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
-
-  useEffect(() => {
-    shouldStopRef.current = shouldStop;
-  }, [shouldStop]);
-
-  useEffect(() => {
-    const skillId = searchParams.get('skill');
-    const moduleId = searchParams.get('module');
-    const lessonId = searchParams.get('lesson');
-
-    if (skillId) {
-      getSkillById(skillId).then(s => {
-        if (s) setSkill(s.name);
-      });
-      getRoadmap(skillId).then(r => setRoadmap(r));
-      getGenerationProgress(skillId).then(p => setProgress(p));
-    }
-
-    if (skillId && moduleId) {
-      getModuleById(skillId, moduleId).then(m => {
-        if (m) setModule(m.title);
-      });
-    }
-  }, [searchParams]);
-
-  const handleGenerateRoadmap = async () => {
-    console.log('AdminLessonGenerator: Starting roadmap generation for', skill);
-    setIsGenerating(true);
-    setStatus('idle');
-    setErrorMessage(null);
-    
-    const timeoutId = setTimeout(() => {
-      if (isGenerating) {
-        console.error('AdminLessonGenerator: Roadmap generation timed out after 60s');
-        setIsGenerating(false);
-        setStatus('timeout');
-        setErrorMessage('Roadmap generation took too long. Please try again.');
-      }
-    }, 60000);
-
-    try {
-      const r = await generateRoadmap(skill);
-      console.log('AdminLessonGenerator: Roadmap generated successfully.');
-      setRoadmap(r);
-      setStatus('success');
-      
-      const initialProgress: GenerationProgress = {
-        skill: skill,
-        totalLessons: r.totalLessons,
-        completedLessons: 0,
-        status: 'idle',
-        currentModuleIndex: 0,
-        currentLessonNumber: 1
-      };
-      await updateGenerationProgress(skill, initialProgress);
-      setProgress(initialProgress);
-    } catch (error: any) {
-      console.error('AdminLessonGenerator: Roadmap generation failed:', error);
-      setStatus('error');
-      setErrorMessage(error.message || 'Failed to generate roadmap.');
-    } finally {
-      clearTimeout(timeoutId);
-      setIsGenerating(false);
-      console.log('AdminLessonGenerator: Roadmap generation process finished.');
-    }
-  };
-
-  const handleReviewDrafts = async () => {
-    const skillId = skill.toLowerCase().replace(/\s+/g, '-');
-    const lessons = await getDraftLessons(skillId);
-    setDrafts(lessons);
-    setIsReviewing(true);
-  };
-
-  const handlePublish = async (lessonId: string) => {
-    await publishLesson(lessonId);
-    setDrafts(prev => prev.filter(d => d.id !== lessonId));
-  };
-
-  const startAutoGeneration = async () => {
-    if (!roadmap) {
-      console.error('AdminLessonGenerator: Cannot start auto-generation without a roadmap.');
-      return;
-    }
-    
-    console.log('AdminLessonGenerator: Starting full auto-generation...');
-    setIsAutoGenerating(true);
-    setIsPaused(false);
-    setShouldStop(false);
-    isPausedRef.current = false;
-    shouldStopRef.current = false;
-    setErrorMessage(null);
-
-    const skillId = skill.toLowerCase().replace(/\s+/g, '-');
-    let currentProgress = progress || {
-      skill: skill,
-      totalLessons: roadmap.totalLessons,
-      completedLessons: 0,
-      status: 'generating',
-      currentModuleIndex: mode === 'module' && selectedModuleIndex !== null ? selectedModuleIndex : 0,
-      currentLessonNumber: mode === 'module' && selectedModuleIndex !== null ? roadmap.modules[selectedModuleIndex].lessonStart : 1
-    };
-
-    if (mode === 'module' && selectedModuleIndex !== null) {
-      currentProgress = {
-        ...currentProgress,
-        currentModuleIndex: selectedModuleIndex,
-        currentLessonNumber: roadmap.modules[selectedModuleIndex].lessonStart
-      };
-    }
-
-    await updateGenerationProgress(skill, { ...currentProgress, status: 'generating' });
-
-    try {
-      const startMIdx = currentProgress.currentModuleIndex;
-      const endMIdx = mode === 'module' && selectedModuleIndex !== null ? selectedModuleIndex : roadmap.modules.length - 1;
-
-      for (let mIdx = startMIdx; mIdx <= endMIdx; mIdx++) {
-        const module = roadmap.modules[mIdx];
-        const start = mIdx === startMIdx ? currentProgress.currentLessonNumber : module.lessonStart;
-        const moduleId = module.name.toLowerCase().replace(/\s+/g, '-');
-
-        console.log(`AdminLessonGenerator: Processing module: ${module.name}`);
-
-        for (let lNum = start; lNum <= module.lessonEnd; lNum++) {
-          if (shouldStopRef.current) {
-            console.log('AdminLessonGenerator: Auto-generation stopped by user.');
-            await updateGenerationProgress(skill, { status: 'idle' });
-            setIsAutoGenerating(false);
-            return;
-          }
-
-          while (isPausedRef.current) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            if (shouldStopRef.current) {
-              await updateGenerationProgress(skill, { status: 'idle' });
-              setIsAutoGenerating(false);
-              return;
-            }
-          }
-
-          console.log(`AdminLessonGenerator: Generating lesson ${lNum} of ${roadmap.totalLessons}...`);
-          
-          // Individual lesson timeout protection
-          const lessonTimeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`Lesson ${lNum} generation timed out`)), 60000)
-          );
-
-          try {
-            const lessonPromise = generateLesson(
-              skill,
-              tool || skill,
-              module.level,
-              module.name,
-              lNum,
-              `Previous topics: ${module.topics.join(', ')}`
-            );
-
-            const lesson = await Promise.race([lessonPromise, lessonTimeoutPromise]) as GeneratedLesson;
-            
-            const validatedLesson = validateLesson(lesson);
-            if (!validatedLesson) {
-              throw new Error(`Lesson ${lNum} was malformed`);
-            }
-
-            // Save as draft
-            await saveLesson(skillId, moduleId, {
-              ...validatedLesson,
-              skillId,
-              moduleId,
-              status: 'draft',
-              order: lNum,
-              createdAt: Date.now(),
-              updatedAt: Date.now()
-            });
-
-            // Update progress
-            currentProgress = {
-              ...currentProgress,
-              completedLessons: currentProgress.completedLessons + 1,
-              currentModuleIndex: mIdx,
-              currentLessonNumber: lNum + 1 > module.lessonEnd ? (mIdx + 1 <= endMIdx ? roadmap.modules[mIdx + 1].lessonStart : lNum) : lNum + 1
-            };
-            setProgress(currentProgress);
-            await updateGenerationProgress(skill, currentProgress);
-            
-            console.log(`AdminLessonGenerator: Lesson ${lNum} generated and saved.`);
-          } catch (err: any) {
-            console.error(`AdminLessonGenerator: Failed to generate lesson ${lNum}:`, err);
-            if (err.message?.includes('quota') || err.message?.includes('API key')) {
-              throw err; // Critical error, stop auto-generation
-            }
-            // For other errors, we might want to continue or retry?
-            // For now, let's just log and continue to next lesson
-          }
+    const loadPaths = async () => {
+      try {
+        const data = await curriculumService.getAllPaths();
+        setPaths(data);
+        if (data.length > 0) {
+          setSelectedPath(data[0].id);
+          setSelectedModule(data[0].levels.beginner.modules[0]?.id || '');
         }
+      } catch (err) {
+        setError('Failed to load curriculum data');
+      } finally {
+        setLoading(false);
       }
-      console.log('AdminLessonGenerator: Full auto-generation completed successfully.');
-      await updateGenerationProgress(skill, { status: 'completed' });
-    } catch (error: any) {
-      console.error('AdminLessonGenerator: Auto-generation failed:', error);
-      setErrorMessage(error.message || 'Auto-generation failed. Please check logs.');
-      await updateGenerationProgress(skill, { status: 'error', error: String(error) });
-    } finally {
-      setIsAutoGenerating(false);
+    };
+    loadPaths();
+  }, []);
+
+  // Subscribe to progress if in auto mode
+  useEffect(() => {
+    if (isAutoMode && selectedPath) {
+      const unsubscribe = curriculumService.subscribeToGenerationProgress(selectedPath, (p) => {
+        setProgress(p);
+      });
+      return () => unsubscribe();
     }
+  }, [isAutoMode, selectedPath]);
+
+  const handlePathChange = (pathId: string) => {
+    setSelectedPath(pathId);
+    const path = paths.find(p => p.id === pathId);
+    if (path) {
+      setSelectedModule(path.levels[selectedLevel].modules[0]?.id || '');
+    }
+    // Reset roadmap and progress when path changes
+    setRoadmap(null);
+    setProgress(null);
   };
 
-  const validateLesson = (lesson: any): GeneratedLesson | null => {
-    console.log('AdminLessonGenerator: Validating lesson object...', lesson);
-    const requiredFields = [
-      'title',
-      'objective',
-      'explanation',
-      'whyItMatters',
-      'analogy',
-      'stepByStep',
-      'practiceTask',
-      'quiz'
-    ];
-
-    const missingFields = requiredFields.filter(field => !lesson[field]);
-    
-    if (missingFields.length > 0) {
-      console.error('AdminLessonGenerator: Validation failed. Missing fields:', missingFields);
-      return null;
+  const handleLevelChange = (level: 'beginner' | 'intermediate' | 'advanced') => {
+    setSelectedLevel(level);
+    const path = paths.find(p => p.id === selectedPath);
+    if (path) {
+      setSelectedModule(path.levels[level].modules[0]?.id || '');
     }
-
-    // Ensure quiz has required structure
-    if (!Array.isArray(lesson.quiz) || lesson.quiz.length === 0) {
-      console.error('AdminLessonGenerator: Validation failed. Quiz is missing or empty.');
-      return null;
-    }
-
-    // Apply safe defaults for optional fields
-    return {
-      ...lesson,
-      visualExplanation: lesson.visualExplanation || 'No visual description provided.',
-      commonMistakes: Array.isArray(lesson.commonMistakes) ? lesson.commonMistakes : [],
-      miniChallenge: lesson.miniChallenge || 'Try to apply what you learned in a new context.',
-      reflectionQuestion: lesson.reflectionQuestion || 'How can you use this in your next project?',
-      stepByStep: Array.isArray(lesson.stepByStep) ? lesson.stepByStep : []
-    };
   };
 
   const handleGenerate = async () => {
-    console.log('AdminLessonGenerator: Starting single lesson generation for:', { skill, tool, level, module, lessonNumber });
-    setIsGenerating(true);
-    setStatus('idle');
-    setErrorMessage(null);
-    setGeneratedLesson(null);
-    
-    const timeoutId = setTimeout(() => {
-      if (isGenerating) {
-        console.error('AdminLessonGenerator: Generation timed out after 60s');
-        setIsGenerating(false);
-        setStatus('timeout');
-        setErrorMessage('Lesson generation took too long. The AI might be overloaded. Please try again.');
-      }
-    }, 60000);
-
-    try {
-      const lesson = await generateLesson(skill, tool, level, module, lessonNumber, context);
-      console.log('AdminLessonGenerator: AI response received.');
-      
-      const validatedLesson = validateLesson(lesson);
-      if (validatedLesson) {
-        console.log('AdminLessonGenerator: Lesson validated and ready for preview.');
-        setGeneratedLesson(validatedLesson);
-        setStatus('success');
-      } else {
-        console.error('AdminLessonGenerator: Generated lesson was malformed.');
-        setStatus('error');
-        setErrorMessage('The AI generated a malformed lesson. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('AdminLessonGenerator: Generation failed with error:', error);
-      setStatus('error');
-      setErrorMessage(error.message || 'An unexpected error occurred during generation.');
-    } finally {
-      clearTimeout(timeoutId);
-      setIsGenerating(false);
-      console.log('AdminLessonGenerator: Generation process finished.');
-    }
-  };
-
-  const handleSave = async (publish: boolean = false) => {
-    if (!generatedLesson) {
-      console.error('AdminLessonGenerator: Cannot save. No lesson generated.');
+    if (!selectedPath || !selectedModule || !tool) {
+      setError('Please fill in all required fields');
       return;
     }
-    
-    console.log(`AdminLessonGenerator: ${publish ? 'Publishing' : 'Saving'} lesson...`);
-    setIsSaving(true);
-    setStatus('saving');
-    setErrorMessage(null);
+
+    setGenerating(true);
+    setError(null);
+    setSuccess(null);
+    setGeneratedLesson(null);
 
     try {
-      const skillId = searchParams.get('skill') || skill.toLowerCase().replace(/\s+/g, '-');
-      const moduleId = searchParams.get('module') || module.toLowerCase().replace(/\s+/g, '-');
+      const path = paths.find(p => p.id === selectedPath);
+      const module = path?.levels[selectedLevel].modules.find(m => m.id === selectedModule);
       
-      const lessonToSave = {
-        ...generatedLesson,
-        skillId,
-        moduleId,
+      const lesson = await aiService.generateLesson({
+        skill: path?.title || selectedPath,
         tool,
-        level,
-        status: publish ? 'published' : 'draft',
-        order: lessonNumber,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
+        level: selectedLevel,
+        module: module?.title || selectedModule,
+        lessonNumber,
+        totalLessonsInModule: 10, // Default for single gen
+        context
+      });
+
+      // Add ID and initial status
+      const lessonWithId: LessonContent = {
+        ...lesson,
+        id: `lesson-${Date.now()}`,
+        status: 'draft'
       };
 
-      await saveLesson(skillId, moduleId, lessonToSave);
-      
-      console.log(`AdminLessonGenerator: Lesson ${publish ? 'published' : 'saved'} successfully.`);
-      setStatus('saved');
-      setTimeout(() => setStatus('idle'), 3000);
-      
-      alert(publish ? 'Lesson published live!' : 'Lesson saved as draft!');
-    } catch (error: any) {
-      console.error('AdminLessonGenerator: Save failed:', error);
-      setStatus('error');
-      setErrorMessage(error.message || 'Failed to save the lesson. Please check your connection.');
+      setGeneratedLesson(lessonWithId);
+      setSuccess('Lesson generated successfully!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate lesson. Please check your GEMINI_API_KEY.');
     } finally {
-      setIsSaving(false);
+      setGenerating(false);
     }
   };
 
+  // Auto Mode Functions
+  const startAutoGeneration = async () => {
+    if (!selectedPath || !tool) {
+      setError('Please select a skill and tool');
+      return;
+    }
+
+    setGenerating(true);
+    setError(null);
+    generationRef.current = true;
+    pauseRef.current = false;
+
+    try {
+      // 1. Generate Roadmap if not exists
+      let currentRoadmap = await curriculumService.getRoadmap(selectedPath);
+      if (!currentRoadmap) {
+        setSuccess('Generating Roadmap...');
+        const roadmapData = await aiService.generateRoadmap(selectedPath, tool);
+        currentRoadmap = {
+          id: `roadmap-${selectedPath}`,
+          skillId: selectedPath,
+          tool,
+          modules: roadmapData.modules,
+          createdAt: Date.now()
+        };
+        await curriculumService.saveRoadmap(currentRoadmap);
+      }
+      setRoadmap(currentRoadmap);
+
+      // 2. Initialize Progress
+      let currentProgress = await curriculumService.getGenerationProgress(selectedPath);
+      if (!currentProgress || currentProgress.status === 'completed') {
+        currentProgress = {
+          id: `progress-${selectedPath}`,
+          skillId: selectedPath,
+          tool,
+          status: 'generating_lessons',
+          currentModuleIndex: 0,
+          currentLessonIndex: 0,
+          totalLessons: currentRoadmap.modules.reduce((acc, m) => acc + m.targetCount, 0),
+          completedLessons: 0,
+          failedLessons: 0,
+          errors: [],
+          lastUpdated: Date.now()
+        };
+        await curriculumService.saveGenerationProgress(currentProgress);
+      }
+
+      // 3. Start Lesson Generation Loop
+      await runGenerationLoop(currentRoadmap, currentProgress);
+
+    } catch (err: any) {
+      setError(err.message || 'Auto generation failed');
+      setGenerating(false);
+    }
+  };
+
+  const runGenerationLoop = async (roadmap: Roadmap, initialProgress: GenerationProgress) => {
+    let currentProgress = { ...initialProgress };
+
+    for (let mIdx = currentProgress.currentModuleIndex; mIdx < roadmap.modules.length; mIdx++) {
+      if (!generationRef.current) break;
+
+      const module = roadmap.modules[mIdx];
+      
+      for (let lIdx = currentProgress.currentLessonIndex; lIdx < module.targetCount; lIdx++) {
+        if (!generationRef.current) break;
+        
+        // Handle Pause
+        while (pauseRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (!generationRef.current) break;
+        }
+
+        try {
+          // Generate Lesson
+          const lesson = await aiService.generateLesson({
+            skill: roadmap.skillId,
+            tool: roadmap.tool,
+            level: module.level,
+            module: module.name,
+            lessonNumber: lIdx + 1,
+            totalLessonsInModule: module.targetCount,
+            context: lIdx > 0 ? `Previously covered lesson ${lIdx} of ${module.name}` : undefined
+          });
+
+          const lessonWithId: LessonContent = {
+            ...lesson,
+            id: `lesson-${roadmap.skillId}-${module.id}-${lIdx + 1}-${Date.now()}`,
+            status: 'generated'
+          };
+
+          // Save to Firebase as draft
+          await curriculumService.saveLesson(lessonWithId);
+
+          // Update Progress
+          currentProgress.completedLessons++;
+          currentProgress.currentLessonIndex = lIdx + 1;
+          currentProgress.lastUpdated = Date.now();
+          
+          await curriculumService.saveGenerationProgress(currentProgress);
+          
+        } catch (err: any) {
+          currentProgress.failedLessons++;
+          currentProgress.errors.push(`Module ${module.name} Lesson ${lIdx + 1}: ${err.message}`);
+          await curriculumService.saveGenerationProgress(currentProgress);
+          // Continue to next lesson if possible
+        }
+      }
+
+      if (generationRef.current) {
+        currentProgress.currentModuleIndex = mIdx + 1;
+        currentProgress.currentLessonIndex = 0;
+        await curriculumService.saveGenerationProgress(currentProgress);
+      }
+    }
+
+    if (generationRef.current) {
+      currentProgress.status = 'completed';
+      await curriculumService.saveGenerationProgress(currentProgress);
+      setSuccess('Full curriculum generation completed!');
+    }
+    
+    setGenerating(false);
+    generationRef.current = false;
+  };
+
+  const togglePause = async () => {
+    pauseRef.current = !pauseRef.current;
+    if (progress) {
+      await curriculumService.saveGenerationProgress({
+        ...progress,
+        status: pauseRef.current ? 'paused' : 'generating_lessons'
+      });
+    }
+  };
+
+  const stopGeneration = async () => {
+    generationRef.current = false;
+    pauseRef.current = false;
+    if (progress) {
+      await curriculumService.saveGenerationProgress({
+        ...progress,
+        status: 'idle'
+      });
+    }
+    setGenerating(false);
+  };
+
+  const handleSaveDraft = async () => {
+    if (!generatedLesson) return;
+    setSaving(true);
+    try {
+      await curriculumService.saveLesson({ ...generatedLesson, status: 'draft' });
+      setSuccess('Draft saved successfully!');
+    } catch (err) {
+      setError('Failed to save draft');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!generatedLesson) return;
+    setSaving(true);
+    try {
+      const lessonToSave = { ...generatedLesson, status: 'published' as const };
+      await curriculumService.saveLesson(lessonToSave);
+      await curriculumService.publishLesson(lessonToSave.id, selectedPath, selectedLevel, selectedModule);
+      setSuccess('Lesson published live!');
+      setGeneratedLesson(lessonToSave);
+    } catch (err) {
+      setError('Failed to publish lesson');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
+        <p className="text-white/40 font-bold uppercase tracking-widest text-xs">Loading Curriculum...</p>
+      </div>
+    );
+  }
+
+  const currentPath = paths.find(p => p.id === selectedPath);
+  const currentModules = currentPath?.levels[selectedLevel].modules || [];
+
   return (
-    <AdminLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Lesson Auto-Generator</h1>
-            <p className="text-gray-400 mt-2">Create high-quality curriculum content using AI.</p>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <Sparkles size={20} />
+            </div>
+            <h1 className="text-4xl font-black tracking-tighter">Lesson Generator</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setGeneratedLesson(null)}
-              className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-              title="Clear all"
-            >
-              <Trash2 size={20} />
-            </button>
-            <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
-              <Settings2 size={20} />
-            </button>
-          </div>
+          <p className="text-white/40 font-medium">Generate high-quality lessons using AI for your curriculum.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Configuration Panel */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Mode Selection */}
-            <div className="bg-[#121214] border border-white/5 rounded-2xl p-2 flex gap-1">
-              {[
-                { id: 'single', label: 'Single', icon: Wand2 },
-                { id: 'module', label: 'Module', icon: Layers },
-                { id: 'full', label: 'Full Auto', icon: Zap }
-              ].map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setMode(m.id as any)}
-                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                    mode === m.id ? 'bg-green-500 text-black' : 'text-gray-400 hover:bg-white/5'
-                  }`}
+        {/* Mode Toggle */}
+        <div className="flex bg-white/[0.03] border border-white/[0.08] p-1 rounded-2xl">
+          <button
+            onClick={() => setIsAutoMode(false)}
+            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              !isAutoMode ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'text-white/40 hover:text-white'
+            }`}
+          >
+            Single Mode
+          </button>
+          <button
+            onClick={() => setIsAutoMode(true)}
+            className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              isAutoMode ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' : 'text-white/40 hover:text-white'
+            }`}
+          >
+            Auto Mode
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Configuration Panel */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white/[0.02] border border-white/[0.05] rounded-3xl p-8 space-y-6">
+            <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
+              <Zap size={18} className="text-emerald-500" />
+              {isAutoMode ? 'Auto Generation' : 'Configuration'}
+            </h3>
+
+            <div className="space-y-4">
+              {/* Skill Selection */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Development Skill</label>
+                <select 
+                  value={selectedPath}
+                  onChange={(e) => handlePathChange(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50 transition-colors"
                 >
-                  <m.icon size={14} />
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-[#121214] border border-white/5 rounded-2xl p-6 space-y-6">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <Settings2 className="text-green-400" size={20} />
-                Configuration
-              </h2>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">Development Skill</label>
-                  <select 
-                    value={skill}
-                    onChange={(e) => setSkill(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                  >
-                    {SKILLS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-
-                {mode === 'single' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Tool / Technology</label>
-                      <input 
-                        type="text"
-                        value={tool}
-                        onChange={(e) => setTool(e.target.value)}
-                        placeholder="e.g. React, Docker, Figma"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Level</label>
-                        <select 
-                          value={level}
-                          onChange={(e) => setLevel(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                        >
-                          {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Lesson #</label>
-                        <input 
-                          type="number"
-                          value={lessonNumber}
-                          onChange={(e) => setLessonNumber(parseInt(e.target.value))}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Module Name</label>
-                      <input 
-                        type="text"
-                        value={module}
-                        onChange={(e) => setModule(e.target.value)}
-                        placeholder="e.g. Advanced State Management"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-400 mb-2">Previous Context (Optional)</label>
-                      <textarea 
-                        value={context}
-                        onChange={(e) => setContext(e.target.value)}
-                        placeholder="What did the user learn just before this?"
-                        rows={3}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all resize-none"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {(mode === 'module' || mode === 'full') && (
-                  <div className="space-y-4">
-                    {!roadmap ? (
-                      <button
-                        onClick={handleGenerateRoadmap}
-                        disabled={isGenerating}
-                        className="w-full py-4 rounded-xl bg-blue-500 text-white font-bold flex items-center justify-center gap-2 hover:bg-blue-400 transition-all disabled:opacity-50"
-                      >
-                        {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <RefreshCcw size={20} />}
-                        Generate Roadmap
-                      </button>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Roadmap Ready</span>
-                            <button onClick={() => setRoadmap(null)} className="text-[10px] text-blue-400 hover:underline">Re-generate</button>
-                          </div>
-                          <p className="text-sm font-bold">{roadmap.totalLessons} Lessons • {roadmap.modules.length} Modules</p>
-                        </div>
-
-                        {progress && (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                              <span className="text-gray-400">Generation Progress</span>
-                              <span className="text-green-400">{Math.round((progress.completedLessons / progress.totalLessons) * 100)}%</span>
-                            </div>
-                            <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-green-500 transition-all duration-500"
-                                style={{ width: `${(progress.completedLessons / progress.totalLessons) * 100}%` }}
-                              />
-                            </div>
-                            <p className="text-[10px] text-gray-500 text-center uppercase tracking-widest">
-                              {progress.completedLessons} / {progress.totalLessons} Lessons Generated
-                            </p>
-                          </div>
-                        )}
-
-                        <div className="flex flex-col gap-2">
-                          {!isAutoGenerating ? (
-                            <>
-                              <button
-                                onClick={startAutoGeneration}
-                                disabled={mode === 'module' && selectedModuleIndex === null}
-                                className="flex-1 py-3 rounded-xl bg-green-500 text-black font-bold flex items-center justify-center gap-2 hover:bg-green-400 transition-all disabled:opacity-50"
-                              >
-                                <Play size={16} fill="currentColor" />
-                                {mode === 'module' ? 'Start Module' : 'Start Auto'}
-                              </button>
-                              <button
-                                onClick={handleReviewDrafts}
-                                className="flex-1 py-3 rounded-xl bg-white/5 text-white border border-white/10 font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all"
-                              >
-                                <Eye size={16} />
-                                Review Drafts
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => setIsPaused(!isPaused)}
-                                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                                  isPaused ? 'bg-yellow-500 text-black' : 'bg-white/10 text-white'
-                                }`}
-                              >
-                                {isPaused ? <Play size={16} fill="currentColor" /> : <Pause size={16} fill="currentColor" />}
-                                {isPaused ? 'Resume' : 'Pause'}
-                              </button>
-                              <button
-                                onClick={() => setShouldStop(true)}
-                                className="flex-1 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 font-bold flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all"
-                              >
-                                <Square size={16} fill="currentColor" />
-                                Stop
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {paths.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
               </div>
 
-              {mode === 'single' && (
-                <button 
+              {/* Tool / Technology */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Tool / Technology</label>
+                <input 
+                  type="text"
+                  value={tool}
+                  onChange={(e) => setTool(e.target.value)}
+                  placeholder="e.g. React, Python, Docker"
+                  className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
+              </div>
+
+              {!isAutoMode && (
+                <>
+                  {/* Level Selection */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Level</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(['beginner', 'intermediate', 'advanced'] as const).map(l => (
+                        <button
+                          key={l}
+                          onClick={() => handleLevelChange(l)}
+                          className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                            selectedLevel === l 
+                              ? 'bg-emerald-500 text-black' 
+                              : 'bg-white/[0.03] text-white/40 hover:bg-white/[0.05]'
+                          }`}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Module Selection */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Module</label>
+                    <select 
+                      value={selectedModule}
+                      onChange={(e) => setSelectedModule(e.target.value)}
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    >
+                      {currentModules.map(m => (
+                        <option key={m.id} value={m.id}>{m.title}</option>
+                      ))}
+                      {currentModules.length === 0 && <option value="">No modules found</option>}
+                    </select>
+                  </div>
+
+                  {/* Lesson Number */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Lesson Number</label>
+                    <input 
+                      type="number"
+                      value={lessonNumber}
+                      onChange={(e) => setLessonNumber(parseInt(e.target.value))}
+                      min="1"
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  {/* Previous Context */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Previous Context (Optional)</label>
+                    <textarea 
+                      value={context}
+                      onChange={(e) => setContext(e.target.value)}
+                      placeholder="Mention what was covered in the previous lesson..."
+                      className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50 transition-colors h-24 resize-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              {isAutoMode ? (
+                <div className="space-y-3">
+                  {!generating && (!progress || progress.status === 'idle' || progress.status === 'completed' || progress.status === 'failed') ? (
+                    <button
+                      onClick={startAutoGeneration}
+                      disabled={!tool}
+                      className="w-full bg-emerald-500 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                    >
+                      <Play size={20} fill="currentColor" />
+                      <span>Start Auto Generation</span>
+                    </button>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={togglePause}
+                        className="bg-white/[0.05] hover:bg-white/[0.1] text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all"
+                      >
+                        {progress?.status === 'paused' ? <Play size={20} fill="currentColor" /> : <Pause size={20} fill="currentColor" />}
+                        <span>{progress?.status === 'paused' ? 'Resume' : 'Pause'}</span>
+                      </button>
+                      <button
+                        onClick={stopGeneration}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black py-4 rounded-2xl flex items-center justify-center gap-3 transition-all"
+                      >
+                        <Square size={20} fill="currentColor" />
+                        <span>Stop</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
                   onClick={handleGenerate}
-                  disabled={isGenerating || !tool || !module}
-                  className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                    isGenerating 
-                      ? 'bg-white/5 text-gray-500 cursor-not-allowed' 
-                      : 'bg-green-500 text-black hover:bg-green-400 shadow-[0_0_20px_rgba(34,197,94,0.3)]'
-                  }`}
+                  disabled={generating || !tool}
+                  className="w-full bg-emerald-500 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isGenerating ? (
+                  {generating ? (
                     <>
-                      <Loader2 className="animate-spin" size={20} />
-                      Generating Lesson...
+                      <Loader2 size={20} className="animate-spin" />
+                      <span>Generating...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles size={20} />
-                      Generate Lesson
+                      <span>Generate Lesson</span>
                     </>
                   )}
                 </button>
               )}
             </div>
-
-            {/* Roadmap Preview */}
-            {roadmap && (
-              <div className="bg-[#121214] border border-white/5 rounded-2xl p-6 space-y-4">
-                <h3 className="font-bold flex items-center gap-2">
-                  <ListOrdered size={18} className="text-blue-400" />
-                  Curriculum Roadmap
-                </h3>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                  {roadmap.modules.map((m, i) => (
-                    <div 
-                      key={i} 
-                      onClick={() => mode === 'module' && setSelectedModuleIndex(i)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer space-y-2 ${
-                        selectedModuleIndex === i && mode === 'module' 
-                          ? 'bg-blue-500/10 border-blue-500/50' 
-                          : 'bg-white/5 border-white/5 hover:border-white/10'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{m.level}</span>
-                        <span className="text-[10px] text-gray-500">{m.lessonStart}-{m.lessonEnd}</span>
-                      </div>
-                      <h4 className="text-sm font-bold">{m.name}</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {m.topics.slice(0, 3).map(t => (
-                          <span key={t} className="text-[8px] px-1.5 py-0.5 bg-white/10 rounded-md text-gray-400">{t}</span>
-                        ))}
-                        {m.topics.length > 3 && <span className="text-[8px] text-gray-500">+{m.topics.length - 3} more</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quality Checklist */}
-            <div className="bg-[#121214] border border-white/5 rounded-2xl p-6">
-              <h3 className="font-bold mb-4">Quality Standards</h3>
-              <ul className="space-y-3 text-sm text-gray-400">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-green-500 mt-0.5 shrink-0" />
-                  Comprehensive explanations
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-green-500 mt-0.5 shrink-0" />
-                  Real-world analogies included
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-green-500 mt-0.5 shrink-0" />
-                  Interactive quiz components
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 size={16} className="text-green-500 mt-0.5 shrink-0" />
-                  Progressive difficulty matching
-                </li>
-              </ul>
-            </div>
           </div>
 
-          {/* Preview Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-[#121214] border border-white/5 rounded-2xl min-h-[600px] flex flex-col overflow-hidden">
-              {/* Toolbar */}
-              <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/5">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-xs font-medium text-gray-300">
-                    <Eye size={14} />
-                    Preview Mode
+          {/* Progress Display (Auto Mode) */}
+          {isAutoMode && progress && (
+            <div className="bg-white/[0.02] border border-white/[0.05] rounded-3xl p-8 space-y-6">
+              <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
+                <RefreshCw size={18} className={`text-emerald-500 ${generating ? 'animate-spin' : ''}`} />
+                Progress
+              </h3>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Status</p>
+                    <p className="text-sm font-bold text-emerald-500 uppercase tracking-tight">{progress.status.replace('_', ' ')}</p>
                   </div>
-                  {(status === 'success' || status === 'saved') && (
-                    <span className="text-xs text-green-400 flex items-center gap-1">
-                      <CheckCircle2 size={14} />
-                      {status === 'saved' ? 'Saved successfully' : 'Ready to publish'}
-                    </span>
-                  )}
-                  {status === 'saving' && (
-                    <span className="text-xs text-blue-400 flex items-center gap-1">
-                      <Loader2 className="animate-spin" size={14} />
-                      Saving...
-                    </span>
-                  )}
+                  <p className="text-2xl font-black tracking-tighter">
+                    {Math.round((progress.completedLessons / progress.totalLessons) * 100) || 0}%
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    disabled={!generatedLesson || isSaving}
-                    onClick={() => handleSave(false)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Save size={16} />
-                    Save Draft
-                  </button>
-                  <button 
-                    disabled={!generatedLesson || isSaving}
-                    onClick={() => handleSave(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-black hover:bg-green-400 rounded-lg text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Publish Live
-                  </button>
+
+                {/* Progress Bar */}
+                <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(progress.completedLessons / progress.totalLessons) * 100}%` }}
+                    className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                  />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="bg-white/[0.03] p-4 rounded-2xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Completed</p>
+                    <p className="text-xl font-black">{progress.completedLessons}</p>
+                  </div>
+                  <div className="bg-white/[0.03] p-4 rounded-2xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Failed</p>
+                    <p className="text-xl font-black text-red-400">{progress.failedLessons}</p>
+                  </div>
+                </div>
+
+                {progress.errors.length > 0 && (
+                  <div className="pt-4 border-t border-white/[0.05]">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mb-2">Recent Errors</p>
+                    <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                      {progress.errors.slice(-3).map((err, i) => (
+                        <p key={i} className="text-[10px] text-white/30 leading-tight">• {err}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Status Messages */}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-start gap-3"
+              >
+                <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-bold text-red-500">{error}</p>
+              </motion.div>
+            )}
+            {success && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex items-start gap-3"
+              >
+                <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-xs font-bold text-emerald-500">{success}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Preview Panel */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="bg-white/[0.02] border border-white/[0.05] rounded-3xl overflow-hidden flex flex-col min-h-[600px]">
+            {/* Preview Header */}
+            <div className="bg-white/[0.03] border-b border-white/[0.05] px-8 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setIsPreviewMode(true)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    isPreviewMode ? 'bg-white text-black' : 'text-white/40 hover:text-white'
+                  }`}
+                >
+                  Preview
+                </button>
+                <button
+                  onClick={() => setIsPreviewMode(false)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    !isPreviewMode ? 'bg-white text-black' : 'text-white/40 hover:text-white'
+                  }`}
+                >
+                  Raw JSON
+                </button>
+                {isAutoMode && (
+                  <button
+                    onClick={() => setIsPreviewMode(true)} // Toggle to roadmap view if needed
+                    className="flex items-center gap-2 px-4 py-2 text-white/40 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    <List size={14} />
+                    Roadmap
+                  </button>
+                )}
               </div>
 
-              {/* Content Area */}
-              <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
-                <AnimatePresence mode="wait">
-                  {isGenerating ? (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="h-full flex flex-col items-center justify-center text-center space-y-4"
-                    >
-                      <div className="relative">
-                        <div className="w-16 h-16 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
-                        <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-500" size={24} />
+              {generatedLesson && !isAutoMode && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleSaveDraft}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    Save Draft
+                  </button>
+                  <button
+                    onClick={handlePublish}
+                    disabled={saving || generatedLesson.status === 'published'}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 ${
+                      generatedLesson.status === 'published'
+                        ? 'bg-emerald-500/20 text-emerald-500 cursor-default'
+                        : 'bg-emerald-500 text-black hover:scale-[1.05]'
+                    }`}
+                  >
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    {generatedLesson.status === 'published' ? 'Published' : 'Publish Live'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Preview Content */}
+            <div className="flex-1 p-8 overflow-y-auto max-h-[800px]">
+              {isAutoMode && roadmap ? (
+                <div className="space-y-8">
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-black tracking-tighter">Curriculum Roadmap</h2>
+                    <p className="text-white/40 font-medium">Automatically generated roadmap for {roadmap.skillId} using {roadmap.tool}.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {roadmap.modules.map((m, i) => (
+                      <div key={i} className="bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl flex items-center gap-6">
+                        <div className="w-12 h-12 rounded-xl bg-white/[0.05] flex items-center justify-center text-xl font-black shrink-0">
+                          {i + 1}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h4 className="font-black tracking-tight">{m.name}</h4>
+                            <Badge className="bg-white/[0.05] text-white/40 text-[8px]">{m.level}</Badge>
+                          </div>
+                          <p className="text-xs text-white/40 leading-relaxed">{m.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Lessons</p>
+                          <p className="text-lg font-black">{m.targetCount}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-xl font-bold">Crafting your lesson...</h3>
-                        <p className="text-gray-400 mt-1">Our AI is building a high-quality educational experience.</p>
+                    ))}
+                  </div>
+                </div>
+              ) : !generatedLesson ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40">
+                  <div className="w-16 h-16 rounded-2xl bg-white/[0.05] flex items-center justify-center">
+                    <BookOpen size={32} />
+                  </div>
+                  <div>
+                    <p className="text-lg font-black tracking-tight">No Lesson Generated</p>
+                    <p className="text-sm font-medium">Configure and click generate to see the magic.</p>
+                  </div>
+                </div>
+              ) : isPreviewMode ? (
+                <div className="space-y-12">
+                  {/* Lesson Title & Status */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Badge className={generatedLesson.status === 'published' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}>
+                        {generatedLesson.status?.toUpperCase()}
+                      </Badge>
+                      <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">
+                        {selectedLevel} • {tool}
+                      </span>
+                    </div>
+                    <h2 className="text-4xl font-black tracking-tighter leading-tight">{generatedLesson.title}</h2>
+                  </div>
+
+                  {/* Sections */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl space-y-3">
+                      <div className="flex items-center gap-2 text-emerald-500">
+                        <Target size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Objective</span>
                       </div>
-                    </motion.div>
-                  ) : status === 'error' || status === 'timeout' ? (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="h-full flex flex-col items-center justify-center text-center space-y-6 p-12"
-                    >
-                      <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center">
-                        <AlertCircle size={40} />
+                      <p className="text-sm text-white/70 leading-relaxed">{generatedLesson.todayYouAreLearning}</p>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl space-y-3">
+                      <div className="flex items-center gap-2 text-blue-500">
+                        <HelpCircle size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Why It Matters</span>
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-2xl font-bold text-white">
-                          {status === 'timeout' ? 'Generation Timed Out' : 'Generation Failed'}
-                        </h3>
-                        <p className="text-gray-400 max-w-md mx-auto">
-                          {errorMessage || 'Something went wrong while generating the lesson content. Please try again.'}
-                        </p>
+                      <p className="text-sm text-white/70 leading-relaxed">{generatedLesson.whyItMatters}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    <section className="space-y-4">
+                      <h4 className="text-lg font-black tracking-tight flex items-center gap-2">
+                        <BookOpen size={20} className="text-emerald-500" />
+                        Explanation
+                      </h4>
+                      <div className="prose prose-invert max-w-none text-white/70">
+                        <Markdown>{generatedLesson.explanation}</Markdown>
                       </div>
-                      <button 
-                        onClick={handleGenerate}
-                        className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all flex items-center gap-2"
-                      >
-                        <RefreshCcw size={18} />
-                        Retry Generation
-                      </button>
-                    </motion.div>
-                  ) : generatedLesson ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="space-y-12"
-                    >
-                      {/* Lesson Content */}
+                    </section>
+
+                    <section className="bg-emerald-500/[0.03] border border-emerald-500/10 p-8 rounded-3xl space-y-4">
+                      <h4 className="text-lg font-black tracking-tight flex items-center gap-2">
+                        <Lightbulb size={20} className="text-emerald-500" />
+                        The Analogy
+                      </h4>
+                      <p className="text-white/80 italic leading-relaxed">"{generatedLesson.analogy}"</p>
+                    </section>
+
+                    {generatedLesson.codeExample && (
+                      <section className="space-y-4">
+                        <h4 className="text-lg font-black tracking-tight flex items-center gap-2">
+                          <Code size={20} className="text-emerald-500" />
+                          Code Example
+                        </h4>
+                        <div className="bg-black/40 rounded-2xl p-6 font-mono text-sm border border-white/[0.05]">
+                          <pre className="text-emerald-400 overflow-x-auto">
+                            <code>{generatedLesson.codeExample}</code>
+                          </pre>
+                        </div>
+                        <div className="bg-white/[0.02] p-6 rounded-2xl border border-white/[0.05] space-y-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Line by Line</span>
+                          <p className="text-sm text-white/60">{generatedLesson.lineByLine}</p>
+                        </div>
+                      </section>
+                    )}
+
+                    <section className="space-y-4">
+                      <h4 className="text-lg font-black tracking-tight text-red-400 flex items-center gap-2">
+                        <AlertCircle size={20} />
+                        Common Mistakes
+                      </h4>
+                      <ul className="space-y-2">
+                        {generatedLesson.commonMistakes.map((m, i) => (
+                          <li key={i} className="flex items-start gap-3 text-sm text-white/60">
+                            <span className="w-5 h-5 rounded-full bg-red-400/10 flex items-center justify-center text-red-400 text-[10px] font-bold shrink-0 mt-0.5">
+                              {i + 1}
+                            </span>
+                            {m}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <section className="bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl space-y-4">
+                        <h4 className="text-sm font-black tracking-tight uppercase tracking-[0.2em] text-emerald-500">Practice Task</h4>
+                        <p className="text-sm text-white/70">{generatedLesson.practice}</p>
+                      </section>
+                      <section className="bg-white/[0.02] border border-white/[0.05] p-6 rounded-2xl space-y-4">
+                        <h4 className="text-sm font-black tracking-tight uppercase tracking-[0.2em] text-blue-500">Mini Challenge</h4>
+                        <p className="text-sm text-white/70">{generatedLesson.challenge}</p>
+                      </section>
+                    </div>
+
+                    <section className="bg-white/[0.03] border border-white/[0.08] p-8 rounded-3xl space-y-6">
+                      <h4 className="text-lg font-black tracking-tight flex items-center gap-2">
+                        <CheckCircle2 size={20} className="text-emerald-500" />
+                        Quiz Check
+                      </h4>
                       <div className="space-y-6">
-                        <div className="space-y-2">
-                          <span className="text-green-400 text-sm font-bold tracking-wider uppercase">Lesson {lessonNumber}</span>
-                          <h2 className="text-4xl font-bold">{generatedLesson.title}</h2>
-                        </div>
-
-                        <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-2xl">
-                          <h4 className="font-bold text-green-400 mb-2 flex items-center gap-2">
-                            <CheckCircle2 size={18} />
-                            Learning Objective
-                          </h4>
-                          <p className="text-gray-200">{generatedLesson.objective}</p>
-                        </div>
-
-                        <div className="prose prose-invert max-w-none">
-                          <h3 className="text-2xl font-bold mb-4">Simple Explanation</h3>
-                          <div className="text-gray-300 leading-relaxed text-lg">
-                            <ReactMarkdown>{generatedLesson.explanation}</ReactMarkdown>
-                          </div>
-                          
-                          <div className="my-8 p-6 bg-white/5 border border-white/10 rounded-2xl">
-                            <h4 className="font-bold text-blue-400 mb-2">Why It Matters</h4>
-                            <p className="text-gray-300 italic">{generatedLesson.whyItMatters}</p>
-                          </div>
-
-                          <h3 className="text-2xl font-bold mb-4">Real-world Analogy</h3>
-                          <p className="text-gray-300 leading-relaxed">{generatedLesson.analogy}</p>
-
-                          <h3 className="text-2xl font-bold mt-12 mb-6">Step-by-Step Breakdown</h3>
-                          <div className="space-y-4">
-                            {generatedLesson.stepByStep.map((step, i) => (
-                              <div key={i} className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/5">
-                                <div className="w-8 h-8 rounded-full bg-green-500 text-black flex items-center justify-center font-bold shrink-0">
-                                  {i + 1}
-                                </div>
-                                <p className="text-gray-300">{step}</p>
-                              </div>
-                            ))}
-                          </div>
-
-                          {generatedLesson.codeExample && (
-                            <div className="mt-12 space-y-4">
-                              <h3 className="text-2xl font-bold">Code Example</h3>
-                              <div className="bg-[#0A0A0B] rounded-2xl border border-white/10 overflow-hidden">
-                                <div className="px-4 py-2 bg-white/5 border-b border-white/10 flex items-center justify-between">
-                                  <span className="text-xs font-mono text-gray-400 uppercase">{generatedLesson.codeExample.language}</span>
-                                  <Code2 size={14} className="text-gray-400" />
-                                </div>
-                                <pre className="p-6 overflow-x-auto font-mono text-sm text-green-400">
-                                  <code>{generatedLesson.codeExample.code}</code>
-                                </pre>
-                              </div>
-                              <p className="text-sm text-gray-400 italic">{generatedLesson.codeExample.explanation}</p>
-                            </div>
-                          )}
-
-                          <h3 className="text-2xl font-bold mt-12 mb-4">Visual Explanation</h3>
-                          <div className="p-6 bg-white/5 border border-dashed border-white/20 rounded-2xl text-center">
-                            <p className="text-gray-400 italic">{generatedLesson.visualExplanation}</p>
-                          </div>
-
-                          <h3 className="text-2xl font-bold mt-12 mb-4">Common Mistakes</h3>
-                          <ul className="space-y-3">
-                            {generatedLesson.commonMistakes.map((mistake, i) => (
-                              <li key={i} className="flex items-start gap-3 text-red-400">
-                                <AlertCircle size={18} className="shrink-0 mt-1" />
-                                <span>{mistake}</span>
-                              </li>
-                            ))}
-                          </ul>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-                            <div className="p-6 bg-purple-500/10 border border-purple-500/20 rounded-2xl">
-                              <h4 className="font-bold text-purple-400 mb-2">Practice Task</h4>
-                              <p className="text-gray-300 text-sm">{generatedLesson.practiceTask}</p>
-                            </div>
-                            <div className="p-6 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl">
-                              <h4 className="font-bold text-yellow-400 mb-2">Mini Challenge</h4>
-                              <p className="text-gray-300 text-sm">{generatedLesson.miniChallenge}</p>
-                            </div>
-                          </div>
-
-                          <div className="mt-12 pt-12 border-t border-white/5">
-                            <h3 className="text-2xl font-bold mb-8">Knowledge Check</h3>
-                            <div className="space-y-8">
-                              {generatedLesson.quiz.map((q, qIdx) => (
-                                <div key={qIdx} className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4">
-                                  <h4 className="font-bold text-lg">{qIdx + 1}. {q.question}</h4>
-                                  <div className="grid grid-cols-1 gap-3">
-                                    {q.options.map((opt, oIdx) => (
-                                      <div 
-                                        key={oIdx} 
-                                        className={`p-4 rounded-xl border text-sm transition-all ${
-                                          oIdx === q.correctAnswer 
-                                            ? 'bg-green-500/10 border-green-500/50 text-green-400' 
-                                            : 'bg-white/5 border-white/5 text-gray-400'
-                                        }`}
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <span>{opt}</span>
-                                          {oIdx === q.correctAnswer && <CheckCircle2 size={16} />}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400">
-                                    <strong>Explanation:</strong> {q.explanation}
-                                  </div>
+                        {generatedLesson.quiz.map((q, i) => (
+                          <div key={i} className="space-y-3">
+                            <p className="text-sm font-bold">{q.question}</p>
+                            <div className="grid grid-cols-1 gap-2">
+                              {q.options.map((opt, optIdx) => (
+                                <div 
+                                  key={optIdx}
+                                  className={`p-3 rounded-xl border text-xs font-medium ${
+                                    optIdx === q.correctIndex 
+                                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' 
+                                      : 'bg-white/[0.02] border-white/[0.05] text-white/40'
+                                  }`}
+                                >
+                                  {opt}
                                 </div>
                               ))}
                             </div>
+                            <p className="text-[10px] text-white/30 italic">Explanation: {q.explanation}</p>
                           </div>
-
-                          <div className="mt-12 p-6 bg-white/5 border border-white/10 rounded-2xl">
-                            <h4 className="font-bold text-gray-400 mb-2">Reflection Question</h4>
-                            <p className="text-gray-200 text-lg">{generatedLesson.reflectionQuestion}</p>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="h-full flex flex-col items-center justify-center text-center space-y-4 text-gray-500"
-                    >
-                      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
-                        <BookOpen size={40} />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-300">No Lesson Preview</h3>
-                        <p className="max-w-xs mx-auto">Select a skill and module, then click "Generate Lesson" to begin crafting your curriculum.</p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                    </section>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-black/40 rounded-2xl p-8 font-mono text-xs border border-white/[0.05] h-full overflow-y-auto">
+                  <pre className="text-emerald-400/80">
+                    <code>{JSON.stringify(generatedLesson, null, 2)}</code>
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         </div>
-        
-        {/* Review Modal */}
-        <AnimatePresence>
-          {isReviewing && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-[#121214] border border-white/10 rounded-3xl w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
-              >
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                  <h2 className="text-xl font-bold">Review Generated Drafts</h2>
-                  <button onClick={() => setIsReviewing(false)} className="p-2 hover:bg-white/5 rounded-lg">
-                    <Trash2 size={20} />
-                  </button>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                  {drafts.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">No drafts found for this skill.</div>
-                  ) : (
-                    drafts.map((draft) => (
-                      <div key={draft.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-bold text-lg">{draft.title}</h3>
-                          <div className="flex items-center gap-2">
-                            <button 
-                              onClick={() => {
-                                setGeneratedLesson(draft);
-                                setIsReviewing(false);
-                              }}
-                              className="px-3 py-1.5 bg-blue-500/10 text-blue-400 rounded-lg text-xs font-bold hover:bg-blue-500/20"
-                            >
-                              View
-                            </button>
-                            <button 
-                              onClick={() => handlePublish(draft.id)}
-                              className="px-3 py-1.5 bg-green-500 text-black rounded-lg text-xs font-bold hover:bg-green-400"
-                            >
-                              Publish
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-400 line-clamp-2">{draft.objective}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
       </div>
-    </AdminLayout>
+    </div>
   );
 };

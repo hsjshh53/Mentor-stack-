@@ -77,22 +77,34 @@ export const AdminSkills: React.FC = () => {
         
         if (data.length === 0) {
           console.log('AdminSkills: No skills in Firebase, using local fallback seed.');
-          setSkills(TECH_TOOLS.map(tool => ({
-            ...tool,
-            status: 'active',
-            isFallback: true
-          })));
+          const fallbackSkills = Object.entries(TECH_TOOLS).flatMap(([category, tools]) => 
+            tools.map(tool => ({
+              id: `skill-${tool.toLowerCase().replace(/\s+/g, '-')}`,
+              name: tool,
+              category,
+              description: `Master ${tool} for ${category}.`,
+              status: 'active',
+              isFallback: true
+            }))
+          );
+          setSkills(fallbackSkills);
         } else {
           setSkills(data);
         }
       } catch (err) {
         console.error('AdminSkills: Error fetching skills:', err);
         setError('Failed to load skills from database. Using local fallback.');
-        setSkills(TECH_TOOLS.map(tool => ({
-          ...tool,
-          status: 'active',
-          isFallback: true
-        })));
+        const fallbackSkills = Object.entries(TECH_TOOLS).flatMap(([category, tools]) => 
+          tools.map(tool => ({
+            id: `skill-${tool.toLowerCase().replace(/\s+/g, '-')}`,
+            name: tool,
+            category,
+            description: `Master ${tool} for ${category}.`,
+            status: 'active',
+            isFallback: true
+          }))
+        );
+        setSkills(fallbackSkills);
       } finally {
         setLoading(false);
         console.log('AdminSkills: Fetch skills completed.');

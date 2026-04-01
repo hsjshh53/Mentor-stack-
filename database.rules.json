@@ -1,0 +1,14 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "curriculum": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'olynqsociallimited@gmail.com'"
+    }
+  }
+}

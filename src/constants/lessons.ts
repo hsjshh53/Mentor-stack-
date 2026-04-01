@@ -1,4 +1,4 @@
-import { LessonContent } from '../types';
+import { LessonContent } from '../types/index';
 
 export const LESSON_CONTENT: Record<string, LessonContent> = {
   'what-is-coding': {

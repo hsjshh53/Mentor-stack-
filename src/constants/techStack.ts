@@ -1,0 +1,21 @@
+export const TECH_TOOLS: Record<string, string[]> = {
+  'Frontend Development': ['HTML', 'CSS', 'JavaScript', 'React', 'Vue', 'Angular', 'Tailwind CSS', 'Sass', 'Vite', 'Next.js'],
+  'Backend Development': ['Node.js', 'Express', 'Python', 'Django', 'Flask', 'PostgreSQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes'],
+  'Full-Stack Development': ['React', 'Node.js', 'PostgreSQL', 'Docker', 'AWS'],
+  'Mobile App Development': ['React Native', 'Flutter', 'Swift', 'Kotlin', 'Firebase'],
+  'Data Analyst': ['Python', 'SQL', 'Pandas', 'NumPy', 'Tableau', 'Power BI'],
+  'AI Engineer': ['Python', 'PyTorch', 'TensorFlow', 'OpenAI', 'LangChain'],
+  'Cybersecurity': ['Linux', 'Wireshark', 'Nmap', 'Metasploit', 'Python'],
+  'DevOps Engineer': ['Docker', 'Kubernetes', 'Terraform', 'GitHub Actions', 'AWS'],
+  'UI/UX Design': ['Figma', 'Adobe XD', 'Sketch', 'Framer', 'Principle'],
+  'Blockchain/Web3 Development': ['Solidity', 'Ethereum', 'Hardhat', 'Ethers.js', 'IPFS'],
+  'Game Development': ['Unity', 'Unreal Engine', 'C#', 'C++', 'Blender'],
+  'AR/VR Development': ['Unity', 'Unreal Engine', 'C#', 'C++', 'Oculus SDK'],
+  'Embedded Systems (IoT)': ['C', 'C++', 'Arduino', 'Raspberry Pi', 'ESP32'],
+  'Product Design': ['Figma', 'Miro', 'Notion', 'Jira'],
+  'Interaction Design': ['Framer', 'Principle', 'After Effects', 'Lottie'],
+  'Web3 Developer': ['Solidity', 'Rust', 'Substrate', 'Polkadot'],
+  'AI Automation Engineer': ['Python', 'Zapier', 'Make.com', 'n8n'],
+  'Prompt Engineer': ['GPT-4', 'Claude', 'Midjourney', 'Stable Diffusion'],
+  'Robotics Engineer': ['ROS', 'Python', 'C++', 'SolidWorks', 'MATLAB']
+};

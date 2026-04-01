@@ -275,7 +275,7 @@ export async function generateLesson(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-pro-preview",
       contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
       config: {
         responseMimeType: "application/json"
@@ -322,7 +322,7 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.1-pro-preview",
       contents: [
         {
           parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
@@ -350,5 +350,86 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     console.log("Gemini Service: Triggering fallback tutor");
     const fallback = getFallbackResponse(message);
     return `(Mentor Mode: ${errorMessage})\n\n${fallback}`;
+  }
+}
+
+export async function generateRoadmap(skill: string, level: string): Promise<any> {
+  console.log(`Gemini Service: Request started - Generate Roadmap (${skill}, ${level})`);
+
+  if (!ai) {
+    console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
+    return {
+      modules: [
+        {
+          id: 'module-1',
+          title: 'Introduction to ' + skill,
+          description: 'The basics of ' + skill + '.',
+          order: 1,
+          lessons: [
+            { id: 'lesson-1', title: 'What is ' + skill + '?', order: 1, status: 'draft' }
+          ]
+        }
+      ]
+    };
+  }
+
+  const prompt = `
+    Generate a COMPREHENSIVE, PROFESSIONAL learning roadmap for the following development skill:
+    Skill: "${skill}"
+    Level: "${level}"
+
+    The roadmap should be divided into modules, and each module should contain a list of lessons.
+    Ensure the roadmap is progressive and covers all essential topics for the given level.
+
+    Return the roadmap in JSON format with the following structure:
+    {
+      "modules": [
+        {
+          "id": "string",
+          "title": "string",
+          "description": "string",
+          "order": number,
+          "lessons": [
+            { "id": "string", "title": "string", "order": number, "status": "draft" }
+          ]
+        }
+      ]
+    }
+
+    OUTPUT REQUIREMENTS:
+    1. At least 3-5 modules.
+    2. Each module should have 3-5 lessons.
+    3. Lesson titles should be descriptive.
+    4. IDs should be URL-friendly (e.g., "intro-to-react").
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    const text = response.text;
+    if (!text) throw new Error("Empty response");
+
+    return JSON.parse(text);
+  } catch (e: any) {
+    console.error("Gemini Service: Error generating roadmap", e.message);
+    return {
+      modules: [
+        {
+          id: 'module-1',
+          title: 'Introduction to ' + skill,
+          description: 'The basics of ' + skill + '.',
+          order: 1,
+          lessons: [
+            { id: 'lesson-1', title: 'What is ' + skill + '?', order: 1, status: 'draft' }
+          ]
+        }
+      ]
+    };
   }
 }

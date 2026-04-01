@@ -19,6 +19,7 @@ import {
   Code,
   Layout
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { getSkillCurriculum, updateSkillCurriculum, getSkills } from '../../services/adminService';
 
@@ -58,7 +59,7 @@ export const AdminCurriculumEditor: React.FC = () => {
     setSaving(true);
     try {
       await updateSkillCurriculum(skillId!, curriculum);
-      alert('Curriculum saved successfully!');
+      toast.success('Curriculum saved successfully!');
     } catch (error) {
       console.error('Error saving curriculum:', error);
     } finally {
