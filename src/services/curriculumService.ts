@@ -20,3 +20,10 @@ export const saveCurriculum = async (skillId: string, curriculum: PathCurriculum
     updatedAt: Date.now()
   });
 };
+
+export const curriculumService = {
+  getCurriculum,
+  saveCurriculum
+};
+
+export default curriculumService;
