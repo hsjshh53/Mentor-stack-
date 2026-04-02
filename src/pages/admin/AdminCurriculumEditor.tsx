@@ -9,8 +9,7 @@ import {
 } from 'lucide-react';
 import { Card, Button, Badge } from '../../components/ui';
 import { CURRICULUM } from '../../constants/curriculum';
-import { ref, get, set, update } from 'firebase/database';
-import { db } from '../../lib/firebase';
+import { getCurriculum, saveCurriculum } from '../../services/curriculumService';
 import { PathCurriculum, Module } from '../../types';
 
 export const AdminCurriculumEditor: React.FC = () => {
@@ -24,7 +23,7 @@ export const AdminCurriculumEditor: React.FC = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchCurriculum = async () => {
+    const fetchCurriculumData = async () => {
       if (!skillId) return;
       
       try {
@@ -37,18 +36,14 @@ export const AdminCurriculumEditor: React.FC = () => {
         }
 
         // Check for overrides in Firebase
-        const roadmapRef = ref(db, `roadmaps/${skillId}`);
-        const snapshot = await get(roadmapRef);
+        const firebaseData = await getCurriculum(skillId);
         
-        if (snapshot.exists()) {
-          // Merge logic if needed, or just use Firebase as source of truth for structure
-          // For now, let's assume Firebase has the full structure if it exists
-          const firebaseData = snapshot.val();
-          // Map firebase roadmap structure to PathCurriculum structure if they differ
-          // Our generator uses a slightly different structure than the static PathCurriculum
+        if (firebaseData) {
+          setCurriculum(firebaseData);
+        } else {
+          setCurriculum(staticSkill as PathCurriculum);
         }
-
-        setCurriculum(staticSkill as PathCurriculum);
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching curriculum:', error);
@@ -56,25 +51,15 @@ export const AdminCurriculumEditor: React.FC = () => {
       }
     };
 
-    fetchCurriculum();
+    fetchCurriculumData();
   }, [skillId, navigate]);
 
   const handleSave = async () => {
     if (!curriculum || !skillId) return;
     setSaving(true);
     try {
-      // Save to Firebase roadmaps
-      const roadmapRef = ref(db, `roadmaps/${skillId}`);
-      await set(roadmapRef, {
-        ...curriculum,
-        updatedAt: Date.now()
-      });
-      
-      // Also update the static-like structure if needed
-      // In a real app, we'd have a more unified data source
-      
+      await saveCurriculum(skillId, curriculum);
       setSaving(false);
-      // Show success toast or something
     } catch (error) {
       console.error('Error saving curriculum:', error);
       setSaving(false);
