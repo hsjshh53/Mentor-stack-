@@ -56,3 +56,10 @@ export const Badge: React.FC<React.HTMLAttributes<HTMLSpanElement>> = ({ childre
     {children}
   </span>
 );
+
+export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = '', ...props }) => (
+  <input 
+    className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500/50 text-white placeholder-white/20 ${className}`}
+    {...props}
+  />
+);

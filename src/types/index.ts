@@ -118,6 +118,18 @@ export interface PathLevel {
   projects: Project[];
 }
 
+export type Level = 'Beginner' | 'Intermediate' | 'Advanced';
+
+export interface PathData {
+  id: string;
+  title: string;
+  description: string;
+  category: CareerCategory;
+  status: PathStatus;
+  levels: Record<Level, PathLevel>;
+  finalExamId: string;
+}
+
 export type CertificateTier = 'Foundation' | 'Intermediate' | 'Advanced' | 'Professional';
 
 export interface Certificate {
@@ -206,17 +218,20 @@ export interface UserProfile {
 export interface LessonContent {
   id: string;
   title: string;
-  status?: 'generated' | 'draft' | 'published';
+  status?: 'draft' | 'published';
   todayYouAreLearning: string;
   whyItMatters: string;
   explanation: string;
+  visualExplanation?: string;
   analogy: string;
   codeExample: string;
-  lineByLine: string;
+  stepByStep?: string;
+  lineByLine?: string;
   commonMistakes: string[];
   practice: string;
   challenge: string;
   proTip?: string;
+  reflectionQuestion?: string;
   quiz: {
     question: string;
     options: string[];
@@ -224,37 +239,6 @@ export interface LessonContent {
     explanation: string;
   }[];
   recap: string;
-}
-
-export interface RoadmapModule {
-  id: string;
-  name: string;
-  description: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  lessonRange: string;
-  targetCount: number;
-}
-
-export interface Roadmap {
-  id: string;
-  skillId: string;
-  tool: string;
-  modules: RoadmapModule[];
-  createdAt: number;
-}
-
-export interface GenerationProgress {
-  id: string;
-  skillId: string;
-  tool: string;
-  status: 'idle' | 'generating_roadmap' | 'generating_lessons' | 'paused' | 'completed' | 'failed';
-  currentModuleIndex: number;
-  currentLessonIndex: number;
-  totalLessons: number;
-  completedLessons: number;
-  failedLessons: number;
-  errors: string[];
-  lastUpdated: number;
 }
 
 export interface Achievement {
@@ -359,6 +343,17 @@ export interface UserProjectProgress {
   startedAt: number;
   updatedAt: number;
   completedAt: number | null;
+}
+
+export interface Activity {
+  id: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  action: string;
+  target: string;
+  timestamp: any;
+  xpReward?: number;
 }
 
 export interface Project {

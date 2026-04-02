@@ -9,8 +9,8 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { Certificate, UserProgress, CareerPath, CertificateTier, PathData, Level, Module } from '../types/index';
+import { firestore } from '../lib/firebase';
+import { Certificate, UserProgress, CareerPath, CertificateTier, PathData, Level, Module, PathLevel } from '../types/index';
 import { CURRICULUM, PROJECTS } from '../constants/curriculum';
 
 export const checkCertificateEligibility = (progress: UserProgress, path: CareerPath): boolean => {
@@ -18,13 +18,13 @@ export const checkCertificateEligibility = (progress: UserProgress, path: Career
   if (!pathData) return false;
 
   // 1. All lessons completed
-  const allLessons = Object.values(pathData.levels).flatMap((level: Level) => 
+  const allLessons = Object.values(pathData.levels).flatMap((level: PathLevel) => 
     level.modules.flatMap((m: Module) => m.lessons)
   );
   const allLessonsCompleted = allLessons.every(id => progress.completedLessons?.includes(id));
 
   // 2. All module tests passed
-  const allTests = Object.values(pathData.levels).flatMap((level: Level) => 
+  const allTests = Object.values(pathData.levels).flatMap((level: PathLevel) => 
     level.modules.filter((m: Module) => m.testId).map((m: Module) => m.testId!)
   );
   const allTestsPassed = allTests.every(id => progress.completedTests?.includes(id));
@@ -33,7 +33,7 @@ export const checkCertificateEligibility = (progress: UserProgress, path: Career
   const examPassed = progress.completedExams?.includes(pathData.finalExamId);
 
   // 4. All projects in the path must be submitted with a GitHub link
-  const pathProjectIds = Object.values(pathData.levels).flatMap((level: Level) => 
+  const pathProjectIds = Object.values(pathData.levels).flatMap((level: PathLevel) => 
     level.modules.filter((m: any) => m.projectId).map((m: any) => m.projectId!)
   );
   const allProjectsSubmitted = pathProjectIds.every(id => {
@@ -55,14 +55,14 @@ export const generateCertificate = async (
   const pathData = CURRICULUM[path] as PathData;
   
   // Check if user already has a certificate for this path
-  const userRef = doc(db, 'users', userId);
+  const userRef = doc(firestore, 'users', userId);
   const userSnap = await getDoc(userRef);
   if (userSnap.exists()) {
     const userData = userSnap.data();
     const existingCerts = userData.progress?.certificates || [];
     
     for (const certId of existingCerts) {
-      const certSnap = await getDoc(doc(db, 'certificates', certId));
+      const certSnap = await getDoc(doc(firestore, 'certificates', certId));
       if (certSnap.exists() && certSnap.data().pathName === path) {
         return certSnap.data() as Certificate;
       }
@@ -70,7 +70,7 @@ export const generateCertificate = async (
   }
 
   // Get project details from submissions
-  const pathProjectIds = Object.values(pathData.levels).flatMap((level: Level) => 
+  const pathProjectIds = Object.values(pathData.levels).flatMap((level: PathLevel) => 
     level.modules.filter((m: any) => m.projectId).map((m: any) => m.projectId!)
   );
   const certProjects = pathProjectIds.map(id => {
@@ -83,7 +83,7 @@ export const generateCertificate = async (
     };
   });
 
-  const certRef = collection(db, 'certificates');
+  const certRef = collection(firestore, 'certificates');
   const newCertDoc = await addDoc(certRef, {
     userId,
     fullName,
@@ -119,13 +119,13 @@ export const generateCertificate = async (
 };
 
 export const getCertificate = async (certId: string): Promise<Certificate | null> => {
-  const certRef = doc(db, 'certificates', certId);
+  const certRef = doc(firestore, 'certificates', certId);
   const snapshot = await getDoc(certRef);
   return snapshot.exists() ? snapshot.data() as Certificate : null;
 };
 
 export const getUserCertificates = async (userId: string): Promise<Certificate[]> => {
-  const userRef = doc(db, 'users', userId);
+  const userRef = doc(firestore, 'users', userId);
   const snapshot = await getDoc(userRef);
   if (!snapshot.exists()) return [];
   

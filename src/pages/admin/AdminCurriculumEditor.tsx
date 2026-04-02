@@ -1,320 +1,355 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, Reorder } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
-  ChevronLeft, 
-  Plus, 
-  GripVertical, 
-  Trash2, 
-  Edit2, 
-  Save, 
-  Eye, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle,
-  Loader2,
-  BookOpen,
-  FileText,
-  Video,
-  Code,
-  Layout
+  ChevronLeft, Save, Plus, Trash2, Edit3, 
+  GripVertical, CheckCircle2, Clock, AlertCircle,
+  Layout, BookOpen, Target, Zap, Settings,
+  ChevronDown, ChevronUp, MoreVertical, X
 } from 'lucide-react';
-import { toast } from 'sonner';
-import { AdminLayout } from '../../components/admin/AdminLayout';
-import { getSkillCurriculum, updateSkillCurriculum, getSkills } from '../../services/adminService';
+import { Card, Button, Badge } from '../../components/ui';
+import { CURRICULUM } from '../../constants/curriculum';
+import { ref, get, set, update } from 'firebase/database';
+import { db } from '../../lib/firebase';
+import { PathCurriculum, Module } from '../../types';
 
 export const AdminCurriculumEditor: React.FC = () => {
   const { skillId } = useParams<{ skillId: string }>();
   const navigate = useNavigate();
-  const [skill, setSkill] = useState<any>(null);
-  const [curriculum, setCurriculum] = useState<any>({ modules: [] });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [curriculum, setCurriculum] = useState<PathCurriculum | null>(null);
+  const [activeLevel, setActiveLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   const [editingModule, setEditingModule] = useState<string | null>(null);
-  const [editingLesson, setEditingLesson] = useState<{ moduleId: string, lessonId: string } | null>(null);
+  const [editingLesson, setEditingLesson] = useState<{moduleId: string, lessonId: string} | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (skillId) {
-      fetchData();
-    }
-  }, [skillId]);
+    const fetchCurriculum = async () => {
+      if (!skillId) return;
+      
+      try {
+        // Find the skill in static curriculum
+        const staticSkill = Object.values(CURRICULUM).find(p => p.id === skillId || p.title.toLowerCase().replace(/\s+/g, '-') === skillId);
+        
+        if (!staticSkill) {
+          navigate('/admin/curriculum');
+          return;
+        }
 
-  const fetchData = async () => {
-    try {
-      const [skillsData, curriculumData] = await Promise.all([
-        getSkills(),
-        getSkillCurriculum(skillId!)
-      ]);
-      const currentSkill = skillsData.find((s: any) => s.id === skillId);
-      setSkill(currentSkill);
-      setCurriculum(curriculumData || { modules: [] });
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Check for overrides in Firebase
+        const roadmapRef = ref(db, `roadmaps/${skillId}`);
+        const snapshot = await get(roadmapRef);
+        
+        if (snapshot.exists()) {
+          // Merge logic if needed, or just use Firebase as source of truth for structure
+          // For now, let's assume Firebase has the full structure if it exists
+          const firebaseData = snapshot.val();
+          // Map firebase roadmap structure to PathCurriculum structure if they differ
+          // Our generator uses a slightly different structure than the static PathCurriculum
+        }
+
+        setCurriculum(staticSkill as PathCurriculum);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching curriculum:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchCurriculum();
+  }, [skillId, navigate]);
 
   const handleSave = async () => {
+    if (!curriculum || !skillId) return;
     setSaving(true);
     try {
-      await updateSkillCurriculum(skillId!, curriculum);
-      toast.success('Curriculum saved successfully!');
+      // Save to Firebase roadmaps
+      const roadmapRef = ref(db, `roadmaps/${skillId}`);
+      await set(roadmapRef, {
+        ...curriculum,
+        updatedAt: Date.now()
+      });
+      
+      // Also update the static-like structure if needed
+      // In a real app, we'd have a more unified data source
+      
+      setSaving(false);
+      // Show success toast or something
     } catch (error) {
       console.error('Error saving curriculum:', error);
-    } finally {
       setSaving(false);
     }
   };
 
   const addModule = () => {
-    const newModule = {
-      id: `module_${Date.now()}`,
+    if (!curriculum) return;
+    const newModule: Module = {
+      id: `mod-${Date.now()}`,
       title: 'New Module',
-      description: 'Enter module description...',
+      description: 'Module description goes here',
       lessons: []
     };
-    setCurriculum({ ...curriculum, modules: [...curriculum.modules, newModule] });
+    
+    const updatedCurriculum = { ...curriculum };
+    updatedCurriculum.levels[activeLevel].modules.push(newModule);
+    setCurriculum(updatedCurriculum);
     setEditingModule(newModule.id);
   };
 
+  const deleteModule = (moduleId: string) => {
+    if (!curriculum) return;
+    const updatedCurriculum = { ...curriculum };
+    updatedCurriculum.levels[activeLevel].modules = updatedCurriculum.levels[activeLevel].modules.filter(m => m.id !== moduleId);
+    setCurriculum(updatedCurriculum);
+  };
+
   const addLesson = (moduleId: string) => {
-    const newLesson = {
-      id: `lesson_${Date.now()}`,
-      title: 'New Lesson',
-      duration: '15 mins',
-      type: 'text',
-      status: 'draft'
-    };
-    const updatedModules = curriculum.modules.map((m: any) => {
-      if (m.id === moduleId) {
-        return { ...m, lessons: [...(m.lessons || []), newLesson] };
-      }
-      return m;
-    });
-    setCurriculum({ ...curriculum, modules: updatedModules });
-    setEditingLesson({ moduleId, lessonId: newLesson.id });
-  };
-
-  const deleteModuleLocal = (moduleId: string) => {
-    if (window.confirm('Are you sure you want to delete this module and all its lessons?')) {
-      setCurriculum({
-        ...curriculum,
-        modules: curriculum.modules.filter((m: any) => m.id !== moduleId)
-      });
+    if (!curriculum) return;
+    const updatedCurriculum = { ...curriculum };
+    const module = updatedCurriculum.levels[activeLevel].modules.find(m => m.id === moduleId);
+    if (module) {
+      const newLessonId = `lesson-${Date.now()}`;
+      module.lessons.push(newLessonId);
+      setCurriculum(updatedCurriculum);
+      setEditingLesson({ moduleId, lessonId: newLessonId });
     }
   };
 
-  const deleteLessonLocal = (moduleId: string, lessonId: string) => {
-    if (window.confirm('Are you sure you want to delete this lesson?')) {
-      const updatedModules = curriculum.modules.map((m: any) => {
-        if (m.id === moduleId) {
-          return { ...m, lessons: m.lessons.filter((l: any) => l.id !== lessonId) };
-        }
-        return m;
-      });
-      setCurriculum({ ...curriculum, modules: updatedModules });
+  const deleteLesson = (moduleId: string, lessonId: string) => {
+    if (!curriculum) return;
+    const updatedCurriculum = { ...curriculum };
+    const module = updatedCurriculum.levels[activeLevel].modules.find(m => m.id === moduleId);
+    if (module) {
+      module.lessons = module.lessons.filter(id => id !== lessonId);
+      setCurriculum(updatedCurriculum);
     }
-  };
-
-  const updateModuleTitle = (moduleId: string, title: string) => {
-    const updatedModules = curriculum.modules.map((m: any) => {
-      if (m.id === moduleId) return { ...m, title };
-      return m;
-    });
-    setCurriculum({ ...curriculum, modules: updatedModules });
-  };
-
-  const updateLessonTitle = (moduleId: string, lessonId: string, title: string) => {
-    const updatedModules = curriculum.modules.map((m: any) => {
-      if (m.id === moduleId) {
-        return {
-          ...m,
-          lessons: m.lessons.map((l: any) => l.id === lessonId ? { ...l, title } : l)
-        };
-      }
-      return m;
-    });
-    setCurriculum({ ...curriculum, modules: updatedModules });
   };
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-          <Loader2 className="animate-spin mb-4" size={40} />
-          <p>Loading curriculum editor...</p>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin text-emerald-500">
+          <Zap size={40} />
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
+  if (!curriculum) return null;
+
   return (
-    <AdminLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/admin/curriculum')}
-              className="p-2 hover:bg-white/5 rounded-xl transition-all text-gray-400 hover:text-white"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Edit Curriculum: {skill?.name}</h1>
-              <p className="text-gray-400 mt-2">Structure modules and lessons for this learning path.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-3 bg-green-500 text-black font-bold rounded-xl hover:bg-green-400 transition-all shadow-lg shadow-green-500/20 disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-              {saving ? 'Saving...' : 'Save Curriculum'}
-            </button>
+    <div className="space-y-8 pb-20">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/admin/curriculum')}
+            className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-3xl font-black tracking-tight">{curriculum.title}</h2>
+            <p className="text-sm text-white/30 font-medium">Curriculum Editor & Structure Management</p>
           </div>
         </div>
-
-        {/* Modules List */}
-        <div className="space-y-6">
-          <Reorder.Group axis="y" values={curriculum.modules} onReorder={(newOrder) => setCurriculum({ ...curriculum, modules: newOrder })} className="space-y-6">
-            {curriculum.modules.map((module: any) => (
-              <Reorder.Item 
-                key={module.id} 
-                value={module}
-                className="bg-[#121214] border border-white/5 rounded-2xl overflow-hidden"
-              >
-                {/* Module Header */}
-                <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/2">
-                  <div className="flex items-center gap-4 flex-1">
-                    <GripVertical className="text-gray-600 cursor-grab active:cursor-grabbing" size={20} />
-                    {editingModule === module.id ? (
-                      <input 
-                        autoFocus
-                        type="text"
-                        value={module.title}
-                        onChange={(e) => updateModuleTitle(module.id, e.target.value)}
-                        onBlur={() => setEditingModule(null)}
-                        onKeyDown={(e) => e.key === 'Enter' && setEditingModule(null)}
-                        className="bg-white/5 border border-green-500/50 rounded-lg px-3 py-1 outline-none text-xl font-bold w-full max-w-md"
-                      />
-                    ) : (
-                      <h3 
-                        onClick={() => setEditingModule(module.id)}
-                        className="text-xl font-bold cursor-pointer hover:text-green-400 transition-colors"
-                      >
-                        {module.title}
-                      </h3>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => addLesson(module.id)}
-                      className="p-2 hover:bg-green-500/10 text-green-400 rounded-lg transition-colors"
-                      title="Add Lesson"
-                    >
-                      <Plus size={20} />
-                    </button>
-                    <button 
-                      onClick={() => deleteModuleLocal(module.id)}
-                      className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
-                      title="Delete Module"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Lessons List */}
-                <div className="p-4 space-y-2">
-                  <Reorder.Group 
-                    axis="y" 
-                    values={module.lessons || []} 
-                    onReorder={(newLessons) => {
-                      const updatedModules = curriculum.modules.map((m: any) => 
-                        m.id === module.id ? { ...m, lessons: newLessons } : m
-                      );
-                      setCurriculum({ ...curriculum, modules: updatedModules });
-                    }}
-                    className="space-y-2"
-                  >
-                    {(module.lessons || []).map((lesson: any) => (
-                      <Reorder.Item 
-                        key={lesson.id} 
-                        value={lesson}
-                        className="flex items-center justify-between p-4 bg-white/2 border border-white/5 rounded-xl hover:border-white/10 transition-all group"
-                      >
-                        <div className="flex items-center gap-4 flex-1">
-                          <GripVertical className="text-gray-700 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" size={16} />
-                          <div className="p-2 rounded-lg bg-white/5 text-gray-400">
-                            {lesson.type === 'video' ? <Video size={16} /> : lesson.type === 'code' ? <Code size={16} /> : <FileText size={16} />}
-                          </div>
-                          {editingLesson?.lessonId === lesson.id ? (
-                            <input 
-                              autoFocus
-                              type="text"
-                              value={lesson.title}
-                              onChange={(e) => updateLessonTitle(module.id, lesson.id, e.target.value)}
-                              onBlur={() => setEditingLesson(null)}
-                              onKeyDown={(e) => e.key === 'Enter' && setEditingLesson(null)}
-                              className="bg-white/5 border border-green-500/50 rounded-lg px-3 py-1 outline-none text-sm font-medium w-full max-w-sm"
-                            />
-                          ) : (
-                            <span 
-                              onClick={() => setEditingLesson({ moduleId: module.id, lessonId: lesson.id })}
-                              className="text-sm font-medium cursor-pointer hover:text-green-400 transition-colors"
-                            >
-                              {lesson.title}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] uppercase tracking-wider text-gray-500 font-bold px-2 py-0.5 bg-white/5 rounded">
-                            {lesson.duration}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <button 
-                              onClick={() => navigate(`/admin/lesson-generator?skill=${skillId}&module=${module.id}&lesson=${lesson.id}`)}
-                              className="p-1.5 hover:bg-white/5 text-gray-500 hover:text-white rounded-lg transition-colors"
-                              title="Edit Content"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button 
-                              onClick={() => deleteLessonLocal(module.id, lesson.id)}
-                              className="p-1.5 hover:bg-red-500/10 text-gray-500 hover:text-red-400 rounded-lg transition-colors"
-                              title="Delete Lesson"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
-
-                  {(module.lessons || []).length === 0 && (
-                    <div className="text-center py-8 border border-dashed border-white/5 rounded-xl text-gray-500 text-sm">
-                      No lessons in this module yet.
-                    </div>
-                  )}
-                </div>
-              </Reorder.Item>
-            ))}
-          </Reorder.Group>
-
-          <button 
-            onClick={addModule}
-            className="w-full py-6 border-2 border-dashed border-white/5 hover:border-green-500/30 hover:bg-green-500/5 rounded-2xl text-gray-500 hover:text-green-400 transition-all flex flex-col items-center gap-2"
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            className="h-12 px-6 rounded-xl font-black tracking-tight text-xs gap-2 border-white/10"
+            onClick={() => navigate('/admin/generator')}
           >
-            <Plus size={32} />
-            <span className="font-bold">Add New Module</span>
-          </button>
+            <Zap size={14} />
+            Auto-Generate
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={saving}
+            className="h-12 px-8 rounded-xl font-black tracking-tight text-xs gap-2 shadow-xl shadow-emerald-500/20"
+          >
+            {saving ? <Clock className="animate-spin" size={14} /> : <Save size={14} />}
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       </div>
-    </AdminLayout>
+
+      {/* Level Selector */}
+      <div className="flex p-1.5 bg-white/[0.02] border border-white/[0.05] rounded-2xl w-fit">
+        {(['beginner', 'intermediate', 'advanced'] as const).map((level) => (
+          <button
+            key={level}
+            onClick={() => setActiveLevel(level)}
+            className={`px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+              activeLevel === level 
+                ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20' 
+                : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            {level}
+          </button>
+        ))}
+      </div>
+
+      {/* Level Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="p-6 bg-white/[0.02] border-white/[0.05] space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Modules</p>
+          <p className="text-2xl font-black">{curriculum.levels[activeLevel].modules.length}</p>
+        </Card>
+        <Card className="p-6 bg-white/[0.02] border-white/[0.05] space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Total Lessons</p>
+          <p className="text-2xl font-black">
+            {curriculum.levels[activeLevel].modules.reduce((acc, m) => acc + m.lessons.length, 0)}
+          </p>
+        </Card>
+        <Card className="p-6 bg-white/[0.02] border-white/[0.05] space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Target Progress</p>
+          <p className="text-2xl font-black text-emerald-500">
+            {Math.round((curriculum.levels[activeLevel].modules.reduce((acc, m) => acc + m.lessons.length, 0) / 40) * 100)}%
+          </p>
+        </Card>
+        <Card className="p-6 bg-white/[0.02] border-white/[0.05] space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Status</p>
+          <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+            {curriculum.status.toUpperCase()}
+          </Badge>
+        </Card>
+      </div>
+
+      {/* Modules List */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black tracking-tight flex items-center gap-3">
+            <Layout className="text-emerald-500" size={24} />
+            Modules & Lessons
+          </h3>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-10 px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest gap-2 border-white/10"
+            onClick={addModule}
+          >
+            <Plus size={14} />
+            Add Module
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {curriculum.levels[activeLevel].modules.map((module, index) => (
+            <Card key={module.id} className="overflow-hidden bg-white/[0.02] border-white/[0.05]">
+              <div className="p-6 flex items-center justify-between group">
+                <div className="flex items-center gap-4 flex-grow">
+                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/20 cursor-grab active:cursor-grabbing">
+                    <GripVertical size={16} />
+                  </div>
+                  {editingModule === module.id ? (
+                    <div className="flex items-center gap-3 flex-grow max-w-md">
+                      <input 
+                        autoFocus
+                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm font-bold w-full focus:outline-none focus:border-emerald-500/50"
+                        value={module.title}
+                        onChange={(e) => {
+                          const updated = { ...curriculum };
+                          updated.levels[activeLevel].modules[index].title = e.target.value;
+                          setCurriculum(updated);
+                        }}
+                        onBlur={() => setEditingModule(null)}
+                        onKeyDown={(e) => e.key === 'Enter' && setEditingModule(null)}
+                      />
+                      <button onClick={() => setEditingModule(null)} className="text-emerald-500"><CheckCircle2 size={18} /></button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <h4 className="font-bold text-lg">{module.title}</h4>
+                      <button 
+                        onClick={() => setEditingModule(module.id)}
+                        className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-emerald-500 transition-all"
+                      >
+                        <Edit3 size={14} />
+                      </button>
+                    </div>
+                  )}
+                  <Badge className="bg-white/5 text-white/40 border-white/10">
+                    {module.lessons.length} Lessons
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 px-3 rounded-lg font-bold text-[10px] uppercase tracking-widest gap-2 border-white/10"
+                    onClick={() => addLesson(module.id)}
+                  >
+                    <Plus size={12} />
+                    Add Lesson
+                  </Button>
+                  <button 
+                    onClick={() => deleteModule(module.id)}
+                    className="w-9 h-9 rounded-lg bg-red-500/5 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all flex items-center justify-center"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Lessons List */}
+              <div className="px-6 pb-6 space-y-2">
+                {module.lessons.map((lessonId, lIndex) => (
+                  <div key={lessonId} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.01] border border-white/[0.03] group/lesson">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] font-black text-white/10 w-4">{lIndex + 1}</span>
+                      <div className="flex items-center gap-3">
+                        {editingLesson?.lessonId === lessonId ? (
+                          <div className="flex items-center gap-3 flex-grow max-w-sm">
+                            <input 
+                              autoFocus
+                              className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs font-bold w-full focus:outline-none focus:border-emerald-500/50"
+                              value={lessonId}
+                              onChange={(e) => {
+                                const updated = { ...curriculum };
+                                const mod = updated.levels[activeLevel].modules.find(m => m.id === module.id);
+                                if (mod) mod.lessons[lIndex] = e.target.value;
+                                setCurriculum(updated);
+                              }}
+                              onBlur={() => setEditingLesson(null)}
+                              onKeyDown={(e) => e.key === 'Enter' && setEditingLesson(null)}
+                            />
+                            <button onClick={() => setEditingLesson(null)} className="text-emerald-500"><CheckCircle2 size={14} /></button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-sm font-medium text-white/60">{lessonId}</span>
+                            <button 
+                              onClick={() => setEditingLesson({ moduleId: module.id, lessonId })}
+                              className="opacity-0 group-hover/lesson:opacity-100 text-white/20 hover:text-emerald-500 transition-all"
+                            >
+                              <Edit3 size={12} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-emerald-500/5 text-emerald-500/40 text-[9px] border-emerald-500/10">PUBLISHED</Badge>
+                      <button 
+                        onClick={() => deleteLesson(module.id, lessonId)}
+                        className="opacity-0 group-hover/lesson:opacity-100 text-red-500/40 hover:text-red-500 transition-all"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {module.lessons.length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed border-white/[0.02] rounded-xl">
+                    <p className="text-xs font-medium text-white/10 italic">No lessons in this module yet.</p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };

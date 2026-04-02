@@ -5,13 +5,13 @@ import {
   updateDoc, 
   onSnapshot 
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { firestore } from "../lib/firebase";
 import { UserProjectProgress } from "../types/index";
 
 export const projectService = {
   // Initialize project progress
   startProject: async (userId: string, projectId: string, initialPhaseId: string) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     const now = Date.now();
     
     const initialProgress: UserProjectProgress = {
@@ -33,7 +33,7 @@ export const projectService = {
 
   // Get project progress
   getProjectProgress: async (userId: string, projectId: string): Promise<UserProjectProgress | null> => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     const snapshot = await getDoc(userRef);
     if (snapshot.exists()) {
       const data = snapshot.data();
@@ -44,7 +44,7 @@ export const projectService = {
 
   // Update current phase
   updateCurrentPhase: async (userId: string, projectId: string, phaseId: string) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     await updateDoc(userRef, {
       [`progress.projects.${projectId}.currentPhaseId`]: phaseId,
       [`progress.projects.${projectId}.updatedAt`]: Date.now()
@@ -53,7 +53,7 @@ export const projectService = {
 
   // Update phase progress
   updatePhaseProgress: async (userId: string, projectId: string, phaseId: string, isCompleted: boolean) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     const snapshot = await getDoc(userRef);
     if (!snapshot.exists()) return;
 
@@ -77,7 +77,7 @@ export const projectService = {
 
   // Update checkpoint progress
   updateCheckpointProgress: async (userId: string, projectId: string, checkpointId: string, isCompleted: boolean) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     const snapshot = await getDoc(userRef);
     if (!snapshot.exists()) return;
 
@@ -101,7 +101,7 @@ export const projectService = {
 
   // Complete project
   completeProject: async (userId: string, projectId: string) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     await updateDoc(userRef, {
       [`progress.projects.${projectId}.status`]: 'completed',
       [`progress.projects.${projectId}.completedAt`]: Date.now(),
@@ -111,7 +111,7 @@ export const projectService = {
 
   // Save project draft (playground code)
   saveProjectDraft: async (userId: string, projectId: string, draft: any) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     await updateDoc(userRef, {
       [`progress.projects.${projectId}.draft`]: draft,
       [`progress.projects.${projectId}.updatedAt`]: Date.now()
@@ -120,7 +120,7 @@ export const projectService = {
 
   // Submit project
   submitProject: async (userId: string, projectId: string, submission: any) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     const now = Date.now();
     
     await updateDoc(userRef, {
@@ -139,7 +139,7 @@ export const projectService = {
 
   // Listen to all user projects
   subscribeToProjects: (userId: string, callback: (projects: Record<string, UserProjectProgress>) => void) => {
-    const userRef = doc(db, 'users', userId);
+    const userRef = doc(firestore, 'users', userId);
     const unsubscribe = onSnapshot(userRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();

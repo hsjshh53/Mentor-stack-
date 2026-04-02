@@ -6,7 +6,7 @@ import {
   updateDoc, 
   getDoc 
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { firestore } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { UserProgress, ProjectSubmission, ProjectStarterCode } from '../types/index';
 
@@ -50,7 +50,7 @@ export const useUserData = () => {
       return;
     }
 
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(firestore, 'users', user.uid);
     
     // Fallback timeout for user data loading
     const timeoutId = setTimeout(() => {
@@ -158,7 +158,7 @@ export const useUserData = () => {
 
   const updateProgress = async (updates: Partial<UserProgress>) => {
     if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(firestore, 'users', user.uid);
     
     // Flatten updates for Firestore updateDoc
     const firestoreUpdates: any = {};
@@ -257,7 +257,7 @@ export const useUserData = () => {
 
   const saveProjectDraft = async (projectId: string, draft: ProjectStarterCode) => {
     if (!user) return;
-    const userRef = doc(db, 'users', user.uid);
+    const userRef = doc(firestore, 'users', user.uid);
     await updateDoc(userRef, {
       [`progress.projects.${projectId}.draft`]: draft,
       [`progress.projects.${projectId}.updatedAt`]: Date.now()

@@ -1,5 +1,5 @@
 import { doc, setDoc, getDoc, onSnapshot, deleteDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { firestore } from "../lib/firebase";
 import { GithubConnection, GithubRepoMetadata } from "../types/index";
 
 const FUNCTIONS_BASE_URL = "/.netlify/functions";
@@ -48,7 +48,7 @@ export const githubService = {
             };
             
             // 4. Save connection to Firebase
-            const connectionRef = doc(db, "users", userId, "github", "connection");
+            const connectionRef = doc(firestore, "users", userId, "github", "connection");
             await setDoc(connectionRef, connection);
             
             resolve(connection);
@@ -73,14 +73,14 @@ export const githubService = {
 
   // Get GitHub connection
   getGithubConnection: async (userId: string): Promise<GithubConnection | null> => {
-    const connectionRef = doc(db, "users", userId, "github", "connection");
+    const connectionRef = doc(firestore, "users", userId, "github", "connection");
     const snapshot = await getDoc(connectionRef);
     return snapshot.exists() ? snapshot.data() as GithubConnection : null;
   },
 
   // Disconnect GitHub
   disconnectGithub: async (userId: string) => {
-    const connectionRef = doc(db, "users", userId, "github", "connection");
+    const connectionRef = doc(firestore, "users", userId, "github", "connection");
     await deleteDoc(connectionRef);
   },
 
@@ -132,7 +132,7 @@ export const githubService = {
     const data = await response.json();
 
     // Save metadata to Firebase
-    const metadataRef = doc(db, "users", userId, "projects", projectId);
+    const metadataRef = doc(firestore, "users", userId, "projects", projectId);
     const metadata: GithubRepoMetadata = {
       repoName,
       repoUrl: `https://github.com/` + connection.username + `/` + repoName,
@@ -147,7 +147,7 @@ export const githubService = {
 
   // Subscribe to connection
   subscribeToConnection: (userId: string, callback: (connection: GithubConnection | null) => void) => {
-    const connectionRef = doc(db, "users", userId, "github", "connection");
+    const connectionRef = doc(firestore, "users", userId, "github", "connection");
     return onSnapshot(connectionRef, (snapshot) => {
       callback(snapshot.exists() ? snapshot.data() as GithubConnection : null);
     });

@@ -14,7 +14,7 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { generateLesson } from '../lib/gemini';
-import { getSavedLesson } from '../services/curriculumService';
+import { curriculumService } from '../services/curriculumService';
 import { LessonContent } from '../types/index';
 import { MentorChat } from '../components/MentorChat';
 import { AnimatePresence } from 'motion/react';
@@ -69,7 +69,7 @@ export const LessonPage: React.FC = () => {
         const previousLessonContext = progress.lastLessonTitle || '';
 
         // 1. Check Firebase first
-        let content = await getSavedLesson(skill, level, lessonNumber);
+        let content = await curriculumService.getSavedLesson(skill, level, lessonNumber);
         
         // 2. If not in Firebase, generate it
         if (!content) {
