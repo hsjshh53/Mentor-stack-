@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
-import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCo1USpFDXZe6ysNGq5ZRCx90BcB1KZYtM",
@@ -16,6 +15,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const rtdb = getDatabase(app);
-export const db = getFirestore(app);
-export const firestore = db;
+export const db = getDatabase(app);
+
+export const sanitizeFirebaseKey = (key: string): string => {
+  if (!key) return '';
+  return key
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[.#$[\]\/]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};

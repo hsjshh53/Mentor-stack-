@@ -15,13 +15,7 @@ import { TestPage } from './pages/TestPage';
 import { ExamPage } from './pages/ExamPage';
 import { VerificationPage } from './pages/VerificationPage';
 import { CertificatePage } from './pages/CertificatePage';
-
-import { AdminLayout } from './pages/admin/AdminLayout';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { AdminUsers } from './pages/admin/AdminUsers';
-import { AdminCurriculum } from './pages/admin/AdminCurriculum';
-import { AdminCurriculumEditor } from './pages/admin/AdminCurriculumEditor';
-import { AdminGenerator } from './pages/admin/AdminGenerator';
+import { AILessonGenerator } from './components/AILessonGenerator';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -29,40 +23,16 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return user ? <>{children}</> : <Navigate to="/login" />;
 };
 
-const ProtectedAdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading, isAdmin } = useAuth();
-  if (loading) return null;
-  if (!user || !isAdmin) return <Navigate to="/dashboard" />;
-  return <>{children}</>;
-};
-
 export default function App() {
   return (
     <AuthProvider>
       <Router>
+        <AILessonGenerator />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/signup" element={<AuthPage mode="signup" />} />
           <Route path="/verify/:certificateId" element={<VerificationPage />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={
-            <ProtectedAdminRoute>
-              <AdminLayout />
-            </ProtectedAdminRoute>
-          }>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="curriculum" element={<AdminCurriculum />} />
-            <Route path="curriculum/:skillId" element={<AdminCurriculumEditor />} />
-            <Route path="generator" element={<AdminGenerator />} />
-            <Route path="skills" element={<AdminCurriculum />} /> {/* Reusing for now */}
-            <Route path="certificates" element={<AdminDashboard />} /> {/* Reusing for now */}
-            <Route path="moderation" element={<AdminDashboard />} /> {/* Reusing for now */}
-            <Route path="announcements" element={<AdminDashboard />} /> {/* Reusing for now */}
-            <Route path="settings" element={<AdminDashboard />} /> {/* Reusing for now */}
-          </Route>
           
           <Route path="/onboarding" element={
             <PrivateRoute>

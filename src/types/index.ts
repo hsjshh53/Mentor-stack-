@@ -1,4 +1,4 @@
-export type PathStatus = 'active' | 'in_progress' | 'coming_soon' | 'completed' | 'locked';
+export type PathStatus = 'active' | 'partial' | 'locked';
 
 export type CareerCategory = 
   | 'Core Software Development'
@@ -14,6 +14,7 @@ export type CareerPath =
   | 'Frontend Developer'
   | 'Backend Developer'
   | 'Full-Stack Developer'
+  | 'HTML'
   | 'Mobile App Developer'
   | 'Software Engineer'
   | 'Systems Architect'
@@ -66,6 +67,9 @@ export interface Module {
   lessons: string[]; // Lesson IDs
   testId?: string;
   projectId?: string;
+  skillId?: string;
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  order?: number;
 }
 
 export interface PathCurriculum {
@@ -84,6 +88,10 @@ export interface PathCurriculum {
   };
   tools: string[]; // TechTool IDs
   finalExamId: string;
+  curriculumGenerated?: boolean;
+  lessonsGeneratedCount?: number;
+  targetLessons?: number;
+  generationStatus?: 'idle' | 'generating' | 'completed' | 'failed';
 }
 
 export type TechCategory = 
@@ -116,18 +124,6 @@ export interface PathLevel {
   description: string;
   modules: Module[];
   projects: Project[];
-}
-
-export type Level = 'Beginner' | 'Intermediate' | 'Advanced';
-
-export interface PathData {
-  id: string;
-  title: string;
-  description: string;
-  category: CareerCategory;
-  status: PathStatus;
-  levels: Record<Level, PathLevel>;
-  finalExamId: string;
 }
 
 export type CertificateTier = 'Foundation' | 'Intermediate' | 'Advanced' | 'Professional';
@@ -198,13 +194,6 @@ export interface UserProgress {
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
   isPremium: boolean;
-  dailyGoalMinutes: number;
-  dailyMinutesLearned: number;
-  lastLessonId: string | null;
-  lastLessonTitle: string | null;
-  lastActiveDate: string | null;
-  goal?: string;
-  experienceLevel?: string;
 }
 
 export interface UserProfile {
@@ -218,20 +207,17 @@ export interface UserProfile {
 export interface LessonContent {
   id: string;
   title: string;
-  status?: 'draft' | 'published';
   todayYouAreLearning: string;
   whyItMatters: string;
   explanation: string;
-  visualExplanation?: string;
   analogy: string;
   codeExample: string;
-  stepByStep?: string;
-  lineByLine?: string;
+  lineByLine: string;
   commonMistakes: string[];
   practice: string;
   challenge: string;
-  proTip?: string;
   reflectionQuestion?: string;
+  proTip?: string;
   quiz: {
     question: string;
     options: string[];
@@ -239,6 +225,12 @@ export interface LessonContent {
     explanation: string;
   }[];
   recap: string;
+  generatedByAI?: boolean;
+  published?: boolean;
+  moduleId?: string;
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+  order?: number;
+  createdAt?: number;
 }
 
 export interface Achievement {
@@ -343,17 +335,6 @@ export interface UserProjectProgress {
   startedAt: number;
   updatedAt: number;
   completedAt: number | null;
-}
-
-export interface Activity {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  action: string;
-  target: string;
-  timestamp: any;
-  xpReward?: number;
 }
 
 export interface Project {

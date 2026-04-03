@@ -10,12 +10,11 @@ import {
 } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
+import { useCurriculum } from '../hooks/useCurriculum';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { generateLesson } from '../lib/gemini';
-import { curriculumService } from '../services/curriculumService';
-import { LessonContent } from '../types/index';
+import { LessonContent, CareerPath } from '../types/index';
 import { MentorChat } from '../components/MentorChat';
 import { AnimatePresence } from 'motion/react';
 
@@ -23,7 +22,21 @@ export const LessonPage: React.FC = () => {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { progress, loading: userLoading, updateProgress, addXP, completeLesson } = useUserData();
+  const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
+  const { curriculum: currentPathData, loading: curriculumLoading } = useCurriculum(progress?.selectedPath as CareerPath);
+  
+  const nextLessonId = React.useMemo(() => {
+    if (!currentPathData || !topic) return null;
+    const allLessons = Object.values(currentPathData.levels || {}).flatMap(level => 
+      level.modules.flatMap(m => m.lessons || [])
+    );
+    const currentIndex = allLessons.indexOf(topic);
+    if (currentIndex !== -1 && currentIndex < allLessons.length - 1) {
+      return allLessons[currentIndex + 1];
+    }
+    return null;
+  }, [currentPathData, topic]);
+
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,25 +76,14 @@ export const LessonPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const skill = progress.selectedPath;
-        const level = progress.currentStage;
-        const lessonNumber = (progress.skills?.[skill] || 0) + 1;
-        const previousLessonContext = progress.lastLessonTitle || '';
-
-        // 1. Check Firebase first
-        let content = await curriculumService.getSavedLesson(skill, level, lessonNumber);
-        
-        // 2. If not in Firebase, generate it
-        if (!content) {
-          console.log("LessonPage: No saved lesson found, generating with AI...");
-          content = await generateLesson(skill, level, lessonNumber, previousLessonContext);
-        } else {
-          console.log("LessonPage: Loaded saved lesson from Firebase");
-        }
+        console.log("LessonPage: Fetching lesson content for", topic, "in path", progress.selectedPath);
+        const content = await generateLesson(progress.selectedPath, progress.currentStage, topic);
+        console.log("LessonPage: Lesson content received:", content);
         
         if (content) {
           setLesson(content);
         } else {
+          console.error("LessonPage: No content returned for", topic);
           setError("Could not load lesson content.");
         }
       } catch (error: any) {
@@ -94,7 +96,7 @@ export const LessonPage: React.FC = () => {
     fetchLesson();
   }, [progress, topic, userLoading, navigate]);
 
-  if (userLoading || loading) return <LoadingScreen />;
+  if (userLoading || loading || curriculumLoading) return <LoadingScreen message="PREPARING LESSON..." />;
 
   if (error || !lesson) {
     return (
@@ -120,22 +122,27 @@ export const LessonPage: React.FC = () => {
   }
 
   const handleComplete = async () => {
-    if (!lesson || !progress) return;
+    if (!lesson || !progress || !topic) return;
     
     // Check if all quiz questions are answered correctly
     const allCorrect = lesson.quiz.every((q, idx) => selectedAnswers[idx] === q.correctIndex);
     if (!allCorrect) {
-      toast.error("Please complete the quiz correctly before finishing the lesson!");
+      alert("Please complete the quiz correctly before finishing the lesson!");
       return;
     }
 
-    const skill = progress.selectedPath;
-    const lessonId = topic || 'lesson-' + Date.now();
+    if (!progress.completedLessons.includes(topic)) {
+      await addXP(50);
+      await updateProgress({
+        completedLessons: [...progress.completedLessons, topic]
+      });
+    }
     
-    await addXP(50);
-    await completeLesson(lessonId, lesson.title);
-
-    navigate('/dashboard');
+    if (nextLessonId) {
+      navigate(`/lesson/${nextLessonId}`);
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -165,8 +172,8 @@ export const LessonPage: React.FC = () => {
           >
             <div className="text-right hidden sm:block">
               <p className="text-xs font-black truncate max-w-[120px] group-hover:text-emerald-400 transition-colors">{user?.displayName || 'Developer'}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">
-                Verified Learner
+              <p className={`text-[10px] font-black uppercase tracking-widest ${progress.isPremium ? 'text-emerald-500' : 'text-white/30'}`}>
+                {progress.isPremium ? 'Pro Member' : 'Free Account'}
               </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-emerald-500/50 transition-colors">
@@ -235,36 +242,53 @@ export const LessonPage: React.FC = () => {
               <BookOpen size={20} />
               <h3 className="font-black uppercase text-xs tracking-[0.2em]">Simple Explanation</h3>
             </div>
-            <div className="prose prose-invert max-w-none space-y-6">
+            <div className="prose prose-invert max-w-none">
               <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
                 {lesson?.explanation || 'Loading explanation...'}
               </p>
-              
-              {lesson?.visualExplanation && (
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 italic text-white/40 text-sm">
-                  <div className="flex items-center gap-2 mb-2 text-emerald-400/50">
-                    <Sparkles size={14} />
-                    <span className="font-black uppercase tracking-widest text-[10px]">Visual Concept</span>
-                  </div>
-                  {lesson.visualExplanation}
-                </div>
-              )}
             </div>
           </section>
 
           {/* Pro Tip Section */}
-          <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group">
+          <Card className={`p-8 border-2 relative overflow-hidden group ${
+            progress.isPremium 
+              ? 'border-emerald-500/20 bg-emerald-500/5' 
+              : 'border-white/5 bg-white/[0.02] opacity-80'
+          }`}>
             <div className="flex items-start gap-6 relative z-10">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400">
-                <Star size={24} fill="currentColor" />
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                progress.isPremium ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/20'
+              }`}>
+                <Star size={24} fill={progress.isPremium ? 'currentColor' : 'none'} />
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <h4 className="font-black uppercase text-xs tracking-[0.2em] text-emerald-400">Pro Tip & Best Practices</h4>
+                  <h4 className={`font-black uppercase text-xs tracking-[0.2em] ${
+                    progress.isPremium ? 'text-emerald-400' : 'text-white/40'
+                  }`}>Pro Tip & Best Practices</h4>
+                  {!progress.isPremium && (
+                    <Badge className="bg-emerald-500 text-black border-none text-[8px] font-black">PRO</Badge>
+                  )}
                 </div>
-                <p className="text-white/70 leading-relaxed font-medium italic">
-                  "{lesson?.proTip || 'Always keep your code clean and well-documented. It saves hours of debugging later.'}"
-                </p>
+                {progress.isPremium ? (
+                  <p className="text-white/70 leading-relaxed font-medium italic">
+                    "{lesson?.proTip || 'Always keep your code clean and well-documented. It saves hours of debugging later.'}"
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-white/20 leading-relaxed font-medium blur-[4px] select-none">
+                      This advanced insight is reserved for MentorStack Pro members. Upgrade to unlock expert tips and industry secrets.
+                    </p>
+                    <Button 
+                      variant="premium" 
+                      size="sm" 
+                      onClick={() => navigate('/profile')}
+                      className="h-10 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                    >
+                      Unlock Pro Tip
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
             <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
@@ -317,10 +341,10 @@ export const LessonPage: React.FC = () => {
           <section className="space-y-6">
             <div className="flex items-center gap-3 text-emerald-400">
               <Code size={20} />
-              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Step-by-Step Breakdown</h3>
+              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Line-by-Line Explanation</h3>
             </div>
             <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
-              {lesson?.stepByStep || 'Loading breakdown...'}
+              {lesson?.lineByLine || 'Loading breakdown...'}
             </p>
           </section>
 
@@ -416,19 +440,6 @@ export const LessonPage: React.FC = () => {
             </div>
           </section>
 
-          {/* Reflection Question */}
-          {lesson?.reflectionQuestion && (
-            <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 space-y-4">
-              <div className="flex items-center gap-3 text-emerald-400">
-                <MessageSquare size={20} />
-                <h4 className="font-black uppercase text-xs tracking-[0.2em]">Reflection Question</h4>
-              </div>
-              <p className="text-white/70 leading-relaxed font-medium italic">
-                "{lesson.reflectionQuestion}"
-              </p>
-            </Card>
-          )}
-
           {/* Recap */}
           <Card className="p-8 border-2 border-purple-500/20 bg-purple-500/10 space-y-4">
             <div className="flex items-center gap-3 text-purple-400">
@@ -512,7 +523,7 @@ export const LessonPage: React.FC = () => {
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-500 text-black font-black hover:bg-emerald-400 transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
           >
             <CheckCircle2 size={20} />
-            <span className="text-[10px] uppercase tracking-widest">Complete</span>
+            <span className="text-[10px] uppercase tracking-widest">{nextLessonId ? 'Next' : 'Complete'}</span>
           </button>
           
           <button 

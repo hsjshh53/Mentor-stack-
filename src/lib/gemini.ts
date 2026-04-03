@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
+import { ref, get } from 'firebase/database';
+import { db, sanitizeFirebaseKey } from './firebase';
 
 // 1. GEMINI SERVICE SETUP
 // Always use process.env.GEMINI_API_KEY as the source of truth
@@ -196,13 +198,11 @@ const getFallbackLesson = (topic: string): LessonContent => {
     whyItMatters: 'Understanding the basics is the first step to becoming a professional developer.',
     explanation: 'We are currently in Offline Mentor Mode, but we can still learn! ' + (topic || 'Programming') + ' is about logic and problem solving.',
     analogy: 'Learning to code is like learning a new language. You start with words, then sentences, then stories.',
-    stepByStep: '1. Understand the problem. 2. Break it down. 3. Write the code. 4. Test it.',
     codeExample: '// Offline Mode Example\nconsole.log("Keep learning!");',
-    visualExplanation: 'Imagine a flow chart where each step leads to the next.',
+    lineByLine: 'This is a simple console log to keep you motivated.',
     commonMistakes: ['Giving up too early', 'Not practicing enough'],
     practice: 'Try to write down what you know about ' + (topic || 'this topic') + ' so far.',
     challenge: 'Can you explain this concept to a friend?',
-    reflectionQuestion: 'What was the most challenging part of this topic for you?',
     quiz: [
       {
         question: 'Is persistence key in coding?',
@@ -215,88 +215,115 @@ const getFallbackLesson = (topic: string): LessonContent => {
   };
 };
 
-export async function generateLesson(
-  skill: string, 
-  level: string, 
-  lessonNumber: number, 
-  previousLessonContext: string
-): Promise<LessonContent | null> {
-  console.log(`Gemini Service: Request started - Generate Lesson (${skill}, ${level}, #${lessonNumber})`);
+async function callGeminiWithRetry(fn: () => Promise<any>, maxRetries = 3): Promise<any> {
+  let lastError: any;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      const isRateLimit = error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED');
+      if (isRateLimit) {
+        const delay = Math.pow(2, i) * 5000;
+        console.warn(`Gemini Rate Limit hit. Retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
+export async function generateLesson(path: CareerPath, stage: Stage, topic: string): Promise<LessonContent | null> {
+  // 1. CHECK LOCAL CONTENT FIRST
+  if (LESSON_CONTENT[topic]) {
+    console.log("Gemini Service: Using local lesson content for:", topic);
+    return LESSON_CONTENT[topic];
+  }
+
+  // 2. CHECK FIREBASE DB NEXT
+  try {
+    // Normalize topic for ID and remove invalid Firebase characters
+    const lessonId = sanitizeFirebaseKey(topic);
+    const lessonRef = ref(db, `lessons/${lessonId}`);
+    const snapshot = await get(lessonRef);
+    if (snapshot.exists()) {
+      console.log("Gemini Service: Using Firebase lesson content for:", topic);
+      return snapshot.val() as LessonContent;
+    }
+  } catch (error) {
+    console.error("Gemini Service: Error checking Firebase for lesson:", error);
+  }
+
+  console.log(`Gemini Service: Request started - Generate Lesson (${topic})`);
 
   if (!ai) {
     console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
-    return getFallbackLesson(skill);
+    return getFallbackLesson(topic);
   }
 
-  const prompt = `
-    Generate a HIGH-QUALITY, DEEP, STRUCTURED lesson for the following development skill:
-    Skill: "${skill}"
-    Level: "${level}"
-    Lesson Number: "${lessonNumber}"
-    Previous Lesson Context: "${previousLessonContext}"
-
-    DIFFICULTY RULES:
-    - Beginner: Assume zero knowledge, very slow, basic concepts.
-    - Intermediate: Build on basics, combine concepts.
-    - Advanced: Real-world problems, optimization.
-    - Expert: Industry-level thinking, best practices, architecture.
-
-    CRITICAL LESSON RULES:
-    - Do NOT generate shallow or fast content.
-    - Do NOT summarize.
-    - Each lesson must feel like a real class.
-    - Teach from beginner to expert level.
-    - Do NOT repeat previous lessons.
-    - Each lesson must build on previous ones.
-    - Lessons must feel progressive.
-    - Lessons must match the selected development skill.
-    - Frontend lessons must not look like backend lessons.
-    - HTML lessons must not look like Python lessons.
-    - UI/UX lessons must not look like cybersecurity lessons.
-
-    Return the lesson in JSON format with the following keys:
-    'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'stepByStep', 'codeExample', 'visualExplanation', 'commonMistakes' (array), 'practice', 'challenge', 'reflectionQuestion', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
-
-    OUTPUT REQUIREMENTS:
-    1. Lesson Title
-    2. Learning Objective (todayYouAreLearning)
-    3. Simple Explanation (beginner-friendly)
-    4. WHY this matters (real-world context)
-    5. Real-world analogy
-    6. Step-by-step explanation
-    7. Code example (if applicable)
-    8. Visual explanation (describe UI/behavior)
-    9. Common mistakes
-    10. Practice task
-    11. Mini challenge
-    12. Reflection question
-    13. Quiz (3–5 questions)
-  `;
-
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
-      config: {
-        responseMimeType: "application/json"
-      }
+    const lesson = await callGeminiWithRetry(async () => {
+      const prompt = `
+        Generate a structured lesson for a ${path} at the ${stage} stage.
+        Topic: "${topic}".
+        
+        IMPORTANT: You are MentorStack AI, part of OLYNQ SOCIAL LIMITED. 
+        The lesson content must be simple, clear, and beginner-friendly.
+        
+        Return the lesson in JSON format with the following keys:
+        'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine' (MUST be a string, not an object), 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
+        
+        Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
+        Follow this 7-step learning flow logic:
+        1. Simple explanation (beginner-friendly, max 3 lines)
+        2. Real example (real-world scenario)
+        3. Code example (if applicable, clean and commented)
+        4. Practice task (small, active command for the user)
+        5. AI guidance (a "pro-tip" or "mentor-secret")
+        6. Mini challenge (a small twist to the practice task)
+        7. THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+      
+      return JSON.parse(response.text);
     });
 
     console.log("Gemini Service: Response status - Success");
     
-    const text = response.text;
-    if (!text) throw new Error("Empty response");
+    // Ensure lineByLine is a string to avoid Firebase key errors
+    const lineByLineStr = typeof lesson.lineByLine === 'object' 
+      ? Object.entries(lesson.lineByLine).map(([k, v]) => `${k}: ${v}`).join('\n')
+      : String(lesson.lineByLine || '');
 
-    const lesson = JSON.parse(text);
     return {
       ...lesson,
-      id: lesson.id || `lesson-${skill}-${level}-${lessonNumber}`,
+      lineByLine: lineByLineStr,
       commonMistakes: lesson.commonMistakes || [],
       quiz: lesson.quiz || []
     };
   } catch (e: any) {
     console.error("Gemini Service: Error occurred", e.message);
-    return getFallbackLesson(skill);
+    
+    // Specific error handling
+    if (e.message?.includes("API_KEY_INVALID")) {
+      console.error("Gemini Service: Invalid API Key");
+    } else if (e.message?.includes("quota") || e.message?.includes("429")) {
+      console.error("Gemini Service: Quota exceeded");
+    } else if (e.message?.includes("not enabled")) {
+      console.error("Gemini Service: API not enabled");
+    }
+
+    console.log("Gemini Service: Triggering fallback tutor");
+    return getFallbackLesson(topic);
   }
 }
 
@@ -310,28 +337,31 @@ export async function getMentorAdvice(message: string, history: any[], userConte
   }
 
   try {
-    const prompt = `
-      User Context: ${JSON.stringify(userContext)}
-      
-      Conversation History:
-      ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
+    const text = await callGeminiWithRetry(async () => {
+      const prompt = `
+        User Context: ${JSON.stringify(userContext)}
+        
+        Conversation History:
+        ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
 
-      User Message: ${message}
+        User Message: ${message}
 
-      If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
-    `;
+        If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
+      `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [
-        {
-          parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
-        }
-      ]
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: [
+          {
+            parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
+          }
+        ]
+      });
+
+      return response.text;
     });
 
     console.log("Gemini Service: Response status - Success");
-    const text = response.text;
     if (!text) throw new Error("Empty response from Gemini");
     
     return text;
@@ -343,93 +373,12 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     let errorMessage = "I'm having a moment to think. Let's try that again.";
     if (error.message?.includes("API_KEY_INVALID")) {
       errorMessage = "I'm currently updating my systems. I'll be back to full strength soon!";
-    } else if (error.message?.includes("quota")) {
+    } else if (error.message?.includes("quota") || error.message?.includes("429")) {
       errorMessage = "I've shared so much advice today! Let's take a quick breather and continue in a bit.";
     }
 
     console.log("Gemini Service: Triggering fallback tutor");
     const fallback = getFallbackResponse(message);
     return `(Mentor Mode: ${errorMessage})\n\n${fallback}`;
-  }
-}
-
-export async function generateRoadmap(skill: string, level: string): Promise<any> {
-  console.log(`Gemini Service: Request started - Generate Roadmap (${skill}, ${level})`);
-
-  if (!ai) {
-    console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
-    return {
-      modules: [
-        {
-          id: 'module-1',
-          title: 'Introduction to ' + skill,
-          description: 'The basics of ' + skill + '.',
-          order: 1,
-          lessons: [
-            { id: 'lesson-1', title: 'What is ' + skill + '?', order: 1, status: 'draft' }
-          ]
-        }
-      ]
-    };
-  }
-
-  const prompt = `
-    Generate a COMPREHENSIVE, PROFESSIONAL learning roadmap for the following development skill:
-    Skill: "${skill}"
-    Level: "${level}"
-
-    The roadmap should be divided into modules, and each module should contain a list of lessons.
-    Ensure the roadmap is progressive and covers all essential topics for the given level.
-
-    Return the roadmap in JSON format with the following structure:
-    {
-      "modules": [
-        {
-          "id": "string",
-          "title": "string",
-          "description": "string",
-          "order": number,
-          "lessons": [
-            { "id": "string", "title": "string", "order": number, "status": "draft" }
-          ]
-        }
-      ]
-    }
-
-    OUTPUT REQUIREMENTS:
-    1. At least 3-5 modules.
-    2. Each module should have 3-5 lessons.
-    3. Lesson titles should be descriptive.
-    4. IDs should be URL-friendly (e.g., "intro-to-react").
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
-      config: {
-        responseMimeType: "application/json"
-      }
-    });
-
-    const text = response.text;
-    if (!text) throw new Error("Empty response");
-
-    return JSON.parse(text);
-  } catch (e: any) {
-    console.error("Gemini Service: Error generating roadmap", e.message);
-    return {
-      modules: [
-        {
-          id: 'module-1',
-          title: 'Introduction to ' + skill,
-          description: 'The basics of ' + skill + '.',
-          order: 1,
-          lessons: [
-            { id: 'lesson-1', title: 'What is ' + skill + '?', order: 1, status: 'draft' }
-          ]
-        }
-      ]
-    };
   }
 }

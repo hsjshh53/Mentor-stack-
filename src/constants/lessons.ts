@@ -1,6 +1,2372 @@
-import { LessonContent } from '../types/index';
+import { LessonContent } from '../types';
 
 export const LESSON_CONTENT: Record<string, LessonContent> = {
+  'html-intro-1': {
+    id: 'html-intro-1',
+    title: 'What is HTML?',
+    todayYouAreLearning: 'The fundamental concept of HTML and its role in web development.',
+    whyItMatters: 'HTML is the foundation of every single website on the internet. You cannot build for the web without it.',
+    explanation: 'HTML stands for HyperText Markup Language. It is not a programming language like Python or JavaScript; instead, it is a "markup" language. This means it uses special "tags" to label parts of a document, telling the browser: "This is a heading," "This is a paragraph," or "This is an image."',
+    analogy: 'Think of HTML as the skeleton of a building. It provides the structure and defines where the rooms (content) go, but it doesn\'t include the paint (CSS) or the electricity (JavaScript).',
+    codeExample: '<h1>Hello, World!</h1>\n<p>This is my first web page.</p>',
+    lineByLine: 'The <h1> tag defines a large heading. The <p> tag defines a paragraph of text. Notice how each tag has an opening part like <h1> and a closing part with a slash like </h1>.',
+    commonMistakes: [
+      'Forgetting the closing tag (e.g., writing <p> without </p>).',
+      'Thinking HTML is used for styling (that\'s what CSS is for).',
+      'Misspelling tag names.'
+    ],
+    practice: 'Try to write a heading and a paragraph about your favorite hobby.',
+    challenge: 'Can you find a tag that makes text smaller than <h1>? (Hint: try <h2> or <h3>)',
+    reflectionQuestion: 'How would the web look if HTML didn\'t exist?',
+    quiz: [
+      {
+        question: 'What does HTML stand for?',
+        options: [
+          'HyperText Markup Language',
+          'HighText Machine Language',
+          'HyperTool Multi Language',
+          'Hidden Text Markup Language'
+        ],
+        correctIndex: 0,
+        explanation: 'HTML stands for HyperText Markup Language, the standard language for creating web pages.'
+      },
+      {
+        question: 'Is HTML a programming language?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'HTML is a markup language, not a programming language, because it describes structure rather than logic.'
+      },
+      {
+        question: 'What do we use to "label" content in HTML?',
+        options: ['Stickers', 'Tags', 'Brackets', 'Codes'],
+        correctIndex: 1,
+        explanation: 'We use tags (like <p> and <h1>) to define the meaning of content.'
+      }
+    ],
+    recap: 'HTML is the structural foundation of the web, using tags to define content.'
+  },
+  'html-intro-2': {
+    id: 'html-intro-2',
+    title: 'How HTML Works',
+    todayYouAreLearning: 'How the browser reads your HTML code and turns it into a visual page.',
+    whyItMatters: 'Understanding the "rendering" process helps you debug errors and structure your code better.',
+    explanation: 'When you open an HTML file, the browser reads it from top to bottom. It looks for tags and builds an internal map called the DOM (Document Object Model). It then uses this map to draw the elements on your screen. If you make a mistake in your tags, the browser might get confused and display things incorrectly.',
+    analogy: 'Imagine a browser is like a professional builder. Your HTML file is the blueprint. The builder reads the blueprint and places the bricks (headings), windows (images), and doors (links) exactly where you told them to.',
+    codeExample: '<!-- This is a comment, the browser ignores it! -->\n<p>The browser will show this text.</p>',
+    lineByLine: 'The first line is a comment. Comments start with <!-- and end with -->. They are for humans to read, not browsers. The second line is a standard paragraph.',
+    commonMistakes: [
+      'Writing code that the browser can\'t "see" (like putting it inside a comment by mistake).',
+      'Expecting the browser to fix your broken tags automatically.',
+      'Not saving your file with the .html extension.'
+    ],
+    practice: 'Create a comment in your code that says "This is my first module".',
+    challenge: 'What happens if you put a tag inside another tag? (e.g., <p>Hello <b>World</b></p>)',
+    reflectionQuestion: 'Why do you think browsers are designed to ignore comments?',
+    quiz: [
+      {
+        question: 'How does a browser read an HTML file?',
+        options: [
+          'From bottom to top',
+          'From top to bottom',
+          'Randomly',
+          'It only reads the middle'
+        ],
+        correctIndex: 1,
+        explanation: 'Browsers parse HTML sequentially from the first line to the last.'
+      },
+      {
+        question: 'What is the internal map the browser creates called?',
+        options: ['The MAP', 'The DOM', 'The WEB', 'The TAG'],
+        correctIndex: 1,
+        explanation: 'DOM stands for Document Object Model, which is the browser\'s representation of the page structure.'
+      },
+      {
+        question: 'What is the correct way to write a comment in HTML?',
+        // Corrected the options to be valid strings
+        options: ['// comment', '/* comment */', '<!-- comment -->', '# comment'],
+        correctIndex: 2,
+        explanation: 'HTML comments use the <!-- --> syntax.'
+      }
+    ],
+    recap: 'Browsers parse HTML blueprints from top to bottom to render the visual page.'
+  },
+  'html-intro-3': {
+    id: 'html-intro-3',
+    title: 'The History of HTML',
+    todayYouAreLearning: 'Where HTML came from and how it evolved into the powerful tool it is today.',
+    whyItMatters: 'Knowing the history helps you understand why certain tags exist and why we use HTML5 today.',
+    explanation: 'HTML was created by Tim Berners-Lee in 1991. At first, it was very simple, used mostly for sharing scientific papers. Over the years, it went through many versions (HTML 2.0, 3.2, 4.01). Today, we use HTML5, which added support for video, audio, and better structure.',
+    analogy: 'Think of HTML versions like phone models. HTML 1.0 was like an old rotary phone—it could only do one thing. HTML5 is like a modern smartphone—it can play videos, show maps, and do almost anything.',
+    codeExample: '<!-- Old way (HTML 4) -->\n<center>Old Tag</center>\n\n<!-- Modern way (HTML5) -->\n<p style="text-align: center;">Modern Way</p>',
+    lineByLine: 'The <center> tag is "deprecated," meaning it\'s old and shouldn\'t be used anymore. In HTML5, we use CSS for centering.',
+    commonMistakes: [
+      'Using old, outdated tags like <font> or <center>.',
+      'Thinking you need to learn all the old versions (just focus on HTML5!).',
+      'Not realizing that the web is constantly changing.'
+    ],
+    practice: 'Search for "list of deprecated HTML tags" to see what you should avoid.',
+    challenge: 'When was HTML5 officially released?',
+    reflectionQuestion: 'How has the internet changed since 1991?',
+    quiz: [
+      {
+        question: 'Who created HTML?',
+        options: ['Bill Gates', 'Steve Jobs', 'Tim Berners-Lee', 'Mark Zuckerberg'],
+        correctIndex: 2,
+        explanation: 'Tim Berners-Lee invented HTML while working at CERN.'
+      },
+      {
+        question: 'What is the current standard version of HTML?',
+        options: ['HTML 4', 'HTML 6', 'HTML5', 'HTML X'],
+        correctIndex: 2,
+        explanation: 'HTML5 is the current industry standard.'
+      },
+      {
+        question: 'What does "deprecated" mean in web development?',
+        options: [
+          'The tag is new and cool',
+          'The tag is old and should no longer be used',
+          'The tag is broken',
+          'The tag is for experts only'
+        ],
+        correctIndex: 1,
+        explanation: 'Deprecated tags are outdated and replaced by better methods (usually CSS).'
+      }
+    ],
+    recap: 'HTML has evolved from a simple document language to the rich HTML5 standard we use today.'
+  },
+  'html-intro-4': {
+    id: 'html-intro-4',
+    title: 'Tools of the Trade',
+    todayYouAreLearning: 'The software you need to write and view HTML code.',
+    whyItMatters: 'Using the right tools makes coding faster, easier, and more fun.',
+    explanation: 'To build websites, you only need two things: a Code Editor (to write the code) and a Browser (to see the result). Popular editors include VS Code, Sublime Text, and Atom. Popular browsers include Chrome, Firefox, and Safari. Most developers also use "Developer Tools" built into the browser to inspect code.',
+    analogy: 'A code editor is like a high-tech notebook for writers. It helps you with spelling (syntax highlighting) and organizing your chapters (files). The browser is like the printed book—it\'s the final version that the reader sees.',
+    codeExample: '<!-- No code for this lesson, just a tip! -->\n<!-- Download VS Code at code.visualstudio.com -->',
+    lineByLine: 'This is just a helpful tip inside a comment!',
+    commonMistakes: [
+      'Using a word processor like Microsoft Word to write code (it adds hidden formatting that breaks HTML).',
+      'Not using "Syntax Highlighting" (colors that help you read code).',
+      'Forgetting to refresh the browser after saving your code changes.'
+    ],
+    practice: 'Download and install VS Code if you haven\'t already.',
+    challenge: 'Open any website, right-click, and select "Inspect". Can you see the HTML?',
+    reflectionQuestion: 'Why can\'t we use Microsoft Word for coding?',
+    quiz: [
+      {
+        question: 'Which of these is a popular code editor?',
+        options: ['Microsoft Word', 'VS Code', 'Photoshop', 'Excel'],
+        correctIndex: 1,
+        explanation: 'VS Code is the most popular code editor for web developers today.'
+      },
+      {
+        question: 'What do you use to VIEW your HTML page?',
+        options: ['A Code Editor', 'A Web Browser', 'A Calculator', 'An Email App'],
+        correctIndex: 1,
+        explanation: 'Browsers like Chrome or Firefox are used to render and view HTML files.'
+      },
+      {
+        question: 'What is "Syntax Highlighting"?',
+        options: [
+          'A way to make the text bigger',
+          'Colors used in the editor to make code easier to read',
+          'A type of light for your desk',
+          'A way to hide your code'
+        ],
+        correctIndex: 1,
+        explanation: 'Syntax highlighting uses colors to distinguish between different parts of the code (like tags vs text).'
+      }
+    ],
+    recap: 'A good code editor and a modern browser are the essential tools for every web developer.'
+  },
+  'html-intro-5': {
+    id: 'html-intro-5',
+    title: 'Your First HTML File',
+    todayYouAreLearning: 'How to create, save, and open your very first web page.',
+    whyItMatters: 'This is the moment you become a web developer! Everything starts with this first file.',
+    explanation: 'To create a web page, you create a new file in your editor and save it with the extension `.html`. The most common name for the main page of a site is `index.html`. Once saved, you can double-click the file to open it in your browser.',
+    analogy: 'Creating an `index.html` file is like naming the first page of your diary. It tells the world (and the browser) exactly where your story begins.',
+    codeExample: '<h1>My First Website</h1>\n<p>I am learning HTML!</p>',
+    lineByLine: 'This simple code creates a big title and a line of text. Save this as index.html and open it!',
+    commonMistakes: [
+      'Saving the file as index.txt instead of index.html.',
+      'Forgetting where you saved the file on your computer.',
+      'Not putting any content in the file and wondering why the page is blank.'
+    ],
+    practice: 'Create a file named index.html, add a heading, and open it in your browser.',
+    challenge: 'Change the text in your file, save it, and refresh the browser. What happens?',
+    reflectionQuestion: 'How did it feel to see your own code on a browser screen?',
+    quiz: [
+      {
+        question: 'What is the standard file extension for HTML files?',
+        options: ['.txt', '.web', '.html', '.code'],
+        correctIndex: 2,
+        explanation: 'Files must end in .html for the browser to recognize them as web pages.'
+      },
+      {
+        question: 'What is the standard name for the main page of a website?',
+        options: ['main.html', 'home.html', 'index.html', 'start.html'],
+        correctIndex: 2,
+        explanation: 'index.html is the default filename that web servers look for.'
+      },
+      {
+        question: 'What do you need to do after changing your code to see the updates in the browser?',
+        options: ['Buy a new computer', 'Restart the internet', 'Save the file and refresh the browser', 'Nothing, it happens automatically'],
+        correctIndex: 2,
+        explanation: 'You must save your changes in the editor and then refresh the page in the browser.'
+      }
+    ],
+    recap: 'Save your work as index.html, open it in a browser, and refresh to see changes.'
+  },
+  'html-struct-1': {
+    id: 'html-struct-1',
+    title: 'The Boilerplate',
+    todayYouAreLearning: 'The standard "skeleton" code that every HTML file must have.',
+    whyItMatters: 'Without this boilerplate, your website might not work correctly on all devices or search engines.',
+    explanation: 'Every HTML file needs a few standard tags to be "valid." This includes the doctype, the html tag, the head (for info), and the body (for content). We call this the "boilerplate" because it\'s the same for every project.',
+    analogy: 'The boilerplate is like the chassis of a car. Every car needs a frame, wheels, and an engine before you can decide if it\'s a sports car or a truck.',
+    codeExample: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Page Title</title>\n</head>\n<body>\n  <!-- Content goes here -->\n</body>\n</html>',
+    lineByLine: 'The DOCTYPE tells the browser this is HTML5. <html> wraps everything. <head> is for hidden info. <body> is for visible content.',
+    commonMistakes: [
+      'Putting visible text outside of the <body> tags.',
+      'Forgetting the closing </html> tag at the very end.',
+      'Mixing up the <head> and the <body>.'
+    ],
+    practice: 'Type out the full boilerplate from memory.',
+    challenge: 'In VS Code, type "!" and press Tab. What happens? (This is a shortcut!)',
+    reflectionQuestion: 'Why do we need a standard structure for every page?',
+    quiz: [
+      {
+        question: 'Which tag wraps the entire HTML document?',
+        options: ['<body>', '<head>', '<html>', '<doctype>'],
+        correctIndex: 2,
+        explanation: 'The <html> tag is the "root" element that contains everything else.'
+      },
+      {
+        question: 'Where do you put the text that you want users to see?',
+        options: ['In the <head>', 'In the <body>', 'In the <title>', 'Outside the <html>'],
+        correctIndex: 1,
+        explanation: 'The <body> tag is the container for all visible content.'
+      }
+    ],
+    recap: 'Every HTML file starts with a standard boilerplate structure.'
+  },
+  'html-struct-2': {
+    id: 'html-struct-2',
+    title: 'The <!DOCTYPE> Declaration',
+    todayYouAreLearning: 'The very first line of every HTML file and why it is so important.',
+    whyItMatters: 'It tells the browser exactly which version of HTML you are using so it doesn\'t get confused.',
+    explanation: 'The `<!DOCTYPE html>` declaration is not actually an HTML tag; it\'s an instruction to the web browser about what version of HTML the page is written in. In the past, this line was very long and complex, but in HTML5, it is short and simple.',
+    analogy: 'The DOCTYPE is like the "Table of Contents" or the "Language" setting on a DVD. It tells the player (the browser) exactly how to read the disc (the file).',
+    codeExample: '<!DOCTYPE html>\n<!-- This must be the very first line! -->',
+    lineByLine: 'This simple line tells the browser: "Hey, I\'m using modern HTML5!"',
+    commonMistakes: [
+      'Putting a space or a comment before the DOCTYPE.',
+      'Forgetting the "!" at the beginning.',
+      'Thinking it\'s a regular tag that needs a closing tag (it doesn\'t!).'
+    ],
+    practice: 'Start a new file and make sure the DOCTYPE is the first thing you type.',
+    challenge: 'What happens if you leave it out? (Search for "Quirks Mode").',
+    reflectionQuestion: 'Why do you think HTML5 made the DOCTYPE so much shorter?',
+    quiz: [
+      {
+        question: 'Where should the <!DOCTYPE html> declaration be placed?',
+        options: [
+          'At the very end of the file',
+          'Inside the <head> tag',
+          'As the very first line of the file',
+          'Inside the <body> tag'
+        ],
+        correctIndex: 2,
+        explanation: 'The DOCTYPE must be the first thing in your HTML document.'
+      },
+      {
+        question: 'Does the <!DOCTYPE html> need a closing tag?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'It is a declaration, not a tag, so it does not have a closing counterpart.'
+      }
+    ],
+    recap: 'The DOCTYPE declaration tells the browser to use modern HTML5 standards.'
+  },
+  'html-struct-3': {
+    id: 'html-struct-3',
+    title: 'The <html> Tag',
+    todayYouAreLearning: 'The "root" element that contains every other part of your web page.',
+    whyItMatters: 'It defines the boundaries of your document and allows you to set the language of your page.',
+    explanation: 'The `<html>` tag follows the DOCTYPE. It is the container for all other HTML elements (except for the DOCTYPE). We often add a `lang` attribute to it (like `<html lang="en">`) to tell search engines and screen readers what language the page is in.',
+    analogy: 'The `<html>` tag is like the physical covers of a book. Everything—the title, the chapters, the pictures—is held together inside those covers.',
+    codeExample: '<html lang="en">\n  <!-- Everything else goes here -->\n</html>',
+    lineByLine: 'The "lang" attribute is set to "en" for English. This helps with accessibility and SEO.',
+    commonMistakes: [
+      'Forgetting the closing </html> tag.',
+      'Putting the DOCTYPE inside the <html> tag.',
+      'Not specifying the language (it\'s a best practice!).'
+    ],
+    practice: 'Add the lang="en" attribute to your html tag.',
+    challenge: 'What is the language code for Spanish? Or French?',
+    reflectionQuestion: 'How does knowing the language help a screen reader?',
+    quiz: [
+      {
+        question: 'What is the "root" element of an HTML page?',
+        options: ['<body>', '<head>', '<html>', '<main>'],
+        correctIndex: 2,
+        explanation: 'The <html> tag is the root element because it contains all other elements.'
+      },
+      {
+        question: 'What attribute is used to specify the language of the page?',
+        options: ['language', 'lang', 'type', 'speech'],
+        correctIndex: 1,
+        explanation: 'The "lang" attribute (e.g., lang="en") is used to define the language.'
+      }
+    ],
+    recap: 'The <html> tag is the root container for your entire web document.'
+  },
+  'html-struct-4': {
+    id: 'html-struct-4',
+    title: 'The <head> Section',
+    todayYouAreLearning: 'The "brain" of your page where you store metadata, titles, and links to styles.',
+    whyItMatters: 'The head contains information that is vital for the browser and search engines, even if users can\'t see it.',
+    explanation: 'The `<head>` element is a container for metadata (data about data). It is placed between the `<html>` tag and the `<body>` tag. Common things inside the head include the `<title>`, `<meta>` tags (for character sets and descriptions), and links to CSS files.',
+    analogy: 'The `<head>` is like the "Backstage" of a theater. The audience (users) doesn\'t see the stagehands or the lighting controls, but without them, the show (the website) couldn\'t happen.',
+    codeExample: '<head>\n  <meta charset="UTF-8">\n  <title>My Awesome Site</title>\n</head>',
+    lineByLine: 'The meta charset="UTF-8" ensures all characters (like emojis!) show up right. The title is what shows up on the browser tab.',
+    commonMistakes: [
+      'Putting visible content like <h1> or <p> inside the <head>.',
+      'Forgetting the <title> tag (it\'s required for a valid page!).',
+      'Confusing the <head> tag with the <header> tag (they are different!).'
+    ],
+    practice: 'Change the <title> of your page and see how it updates in the browser tab.',
+    challenge: 'Add a <meta> tag for a description of your site.',
+    reflectionQuestion: 'Why is the title important for someone using many browser tabs?',
+    quiz: [
+      {
+        question: 'Is the content inside the <head> tag visible on the main web page?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'The <head> contains metadata and settings, not visible content.'
+      },
+      {
+        question: 'Which tag inside the <head> defines the text shown on the browser tab?',
+        options: ['<meta>', '<tab>', '<title>', '<link>'],
+        correctIndex: 2,
+        explanation: 'The <title> tag sets the name of the page in the browser\'s tab or window.'
+      }
+    ],
+    recap: 'The <head> stores metadata and settings that help the browser understand your page.'
+  },
+  'html-struct-5': {
+    id: 'html-struct-5',
+    title: 'The <body> Section',
+    todayYouAreLearning: 'The container for all the visible content that users interact with.',
+    whyItMatters: 'This is where the "real" website lives. If it\'s not in the body, the user won\'t see it.',
+    explanation: 'The `<body>` tag contains all the visible parts of an HTML document, such as headings, paragraphs, images, hyperlinks, tables, lists, etc. There can only be one `<body>` element in an HTML document.',
+    analogy: 'The `<body>` is the "Stage" of the theater. Everything the audience sees—the actors, the props, the scenery—happens right here.',
+    codeExample: '<body>\n  <h1>Welcome!</h1>\n  <p>Enjoy your stay.</p>\n</body>',
+    lineByLine: 'Everything between <body> and </body> will be drawn on the screen by the browser.',
+    commonMistakes: [
+      'Having more than one <body> tag.',
+      'Putting the <body> inside the <head>.',
+      'Writing content outside of the <body> tags.'
+    ],
+    practice: 'Add a few different tags (h1, p, etc.) inside your body and see them appear.',
+    challenge: 'What happens if you put a <title> tag inside the <body>?',
+    reflectionQuestion: 'Why can we only have one body tag?',
+    quiz: [
+      {
+        question: 'Which tag contains all the visible elements of a web page?',
+        options: ['<html>', '<head>', '<body>', '<main>'],
+        correctIndex: 2,
+        explanation: 'The <body> tag is the container for all visible content.'
+      },
+      {
+        question: 'How many <body> tags can a single HTML document have?',
+        options: ['As many as you want', 'Only one', 'Two (one for mobile, one for desktop)', 'Zero'],
+        correctIndex: 1,
+        explanation: 'An HTML document must have exactly one <body> tag.'
+      }
+    ],
+    recap: 'The <body> tag is the home for all visible content on your web page.'
+  },
+  'html-text-1': {
+    id: 'html-text-1',
+    title: 'Headings (h1-h6)',
+    todayYouAreLearning: 'How to use headings to create a clear hierarchy for your content.',
+    whyItMatters: 'Headings are the first thing users and search engines look at to understand what your page is about.',
+    explanation: 'HTML provides six levels of headings. <h1> is the most important (usually the page title), and <h6> is the least important. You should use them in order—don\'t skip from <h1> to <h3> just because you like the size!',
+    analogy: 'Headings are like the headlines in a newspaper. The main story has a huge headline (h1), sub-stories have smaller ones (h2), and minor details have even smaller ones (h3-h6).',
+    codeExample: '<h1>The Main Title</h1>\n<h2>A Major Section</h2>\n<h3>A Sub-section</h3>',
+    lineByLine: '<h1> is the largest and should only be used once per page. <h2> is for main sections. <h3> is for sub-sections within those <h2> areas.',
+    commonMistakes: [
+      'Using <h1> multiple times on a single page.',
+      'Choosing a heading level based on its visual size instead of its structural importance.',
+      'Skipping levels (e.g., going from <h1> directly to <h4>).'
+    ],
+    practice: 'Create a page structure for a recipe book using h1 for the book title, h2 for chapters, and h3 for recipe names.',
+    challenge: 'Try to find a website that uses an <h5> or <h6>. They are rare!',
+    reflectionQuestion: 'Why is it important for a screen reader to know the heading level?',
+    quiz: [
+      {
+        question: 'Which heading level is the most important?',
+        options: ['h6', 'h1', 'h3', 'header'],
+        correctIndex: 1,
+        explanation: 'h1 is the primary heading and should represent the main topic of the page.'
+      },
+      {
+        question: 'Is it okay to skip heading levels (e.g., h1 to h4)?',
+        options: ['Yes, if it looks better', 'No, it breaks the logical structure'],
+        correctIndex: 1,
+        explanation: 'Headings should follow a logical, nested order for accessibility and SEO.'
+      }
+    ],
+    recap: 'Use h1-h6 to define the hierarchy of your content, starting with one h1 per page.'
+  },
+  'html-text-2': {
+    id: 'html-text-2',
+    title: 'Paragraphs',
+    todayYouAreLearning: 'How to group sentences into readable blocks of text.',
+    whyItMatters: 'Paragraphs are the most common way to display text. Without them, your page would be a giant, unreadable wall of words.',
+    explanation: 'The <p> tag defines a paragraph. Browsers automatically add some space (margin) before and after each paragraph to make them stand out.',
+    analogy: 'A paragraph tag is like a container for a single thought. Just like in a book, you start a new paragraph when you move on to a new idea.',
+    codeExample: '<p>This is my first paragraph of text.</p>\n<p>This is my second paragraph, separated by a gap.</p>',
+    lineByLine: 'Each <p> tag creates a new block of text with space around it.',
+    commonMistakes: [
+      'Using <br> (line breaks) to create space between paragraphs instead of using separate <p> tags.',
+      'Putting other block-level elements (like <ul> or <h1>) inside a <p> tag.',
+      'Forgetting the closing </p> tag.'
+    ],
+    practice: 'Write two paragraphs about your favorite movie.',
+    challenge: 'What happens if you put a lot of spaces inside your <p> tag in the code? Does the browser show them?',
+    reflectionQuestion: 'Why does the browser ignore extra spaces in your HTML code?',
+    quiz: [
+      {
+        question: 'What tag is used for a paragraph?',
+        options: ['<para>', '<p>', '<text>', '<div>'],
+        correctIndex: 1,
+        explanation: 'The <p> tag is the standard way to define a paragraph.'
+      },
+      {
+        question: 'Does the browser add space between two <p> tags automatically?',
+        options: ['Yes', 'No'],
+        correctIndex: 0,
+        explanation: 'Browsers apply default margins to paragraphs to ensure readability.'
+      }
+    ],
+    recap: 'Use the <p> tag to organize your text into readable blocks.'
+  },
+  'html-text-3': {
+    id: 'html-text-3',
+    title: 'Bold and Italic',
+    todayYouAreLearning: 'How to emphasize specific words or phrases in your text.',
+    whyItMatters: 'Emphasis helps guide the reader\'s eye to the most important parts of your message.',
+    explanation: 'We use <strong> for bold text that is important, and <em> for italicized text that needs emphasis. While <b> and <i> also exist, <strong> and <em> are preferred because they have "semantic meaning"—they tell screen readers that the text is actually important, not just visually different.',
+    analogy: 'Using <strong> is like raising your voice to show importance. Using <em> is like changing your tone to add stress to a word.',
+    codeExample: '<p>This is <strong>very important</strong>!</p>\n<p>I <em>really</em> love coding.</p>',
+    lineByLine: '<strong> makes text bold. <em> makes text italic. Both are "inline" tags, meaning they don\'t start a new line.',
+    commonMistakes: [
+      'Using <b> and <i> for everything (use strong and em for better accessibility).',
+      'Overusing bold text, which makes it lose its impact.',
+      'Forgetting to close the tags, which makes the rest of the page bold/italic.'
+    ],
+    practice: 'Write a sentence where you emphasize one word and make another word "important".',
+    challenge: 'Can you put an <em> tag inside a <strong> tag? Try it!',
+    reflectionQuestion: 'Why is "importance" (strong) different from just "looking bold" (b)?',
+    quiz: [
+      {
+        question: 'Which tag is preferred for bold text with importance?',
+        options: ['<b>', '<strong>', '<bold>', '<emp>'],
+        correctIndex: 1,
+        explanation: '<strong> is the semantic way to indicate important bold text.'
+      },
+      {
+        question: 'Which tag is used for italics/emphasis?',
+        options: ['<i>', '<italic>', '<em>', '<cite>'],
+        correctIndex: 2,
+        explanation: '<em> stands for emphasis and renders as italics.'
+      }
+    ],
+    recap: 'Use <strong> for importance and <em> for emphasis to make your text more meaningful.'
+  },
+  'html-text-4': {
+    id: 'html-text-4',
+    title: 'Line Breaks and Rules',
+    todayYouAreLearning: 'How to force a new line or draw a dividing line between sections.',
+    whyItMatters: 'Sometimes you need to break a line without starting a whole new paragraph (like in a poem or an address).',
+    explanation: 'The <br> tag creates a single line break. The <hr> tag creates a horizontal rule (a line) that separates content. Both of these are "void" tags, meaning they don\'t have a closing tag.',
+    analogy: '<br> is like pressing "Shift + Enter" in a word processor. <hr> is like drawing a line across the page with a ruler to show that one topic has ended and another is beginning.',
+    codeExample: '<p>123 Web Street<br>Code City, 90210</p>\n<hr>\n<p>New Section Starts Here</p>',
+    lineByLine: '<br> forces the text after it to the next line. <hr> draws a horizontal line across the container.',
+    commonMistakes: [
+      'Using <br> to create large gaps between elements (use CSS margins instead).',
+      'Trying to close these tags like <br></br> (they are self-closing!).',
+      'Using <hr> too often, which can clutter the design.'
+    ],
+    practice: 'Write your favorite short poem using <br> for each line.',
+    challenge: 'Can you find a way to change the color of the <hr> line? (Hint: you\'ll need a tiny bit of CSS).',
+    reflectionQuestion: 'When is a line (hr) better than just a new heading?',
+    quiz: [
+      {
+        question: 'Which tag creates a single line break?',
+        options: ['<break>', '<lb>', '<br>', '<hr>'],
+        correctIndex: 2,
+        explanation: '<br> stands for break and moves content to the next line.'
+      },
+      {
+        question: 'Does the <hr> tag need a closing tag?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: '<hr> is a void element and does not have a closing tag.'
+      }
+    ],
+    recap: 'Use <br> for simple line breaks and <hr> for visual separation between sections.'
+  },
+  'html-text-5': {
+    id: 'html-text-5',
+    title: 'Preformatted Text',
+    todayYouAreLearning: 'How to display text exactly as you type it, including all spaces and line breaks.',
+    whyItMatters: 'Normally, browsers collapse multiple spaces into one. The <pre> tag stops this, which is perfect for showing code or ASCII art.',
+    explanation: 'The <pre> tag (short for preformatted) tells the browser: "Don\'t touch my spacing!" It also usually displays text in a "monospace" font (where every letter is the same width).',
+    analogy: '<pre> is like a photograph of your text. It captures every space, tab, and enter key exactly as you placed them in your editor.',
+    codeExample: '<pre>\n  Line 1\n    Line 2 (indented)\n  Line 3\n</pre>',
+    lineByLine: 'The spaces at the start of Line 2 will be preserved and shown in the browser.',
+    commonMistakes: [
+      'Using <pre> for regular paragraphs (it makes them hard to read because they don\'t wrap).',
+      'Forgetting that <pre> text can overflow the screen if the lines are too long.',
+      'Not realizing that the font will change to monospace.'
+    ],
+    practice: 'Try to draw a simple "smiley face" or a "box" using only keyboard characters inside a <pre> tag.',
+    challenge: 'What happens if you put an <h1> tag inside a <pre> tag?',
+    reflectionQuestion: 'Why is a monospace font (like in <pre>) better for reading code?',
+    quiz: [
+      {
+        question: 'What does the <pre> tag preserve?',
+        options: ['Only colors', 'Spaces and line breaks', 'Images', 'Links'],
+        correctIndex: 1,
+        explanation: '<pre> preserves the exact formatting of the text inside it.'
+      },
+      {
+        question: 'What type of font does <pre> usually use?',
+        options: ['Sans-serif', 'Serif', 'Monospace', 'Cursive'],
+        correctIndex: 2,
+        explanation: 'Monospace fonts are used so that characters and spaces align perfectly.'
+      }
+    ],
+    recap: 'Use <pre> when you need to maintain exact spacing and indentation.'
+  },
+  'html-links-1': {
+    id: 'html-links-1',
+    title: 'Creating Hyperlinks',
+    todayYouAreLearning: 'How to connect different web pages together using links.',
+    whyItMatters: 'Links are the "Hypertext" in HTML. They are what make the World Wide Web a "web" of connected information.',
+    explanation: 'The <a> (anchor) tag is used to create links. It requires an `href` attribute, which stands for "hypertext reference"—this is the destination address where the link will take you.',
+    analogy: 'A hyperlink is like a magic portal. When you step through it (click it), you are instantly transported to another location (another page).',
+    codeExample: '<a href="https://www.google.com">Go to Google</a>',
+    lineByLine: 'The <a> tag starts the link. href="..." defines the destination. The text between the tags is what the user clicks on.',
+    commonMistakes: [
+      'Forgetting the http:// or https:// in external links (the browser will think it\'s a local file).',
+      'Leaving the href empty or missing.',
+      'Not providing clear text for the link (e.g., just saying "Click Here").'
+    ],
+    practice: 'Create a link to your favorite news website.',
+    challenge: 'Can you make a link that sends an email? (Hint: search for "mailto:").',
+    reflectionQuestion: 'How would you find information on the web if links didn\'t exist?',
+    quiz: [
+      {
+        question: 'What does the "a" in the <a> tag stand for?',
+        options: ['Address', 'Anchor', 'Arrow', 'Action'],
+        correctIndex: 1,
+        explanation: 'The <a> tag stands for Anchor, as it "anchors" a link to a specific spot.'
+      },
+      {
+        question: 'Which attribute is required for a link to work?',
+        options: ['src', 'link', 'href', 'url'],
+        correctIndex: 2,
+        explanation: 'href specifies the destination URL of the link.'
+      }
+    ],
+    recap: 'Use <a> with the href attribute to create connections between pages.'
+  },
+  'html-links-2': {
+    id: 'html-links-2',
+    title: 'Absolute vs Relative Paths',
+    todayYouAreLearning: 'The two different ways to tell a link where to go.',
+    whyItMatters: 'Using the right path ensures your links don\'t break when you move your website to a real server.',
+    explanation: 'An Absolute Path is a full URL (like https://google.com). A Relative Path points to a file on your own computer or server (like "about.html"). Relative paths are better for internal links because they still work even if your domain name changes.',
+    analogy: 'An Absolute Path is like a full mailing address (Country, City, Street, House #). A Relative Path is like giving directions to someone already in your house: "Go to the kitchen."',
+    codeExample: '<!-- Absolute -->\n<a href="https://wikipedia.org">Wikipedia</a>\n\n<!-- Relative -->\n<a href="contact.html">Contact Us</a>',
+    lineByLine: 'Absolute paths start with http/https. Relative paths usually just start with the filename or a folder name.',
+    commonMistakes: [
+      'Using absolute paths for your own internal pages (it makes testing harder).',
+      'Forgetting that relative paths are "relative" to the current file\'s location.',
+      'Using backslashes (\\) instead of forward slashes (/) in paths.'
+    ],
+    practice: 'Create a relative link to a file named "gallery.html".',
+    challenge: 'How do you link to a file that is inside a folder named "images"?',
+    reflectionQuestion: 'Why is it easier to maintain a site using relative paths?',
+    quiz: [
+      {
+        question: 'Which path type includes the full "https://" address?',
+        options: ['Relative', 'Absolute', 'Internal', 'Local'],
+        correctIndex: 1,
+        explanation: 'Absolute paths provide the complete URL from the root of the internet.'
+      },
+      {
+        question: 'If your file is in the same folder as "index.html", what path should you use?',
+        options: ['https://mysite.com/index.html', 'index.html', '/root/index.html', 'C:/files/index.html'],
+        correctIndex: 1,
+        explanation: 'A simple relative path (the filename) is best for files in the same directory.'
+      }
+    ],
+    recap: 'Use absolute paths for external sites and relative paths for your own pages.'
+  },
+  'html-links-3': {
+    id: 'html-links-3',
+    title: 'Opening Links in New Tabs',
+    todayYouAreLearning: 'How to keep your website open while the user visits another one.',
+    whyItMatters: 'If you link to another site, you don\'t want the user to "leave" your site forever. Opening it in a new tab solves this.',
+    explanation: 'By adding the `target="_blank"` attribute to your link, the browser will open the destination in a new tab or window.',
+    analogy: 'It\'s like handing someone a second book to look at without taking away the first book they were reading.',
+    codeExample: '<a href="https://google.com" target="_blank">Search (New Tab)</a>',
+    lineByLine: 'target="_blank" is the magic instruction that tells the browser to use a new tab.',
+    commonMistakes: [
+      'Opening every single link in a new tab (this is annoying for users!).',
+      'Forgetting the underscore in _blank.',
+      'Not using rel="noopener" for security (modern browsers handle this better now, but it\'s still a good habit).'
+    ],
+    practice: 'Add target="_blank" to a link that goes to a social media site.',
+    challenge: 'What happens if you use target="_self"? (Hint: it\'s the default!).',
+    reflectionQuestion: 'When is it better NOT to open a link in a new tab?',
+    quiz: [
+      {
+        question: 'What attribute opens a link in a new tab?',
+        options: ['new-tab="true"', 'open="window"', 'target="_blank"', 'mode="external"'],
+        correctIndex: 2,
+        explanation: 'target="_blank" is the standard attribute for opening links in new tabs.'
+      },
+      {
+        question: 'Should you open internal links (to your own pages) in new tabs?',
+        options: ['Yes, always', 'No, usually not'],
+        correctIndex: 1,
+        explanation: 'Internal links should usually stay in the same tab to maintain a smooth navigation flow.'
+      }
+    ],
+    recap: 'Use target="_blank" sparingly, mostly for external websites.'
+  },
+  'html-links-4': {
+    id: 'html-links-4',
+    title: 'Adding Images',
+    todayYouAreLearning: 'How to display pictures and graphics on your web page.',
+    whyItMatters: 'A website without images is just a document. Images make your site engaging, professional, and informative.',
+    explanation: 'The <img> tag is used to embed images. It uses the `src` attribute to find the image file. Unlike most tags, <img> is "self-closing"—it doesn\'t need a </img> at the end.',
+    analogy: 'An <img> tag is like a picture frame on a wall. The "src" is the actual photo you put inside that frame.',
+    codeExample: '<img src="my-dog.jpg" alt="A photo of my golden retriever">',
+    lineByLine: 'src="..." is the path to the image. alt="..." is a text description (very important!).',
+    commonMistakes: [
+      'Using massive image files that take forever to load.',
+      'Forgetting the alt attribute (bad for accessibility).',
+      'Using the wrong file extension (e.g., .jpg vs .png).'
+    ],
+    practice: 'Find a small image online, copy its URL, and display it using an <img> tag.',
+    challenge: 'Can you change the width of an image using only HTML? (Hint: use the width attribute).',
+    reflectionQuestion: 'What happens if the image file is deleted but the code is still there?',
+    quiz: [
+      {
+        question: 'Which attribute tells the browser WHERE the image is?',
+        options: ['href', 'link', 'src', 'url'],
+        correctIndex: 2,
+        explanation: 'src stands for "source" and points to the image file.'
+      },
+      {
+        question: 'Does the <img> tag need a closing </img> tag?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: '<img> is a self-closing (void) element.'
+      }
+    ],
+    recap: 'Use <img> with the src attribute to add visuals to your site.'
+  },
+  'html-links-5': {
+    id: 'html-links-5',
+    title: 'Image Alt Text',
+    todayYouAreLearning: 'How to describe your images for people who cannot see them.',
+    whyItMatters: 'Alt text is vital for accessibility (screen readers) and SEO (search engines). It also shows up if the image fails to load.',
+    explanation: 'The `alt` attribute should contain a short, descriptive summary of what is in the image. If the image is just for decoration (like a background pattern), you can leave it empty: alt="".',
+    analogy: 'Alt text is like describing a photo to a friend over the phone. You want to give them the most important details so they can "see" it in their mind.',
+    codeExample: '<img src="logo.png" alt="MentorStack Company Logo">',
+    lineByLine: 'The alt text should be specific. Instead of "logo", use "MentorStack Company Logo".',
+    commonMistakes: [
+      'Writing "image of..." or "picture of..." (the browser already knows it\'s an image).',
+      'Leaving the alt attribute out entirely.',
+      'Writing extremely long descriptions in the alt tag.'
+    ],
+    practice: 'Write a perfect alt description for a photo of a mountain during sunset.',
+    challenge: 'What should the alt text be for a "Submit" button that is an image of a checkmark?',
+    reflectionQuestion: 'How does alt text help a search engine like Google?',
+    quiz: [
+      {
+        question: 'Who primarily uses alt text?',
+        options: ['Hackers', 'People using screen readers', 'Only developers', 'Nobody'],
+        correctIndex: 1,
+        explanation: 'Screen readers read alt text aloud to visually impaired users.'
+      },
+      {
+        question: 'If an image is purely decorative, what should the alt text be?',
+        options: ['"decoration"', 'Leave it blank (alt="")', 'Describe it anyway', 'Don\'t use an alt attribute'],
+        correctIndex: 1,
+        explanation: 'An empty alt attribute tells screen readers to skip the image.'
+      }
+    ],
+    recap: 'Always provide descriptive alt text for every meaningful image.'
+  },
+  'html-lists-1': {
+    id: 'html-lists-1',
+    title: 'Unordered Lists',
+    todayYouAreLearning: 'How to create bulleted lists for grouping related items.',
+    whyItMatters: 'Lists are essential for navigation menus, feature lists, and organizing information clearly.',
+    explanation: 'An unordered list starts with the `<ul>` tag. Each item in the list is wrapped in an `<li>` (list item) tag. By default, browsers show these as a list with small black circles (bullets).',
+    analogy: 'An unordered list is like a grocery list. It doesn\'t matter if you buy the milk or the bread first—the order isn\'t important.',
+    codeExample: '<ul>\n  <li>Milk</li>\n  <li>Bread</li>\n  <li>Eggs</li>\n</ul>',
+    lineByLine: '<ul> is the container. Each <li> is a single bullet point.',
+    commonMistakes: [
+      'Putting text directly inside the <ul> tag without using <li>.',
+      'Forgetting to close the <ul> tag.',
+      'Using <ul> when the order of items actually matters.'
+    ],
+    practice: 'Create a list of your three favorite hobbies.',
+    challenge: 'Can you put a link inside a list item?',
+    reflectionQuestion: 'Why is a list easier to read than a long sentence with commas?',
+    quiz: [
+      {
+        question: 'What does <ul> stand for?',
+        options: ['Under Line', 'Unordered List', 'User Link', 'Unique List'],
+        correctIndex: 1,
+        explanation: '<ul> stands for Unordered List, meaning the items have no specific numerical order.'
+      },
+      {
+        question: 'Which tag is used for each item in the list?',
+        options: ['<item>', '<list>', '<li>', '<ul>'],
+        correctIndex: 2,
+        explanation: '<li> stands for List Item.'
+      }
+    ],
+    recap: 'Use <ul> and <li> to create bulleted lists of related items.'
+  },
+  'html-lists-2': {
+    id: 'html-lists-2',
+    title: 'Ordered Lists',
+    todayYouAreLearning: 'How to create numbered lists for steps or rankings.',
+    whyItMatters: 'Ordered lists are perfect for recipes, instructions, or "Top 10" lists where the sequence matters.',
+    explanation: 'An ordered list uses the `<ol>` tag. Just like unordered lists, each item uses the `<li>` tag. The browser automatically adds the numbers for you!',
+    analogy: 'An ordered list is like a recipe. You must "1. Crack the egg" before you "2. Fry the egg". The order is vital.',
+    codeExample: '<ol>\n  <li>Step One</li>\n  <li>Step Two</li>\n</ol>',
+    lineByLine: '<ol> starts the numbered list. The browser handles the 1, 2, 3... automatically.',
+    commonMistakes: [
+      'Manually typing "1." or "2." inside your <li> tags (the browser does this for you!).',
+      'Using <ol> for items that don\'t have a specific order.',
+      'Forgetting that you can change the numbering style (like A, B, C) with CSS later.'
+    ],
+    practice: 'Create a list of steps to make a cup of coffee.',
+    challenge: 'Can you make an ordered list start at the number 5? (Hint: search for the "start" attribute).',
+    reflectionQuestion: 'What happens to the numbers if you delete the second item in an <ol>?',
+    quiz: [
+      {
+        question: 'What does <ol> stand for?',
+        options: ['Only List', 'Ordered List', 'Object Link', 'Open List'],
+        correctIndex: 1,
+        explanation: '<ol> stands for Ordered List.'
+      },
+      {
+        question: 'If you add a new <li> to the middle of an <ol>, what happens to the numbers?',
+        options: ['They break', 'They stay the same', 'They re-number automatically', 'They disappear'],
+        correctIndex: 2,
+        explanation: 'Browsers automatically update the numbering when items are added or removed.'
+      }
+    ],
+    recap: 'Use <ol> and <li> for sequences where the order is important.'
+  },
+  'html-lists-3': {
+    id: 'html-lists-3',
+    title: 'Nested Lists',
+    todayYouAreLearning: 'How to put a list inside another list to create sub-categories.',
+    whyItMatters: 'Nesting allows you to create complex outlines, multi-level menus, and detailed lists.',
+    explanation: 'To nest a list, you place a new `<ul>` or `<ol>` *inside* an `<li>` tag of the parent list.',
+    analogy: 'Nesting is like a folder inside another folder. You have a "Fruits" folder, and inside it, you have a "Tropical" folder.',
+    codeExample: '<ul>\n  <li>Fruits\n    <ul>\n      <li>Apple</li>\n      <li>Banana</li>\n    </ul>\n  </li>\n  <li>Vegetables</li>\n</ul>',
+    lineByLine: 'The second <ul> is placed inside the first <li> before that <li> is closed.',
+    commonMistakes: [
+      'Closing the parent <li> before starting the nested list.',
+      'Nesting too many levels deep, which makes the page look messy.',
+      'Mixing up <ul> and <ol> in a way that confuses the reader.'
+    ],
+    practice: 'Create a list of "Continents" and nest a list of "Countries" inside one of them.',
+    challenge: 'Can you nest an ordered list inside an unordered list?',
+    reflectionQuestion: 'How does indentation help you read nested code?',
+    quiz: [
+      {
+        question: 'Where should a nested list be placed?',
+        options: ['Between two <li> tags', 'Inside an <li> tag', 'Outside the <ul> tag', 'In the <head>'],
+        correctIndex: 1,
+        explanation: 'A nested list must be a child of a list item (<li>).'
+      },
+      {
+        question: 'Can you nest an <ol> inside a <ul>?',
+        options: ['Yes', 'No'],
+        correctIndex: 0,
+        explanation: 'You can mix and match list types as much as you need.'
+      }
+    ],
+    recap: 'Nest lists by placing them inside <li> tags to create hierarchy.'
+  },
+  'html-lists-4': {
+    id: 'html-lists-4',
+    title: 'Basic Tables',
+    todayYouAreLearning: 'How to display data in a grid of rows and columns.',
+    whyItMatters: 'Tables are the best way to show structured data like schedules, price lists, or sports scores.',
+    explanation: 'A table is built using three main tags: `<table>` (the container), `<tr>` (table row), and `<td>` (table data/cell).',
+    analogy: 'A table is like a spreadsheet or a piece of graph paper. You define the rows first, then fill in the boxes in each row.',
+    codeExample: '<table>\n  <tr>\n    <td>Row 1, Cell 1</td>\n    <td>Row 1, Cell 2</td>\n  </tr>\n</table>',
+    lineByLine: '<table> starts the grid. <tr> creates a horizontal row. <td> creates a single box in that row.',
+    commonMistakes: [
+      'Using tables to create the layout of your whole website (this is an old, bad practice—use CSS instead!).',
+      'Forgetting to close the <tr> tags.',
+      'Having a different number of cells in different rows (this makes the table look broken).'
+    ],
+    practice: 'Create a simple 2x2 table showing your name and your favorite color.',
+    challenge: 'How do you add a border to your table using only HTML? (Hint: use the border attribute).',
+    reflectionQuestion: 'Why shouldn\'t we use tables for page layouts anymore?',
+    quiz: [
+      {
+        question: 'Which tag defines a single row in a table?',
+        options: ['<td>', '<th>', '<tr>', '<row>'],
+        correctIndex: 2,
+        explanation: '<tr> stands for Table Row.'
+      },
+      {
+        question: 'Which tag defines a single cell of data?',
+        options: ['<td>', '<tr>', '<table>', '<cell>'],
+        correctIndex: 0,
+        explanation: '<td> stands for Table Data.'
+      }
+    ],
+    recap: 'Use <table>, <tr>, and <td> to build data grids.'
+  },
+  'html-lists-5': {
+    id: 'html-lists-5',
+    title: 'Table Headers',
+    todayYouAreLearning: 'How to label your table columns so they are easy to understand.',
+    whyItMatters: 'Headers make tables much more readable and accessible for screen readers.',
+    explanation: 'Instead of using `<td>` for the first row, we use `<th>` (table header). Browsers usually make these bold and centered by default.',
+    analogy: 'Table headers are like the bold labels at the top of a column in a calendar (Mon, Tue, Wed).',
+    codeExample: '<table>\n  <tr>\n    <th>Name</th>\n    <th>Score</th>\n  </tr>\n  <tr>\n    <td>Alice</td>\n    <td>100</td>\n  </tr>\n</table>',
+    lineByLine: '<th> is used in the first row to label the columns.',
+    commonMistakes: [
+      'Using <td> for headers and then trying to make them bold manually.',
+      'Forgetting to put the <th> tags inside a <tr>.',
+      'Not using headers at all for complex data.'
+    ],
+    practice: 'Add headers to the 2x2 table you created in the last lesson.',
+    challenge: 'What is the <thead> tag? (Hint: it helps group all your header rows).',
+    reflectionQuestion: 'How does a screen reader use <th> to help a blind user?',
+    quiz: [
+      {
+        question: 'What does <th> stand for?',
+        options: ['Table Height', 'Table Header', 'Table Help', 'Table Hint'],
+        correctIndex: 1,
+        explanation: '<th> defines a header cell in a table.'
+      },
+      {
+        question: 'How do browsers usually display <th> text?',
+        options: ['Italic and red', 'Small and gray', 'Bold and centered', 'Underlined'],
+        correctIndex: 2,
+        explanation: 'Most browsers default to bold and centered for header cells.'
+      }
+    ],
+    recap: 'Always use <th> to label your table columns for better clarity.'
+  },
+  'html-forms-1': {
+    id: 'html-forms-1',
+    title: 'The <form> Tag',
+    todayYouAreLearning: 'How to create a container for all user input on your website.',
+    whyItMatters: 'Forms are the primary way users interact with your site—whether they are logging in, searching, or signing up for a newsletter.',
+    explanation: 'The `<form>` tag wraps all your input elements. It tells the browser that everything inside is part of one single data submission. It also uses the `action` attribute to define where the data should be sent.',
+    analogy: 'A form is like a physical paper application. It holds all the different fields (name, age, signature) together until you hand it in to the office.',
+    codeExample: '<form action="/submit-data" method="POST">\n  <!-- Inputs go here -->\n</form>',
+    lineByLine: 'action="..." is the URL where the data goes. method="POST" is a secure way to send data.',
+    commonMistakes: [
+      'Forgetting to wrap your inputs in a <form> tag.',
+      'Not specifying an action, which can cause the page to just refresh.',
+      'Putting a form inside another form (this is not allowed!).'
+    ],
+    practice: 'Create a basic form tag with an action attribute pointing to "success.html".',
+    challenge: 'What is the difference between the "GET" and "POST" methods?',
+    reflectionQuestion: 'What happens to the data if you don\'t have a form tag?',
+    quiz: [
+      {
+        question: 'Which tag is the container for all form elements?',
+        options: ['<input>', '<form>', '<submit>', '<data>'],
+        correctIndex: 1,
+        explanation: 'The <form> tag groups all inputs together for submission.'
+      },
+      {
+        question: 'What does the "action" attribute define?',
+        options: ['The color of the button', 'Where to send the form data', 'The name of the user', 'How fast the form loads'],
+        correctIndex: 1,
+        explanation: 'The action attribute specifies the URL where the form data will be processed.'
+      }
+    ],
+    recap: 'Use the <form> tag to group and submit user input data.'
+  },
+  'html-forms-2': {
+    id: 'html-forms-2',
+    title: 'Text Inputs',
+    todayYouAreLearning: 'How to create simple boxes where users can type their information.',
+    whyItMatters: 'Text inputs are the most basic and common way to collect names, usernames, and other short pieces of text.',
+    explanation: 'The `<input>` tag with `type="text"` creates a single-line text box. You can also use the `placeholder` attribute to show a hint to the user about what to type.',
+    analogy: 'A text input is like a blank line on a form that says "Name: __________". It\'s a clear space for the user to provide their answer.',
+    codeExample: '<input type="text" placeholder="Enter your username">',
+    lineByLine: 'type="text" defines the input style. placeholder="..." shows the gray hint text inside the box.',
+    commonMistakes: [
+      'Forgetting to give your input a "name" attribute (the server needs this to identify the data!).',
+      'Using a placeholder as a replacement for a label (placeholders disappear when the user types).',
+      'Not closing the input tag (remember, it\'s self-closing!).'
+    ],
+    practice: 'Create a text input for a "City" field with a placeholder.',
+    challenge: 'How can you set a default value that is already typed in the box? (Hint: use the "value" attribute).',
+    reflectionQuestion: 'Why is it better to use a placeholder than to leave the box completely empty?',
+    quiz: [
+      {
+        question: 'Which attribute defines the type of input?',
+        options: ['kind', 'style', 'type', 'mode'],
+        correctIndex: 2,
+        explanation: 'The type attribute (e.g., type="text") determines how the input looks and behaves.'
+      },
+      {
+        question: 'What does the "placeholder" attribute do?',
+        options: ['It saves the data', 'It shows a hint inside the input', 'It makes the input bold', 'It validates the text'],
+        correctIndex: 1,
+        explanation: 'Placeholders provide a temporary hint to the user.'
+      }
+    ],
+    recap: 'Use <input type="text"> for single-line text entry.'
+  },
+  'html-forms-3': {
+    id: 'html-forms-3',
+    title: 'Labels & IDs',
+    todayYouAreLearning: 'How to properly name your inputs so they are accessible and easy to use.',
+    whyItMatters: 'Labels are crucial for accessibility. They allow screen readers to tell users what an input is for, and they make it easier to click on the input.',
+    explanation: 'The `<label>` tag is connected to an input using the `for` attribute on the label and the `id` attribute on the input. These two values must match exactly.',
+    analogy: 'A label is like a name tag for a person. Without it, you might know someone is there, but you don\'t know who they are or what they do.',
+    codeExample: '<label for="user-email">Email Address:</label>\n<input type="email" id="user-email">',
+    lineByLine: 'The "for" in the label matches the "id" in the input. This "bonds" them together.',
+    commonMistakes: [
+      'Not matching the "for" and "id" values exactly (even a small typo breaks the connection).',
+      'Using the same ID for multiple elements (IDs must be unique on the whole page).',
+      'Forgetting to use labels entirely.'
+    ],
+    practice: 'Create a label and a text input for "First Name" and connect them using an ID.',
+    challenge: 'What happens when you click on the label text in your browser? Try it!',
+    reflectionQuestion: 'How does clicking a label help someone with a small phone or a shaky hand?',
+    quiz: [
+      {
+        question: 'Which attribute on the <label> connects it to an input?',
+        options: ['to', 'for', 'id', 'link'],
+        correctIndex: 1,
+        explanation: 'The "for" attribute is used to associate a label with an input\'s ID.'
+      },
+      {
+        question: 'Should an "id" be unique on a web page?',
+        options: ['Yes', 'No'],
+        correctIndex: 0,
+        explanation: 'Every ID must be unique to avoid confusing the browser and accessibility tools.'
+      }
+    ],
+    recap: 'Always use <label for="..."> and <input id="..."> to connect your form elements.'
+  },
+  'html-forms-4': {
+    id: 'html-forms-4',
+    title: 'Buttons',
+    todayYouAreLearning: 'How to create buttons that users can click to submit their forms.',
+    whyItMatters: 'Buttons are the "Go" signal. Without a button, a user can fill out a form but they can\'t send the information to you.',
+    explanation: 'The `<button>` tag creates a clickable button. Inside a form, the default type is `type="submit"`, which sends the form data to the action URL.',
+    analogy: 'A button is like the "Send" button on an email or a "Submit" button on a physical application.',
+    codeExample: '<button type="submit">Submit Registration</button>',
+    lineByLine: 'type="submit" tells the browser to process the form when clicked. The text between the tags is what appears on the button.',
+    commonMistakes: [
+      'Using an <a> tag and trying to make it look like a button (use a real <button> for forms!).',
+      'Forgetting to include a submit button in your form.',
+      'Not giving the button a clear, action-oriented label (like "Send" or "Join Now").'
+    ],
+    practice: 'Add a submit button to the form you\'ve been building.',
+    challenge: 'What other "types" can a button have? (Hint: try type="reset").',
+    reflectionQuestion: 'Why is it important for a button to look "clickable"?',
+    quiz: [
+      {
+        question: 'What is the default behavior of a <button> inside a <form>?',
+        options: ['It clears the form', 'It submits the form', 'It closes the browser', 'It does nothing'],
+        correctIndex: 1,
+        explanation: 'By default, buttons in forms act as submit buttons.'
+      },
+      {
+        question: 'Which attribute explicitly defines a button as a submit button?',
+        options: ['action="submit"', 'mode="send"', 'type="submit"', 'role="button"'],
+        correctIndex: 2,
+        explanation: 'type="submit" ensures the button triggers the form submission.'
+      }
+    ],
+    recap: 'Use the <button> tag to allow users to take action on your forms.'
+  },
+  'html-forms-5': {
+    id: 'html-forms-5',
+    title: 'Checkboxes & Radio Buttons',
+    todayYouAreLearning: 'How to let users pick from a list of options.',
+    whyItMatters: 'Sometimes you want users to pick one option (like a gender) or multiple options (like their interests).',
+    explanation: 'Use `type="checkbox"` for multiple choices and `type="radio"` for a single choice from a group. For radio buttons to work as a group, they must all have the same `name` attribute.',
+    analogy: 'A checkbox is like a "Check all that apply" list. A radio button is like a multiple-choice question where there is only one correct answer.',
+    codeExample: '<input type="checkbox" id="news"> <label for="news">Newsletter</label>\n<input type="radio" name="gender" id="m"> <label for="m">Male</label>\n<input type="radio" name="gender" id="f"> <label for="f">Female</label>',
+    lineByLine: 'Checkboxes are independent. Radio buttons with the same "name" (gender) are linked—picking one unpicks the others.',
+    commonMistakes: [
+      'Forgetting to give radio buttons the same "name" (which lets the user pick all of them!).',
+      'Not using labels for these small inputs (they are very hard to click otherwise).',
+      'Confusing when to use a checkbox vs a radio button.'
+    ],
+    practice: 'Create a radio group for "Favorite Season" (Spring, Summer, Fall, Winter).',
+    challenge: 'How do you make a checkbox or radio button "checked" by default? (Hint: use the "checked" attribute).',
+    reflectionQuestion: 'Why is it better to use radio buttons for "Yes/No" questions instead of checkboxes?',
+    quiz: [
+      {
+        question: 'Which input type allows selecting multiple options at once?',
+        options: ['radio', 'checkbox', 'text', 'submit'],
+        correctIndex: 1,
+        explanation: 'Checkboxes are designed for multiple independent selections.'
+      },
+      {
+        question: 'How do you group radio buttons so only one can be picked?',
+        options: ['Give them the same ID', 'Give them the same name', 'Put them in the same div', 'Use the same label'],
+        correctIndex: 1,
+        explanation: 'The name attribute links radio buttons into a single group.'
+      }
+    ],
+    recap: 'Use checkboxes for multiple choices and radio buttons for single choices.'
+  },
+  'html-sem-1': {
+    id: 'html-sem-1',
+    title: 'Why Semantic HTML?',
+    todayYouAreLearning: 'The importance of using tags that actually describe their content.',
+    whyItMatters: 'Semantic HTML makes your code easier to read for humans, better for search engines (SEO), and accessible for screen readers.',
+    explanation: 'In the past, developers used `<div>` tags for everything. HTML5 introduced "semantic" tags like `<header>`, `<nav>`, and `<footer>` which tell the browser exactly what that section of the page is.',
+    analogy: 'Imagine a map. A non-semantic map is just a grid with no labels. A semantic map has labels for "Hospital", "Park", and "School". Which one is easier to use?',
+    codeExample: '<!-- Non-semantic -->\n<div id="header">...</div>\n\n<!-- Semantic -->\n<header>...</header>',
+    lineByLine: 'The <header> tag is built-in and meaningful. The <div> is generic and needs an ID to explain itself.',
+    commonMistakes: [
+      'Using <div> for everything (this is called "div-itis").',
+      'Thinking semantic tags change the look of the page (they don\'t, they only change the meaning).',
+      'Using semantic tags incorrectly (e.g., using <nav> for a single link).'
+    ],
+    practice: 'Look at a popular website and try to identify the header, footer, and navigation.',
+    challenge: 'How many different semantic tags can you find in the HTML5 specification?',
+    reflectionQuestion: 'How does a search engine like Google use semantic tags to understand your site?',
+    quiz: [
+      {
+        question: 'What is the main benefit of Semantic HTML?',
+        options: ['It makes the page faster', 'It adds colors', 'It provides meaning to the structure', 'It replaces CSS'],
+        correctIndex: 2,
+        explanation: 'Semantic tags describe the purpose of the content they contain.'
+      },
+      {
+        question: 'Is a <div> tag semantic?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'A <div> is a generic container with no inherent meaning.'
+      }
+    ],
+    recap: 'Use semantic tags to give your code structure and meaning.'
+  },
+  'html-sem-2': {
+    id: 'html-sem-2',
+    title: 'Header & Footer',
+    todayYouAreLearning: 'How to define the top and bottom sections of your website.',
+    whyItMatters: 'Almost every website has a consistent header and footer. Using these tags helps browsers identify them immediately.',
+    explanation: 'The `<header>` tag is for introductory content or navigation links at the top. The `<footer>` tag is for information at the bottom, like copyright, contact info, or site maps.',
+    analogy: 'A website is like a person. The `<header>` is the hat/face (the first thing you see), and the `<footer>` is the shoes (the base that holds everything up).',
+    codeExample: '<header>\n  <h1>My Blog</h1>\n</header>\n\n<footer>\n  <p>© 2024 My Name</p>\n</footer>',
+    lineByLine: 'The <header> wraps the title. The <footer> wraps the copyright info.',
+    commonMistakes: [
+      'Confusing <header> with the <head> tag (remember: <head> is for metadata, <header> is for visible content).',
+      'Putting the main content of your page inside the footer.',
+      'Having multiple headers and footers in a way that confuses the structure.'
+    ],
+    practice: 'Add a header with a title and a footer with your name to your project.',
+    challenge: 'Can you have a <header> inside an <article> tag? (Hint: Yes, you can!).',
+    reflectionQuestion: 'Why do we usually put the logo and navigation in the header?',
+    quiz: [
+      {
+        question: 'Which tag is used for the bottom section of a page?',
+        options: ['<bottom>', '<end>', '<footer>', '<base>'],
+        correctIndex: 2,
+        explanation: 'The <footer> tag is the standard for the bottom area of a page.'
+      },
+      {
+        question: 'What is the difference between <head> and <header>?',
+        options: ['They are the same', '<head> is for metadata, <header> is for visible content', '<header> is for metadata, <head> is for visible content'],
+        correctIndex: 1,
+        explanation: '<head> is hidden info for the browser; <header> is the visible top of your page.'
+      }
+    ],
+    recap: 'Use <header> and <footer> to define the boundaries of your page content.'
+  },
+  'html-sem-3': {
+    id: 'html-sem-3',
+    title: 'Nav & Main',
+    todayYouAreLearning: 'How to define your navigation menu and your primary content area.',
+    whyItMatters: 'The `<nav>` tag helps screen readers find the menu quickly, and `<main>` tells search engines where the "real" content is.',
+    explanation: 'Use `<nav>` for major blocks of navigation links. Use `<main>` to wrap the unique, primary content of your page. You should only have one `<main>` tag per page.',
+    analogy: 'In a building, the `<nav>` is the directory in the lobby. The `<main>` is the actual room or office where the important work happens.',
+    codeExample: '<nav>\n  <a href="/">Home</a> | <a href="/about">About</a>\n</nav>\n<main>\n  <h2>Welcome to my site</h2>\n  <p>This is the main story.</p>\n</main>',
+    lineByLine: '<nav> groups the links. <main> wraps the unique content of this specific page.',
+    commonMistakes: [
+      'Using more than one <main> tag on a page.',
+      'Putting site-wide navigation inside the <main> tag (it should be outside or in the header).',
+      'Using <nav> for every single link (only use it for major navigation blocks).'
+    ],
+    practice: 'Wrap your navigation links in a <nav> tag and your main text in a <main> tag.',
+    challenge: 'Should the <footer> be inside the <main> tag? (Hint: No, it should be a sibling).',
+    reflectionQuestion: 'How does a "Skip to Main Content" link help someone using a screen reader?',
+    quiz: [
+      {
+        question: 'How many <main> tags should you have on one page?',
+        options: ['As many as you want', 'Only one', 'Two', 'Zero'],
+        correctIndex: 1,
+        explanation: 'The <main> tag represents the unique content of the page, so there should only be one.'
+      },
+      {
+        question: 'Which tag is specifically for a set of navigation links?',
+        options: ['<links>', '<menu>', '<nav>', '<ul>'],
+        correctIndex: 2,
+        explanation: '<nav> is the semantic tag for navigation sections.'
+      }
+    ],
+    recap: 'Use <nav> for menus and <main> for the primary content of your page.'
+  },
+  'html-sem-4': {
+    id: 'html-sem-4',
+    title: 'Article & Section',
+    todayYouAreLearning: 'How to group related content into logical chunks.',
+    whyItMatters: 'These tags help organize long pages into readable, meaningful parts.',
+    explanation: 'Use `<article>` for content that could stand alone (like a blog post or a news story). Use `<section>` for grouping related content within a page or an article.',
+    analogy: 'An `<article>` is like a single news story in a newspaper. A `<section>` is like the "Sports" or "Weather" section that contains many stories.',
+    codeExample: '<main>\n  <section>\n    <h2>Latest News</h2>\n    <article>\n      <h3>New HTML Course!</h3>\n      <p>Learn HTML today...</p>\n    </article>\n  </section>\n</main>',
+    lineByLine: '<section> groups the news. <article> is one specific, independent story.',
+    commonMistakes: [
+      'Using <article> when <section> is more appropriate (and vice versa).',
+      'Using these tags just for styling (remember, they are for meaning!).',
+      'Forgetting to include a heading (h2-h6) inside every section.'
+    ],
+    practice: 'Create a "Features" section for a product with three small articles inside it.',
+    challenge: 'Can an <article> contain multiple <section> tags? (Hint: Yes!).',
+    reflectionQuestion: 'When is a piece of content "independent" enough to be an article?',
+    quiz: [
+      {
+        question: 'Which tag is best for a standalone blog post?',
+        options: ['<section>', '<article>', '<div>', '<main>'],
+        correctIndex: 1,
+        explanation: '<article> is for content that makes sense even if removed from the rest of the page.'
+      },
+      {
+        question: 'What is the primary use of the <section> tag?',
+        options: ['To create a link', 'To group related content together', 'To add an image', 'To make text bold'],
+        correctIndex: 1,
+        explanation: '<section> is used to divide a page into thematic areas.'
+      }
+    ],
+    recap: 'Use <article> for independent content and <section> for thematic grouping.'
+  },
+  'html-sem-5': {
+    id: 'html-sem-5',
+    title: 'Aside & Figure',
+    todayYouAreLearning: 'How to handle sidebars, pull-quotes, and images with captions.',
+    whyItMatters: 'These tags handle "extra" information and media in a way that is clear to both users and browsers.',
+    explanation: 'The `<aside>` tag is for content that is "indirectly" related to the main content (like a sidebar or a "Did you know?" box). The `<figure>` tag wraps an image, and `<figcaption>` provides a caption for it.',
+    analogy: 'An `<aside>` is like a "sidebar" in a magazine. A `<figure>` is like a diagram in a textbook with a caption underneath it.',
+    codeExample: '<article>\n  <p>Main story text...</p>\n  <aside>Fun fact: HTML was made in 1991!</aside>\n  <figure>\n    <img src="tim.jpg" alt="Tim Berners-Lee">\n    <figcaption>The inventor of the web.</figcaption>\n  </figure>\n</article>',
+    lineByLine: '<aside> provides extra context. <figure> groups the image and its caption together.',
+    commonMistakes: [
+      'Using <aside> for the main content of your page.',
+      'Putting the <figcaption> outside of the <figure> tag.',
+      'Using <aside> just to move something to the side (use CSS for that!).'
+    ],
+    practice: 'Add a "Fun Fact" sidebar to your blog post using <aside>.',
+    challenge: 'Can you have more than one image inside a single <figure> tag?',
+    reflectionQuestion: 'Why is a caption better than just a regular paragraph below an image?',
+    quiz: [
+      {
+        question: 'Which tag is used for a sidebar or secondary content?',
+        options: ['<sidebar>', '<aside>', '<extra>', '<margin>'],
+        correctIndex: 1,
+        explanation: '<aside> is the semantic tag for content that is related but separate from the main flow.'
+      },
+      {
+        question: 'Which tag provides a caption for a <figure>?',
+        options: ['<caption', '<desc>', '<figcaption>', '<label>'],
+        correctIndex: 2,
+        explanation: '<figcaption> is specifically used to label media inside a <figure>.'
+      }
+    ],
+    recap: 'Use <aside> for sidebars and <figure> with <figcaption> for captioned media.'
+  },
+  'html-forms-adv-1': {
+    id: 'html-forms-adv-1',
+    title: 'Select Dropdowns',
+    todayYouAreLearning: 'How to create a list of options that users can pick from a dropdown menu.',
+    whyItMatters: 'Dropdowns save a lot of space on the screen and prevent users from making typing mistakes.',
+    explanation: 'Use the `<select>` tag to create the dropdown box, and the `<option>` tag for each item inside the list.',
+    analogy: 'A select menu is like a restaurant menu. You see one item at a time, but when you open it, you see all the choices available.',
+    codeExample: '<label for="cars">Choose a car:</label>\n<select id="cars" name="cars">\n  <option value="volvo">Volvo</option>\n  <option value="saab">Saab</option>\n  <option value="mercedes">Mercedes</option>\n</select>',
+    lineByLine: 'select creates the box. Each option has a "value" (what the server sees) and text (what the user sees).',
+    commonMistakes: [
+      'Forgetting to give each option a "value" attribute.',
+      'Not using a label for your dropdown.',
+      'Having too many options in one dropdown (it becomes hard to scroll).'
+    ],
+    practice: 'Create a dropdown menu for "Favorite Color" with at least 4 options.',
+    challenge: 'How do you allow a user to select more than one option? (Hint: search for the "multiple" attribute).',
+    reflectionQuestion: 'When is a dropdown better than a set of radio buttons?',
+    quiz: [
+      {
+        question: 'Which tag creates the dropdown container?',
+        options: ['<dropdown>', '<list>', '<select>', '<menu>'],
+        correctIndex: 2,
+        explanation: 'The <select> tag is used to create a dropdown list.'
+      },
+      {
+        question: 'Which tag defines each individual choice in the list?',
+        options: ['<choice>', '<item>', '<option>', '<pick>'],
+        correctIndex: 2,
+        explanation: 'The <option> tag defines the items within a <select> menu.'
+      }
+    ],
+    recap: 'Use <select> and <option> to create compact choice lists.'
+  },
+  'html-forms-adv-2': {
+    id: 'html-forms-adv-2',
+    title: 'Textareas',
+    todayYouAreLearning: 'How to create large boxes for multi-line text like comments or messages.',
+    whyItMatters: 'Standard text inputs are only for one line. If you want a user to write a long message, you need a textarea.',
+    explanation: 'The `<textarea>` tag creates a multi-line input. You can control its initial size using the `rows` and `cols` attributes.',
+    analogy: 'A regular input is like a single line on a form. A textarea is like a large blank "Comments" section at the bottom of a page.',
+    codeExample: '<label for="msg">Message:</label>\n<textarea id="msg" name="msg" rows="5" cols="30">\nType your message here...\n</textarea>',
+    lineByLine: 'rows="5" makes it 5 lines tall. cols="30" makes it about 30 characters wide.',
+    commonMistakes: [
+      'Using <input type="text"> for long messages (it doesn\'t wrap text!).',
+      'Forgetting that <textarea> has a closing tag (unlike <input>).',
+      'Not realizing that users can usually resize textareas in their browser.'
+    ],
+    practice: 'Create a "Contact Us" message box that is 10 rows tall.',
+    challenge: 'How do you prevent a user from resizing the textarea? (Hint: you\'ll need a bit of CSS: "resize: none").',
+    reflectionQuestion: 'Why does textarea have its own tag instead of being an <input type="textarea">?',
+    quiz: [
+      {
+        question: 'Which tag is used for multi-line text input?',
+        options: ['<input type="big">', '<text>', '<textarea>', '<textbox>'],
+        correctIndex: 2,
+        explanation: '<textarea> is specifically designed for long-form text.'
+      },
+      {
+        question: 'Does <textarea> have a closing tag?',
+        options: ['Yes', 'No'],
+        correctIndex: 0,
+        explanation: 'Yes, <textarea> requires a closing </textarea> tag.'
+      }
+    ],
+    recap: 'Use <textarea> for long-form user messages and comments.'
+  },
+  'html-forms-adv-3': {
+    id: 'html-forms-adv-3',
+    title: 'Specialized Input Types',
+    todayYouAreLearning: 'How to use modern input types for emails, numbers, dates, and colors.',
+    whyItMatters: 'Using the right type provides better keyboards on mobile phones and built-in validation in the browser.',
+    explanation: 'HTML5 added many new types like `email`, `number`, `date`, `color`, and `range`. These help the browser understand exactly what kind of data is expected.',
+    analogy: 'Specialized inputs are like specialized tools. You *could* use a rock to drive a nail, but a hammer (the right tool) works much better.',
+    codeExample: '<input type="email" placeholder="email@example.com">\n<input type="number" min="1" max="10">\n<input type="date">\n<input type="color">',
+    lineByLine: 'type="email" checks for an @ sign. type="number" only allows digits. type="date" opens a calendar.',
+    commonMistakes: [
+      'Using type="text" for everything (this makes mobile users frustrated!).',
+      'Not using min/max for number inputs.',
+      'Thinking these types work perfectly in every single old browser (they usually "fall back" to regular text).'
+    ],
+    practice: 'Create a form that asks for a user\'s birthday (date) and their favorite color (color).',
+    challenge: 'What happens on an iPhone when you click an <input type="number">? Try it!',
+    reflectionQuestion: 'How do these specialized types make the web more accessible?',
+    quiz: [
+      {
+        question: 'Which input type shows a calendar on most browsers?',
+        options: ['type="calendar"', 'type="date"', 'type="time"', 'type="day"'],
+        correctIndex: 1,
+        explanation: 'type="date" triggers the browser\'s native date picker.'
+      },
+      {
+        question: 'What happens if you type plain text into a type="number" input?',
+        options: ['The computer crashes', 'The browser will show an error on submission', 'It turns into a number', 'Nothing'],
+        correctIndex: 1,
+        explanation: 'Browsers provide built-in validation for specialized types.'
+      }
+    ],
+    recap: 'Always use the most specific input type available for the best user experience.'
+  },
+  'html-forms-adv-4': {
+    id: 'html-forms-adv-4',
+    title: 'Form Validation',
+    todayYouAreLearning: 'How to ensure users fill out your form correctly before they submit it.',
+    whyItMatters: 'Validation prevents empty or broken data from reaching your server, which saves time and prevents errors.',
+    explanation: 'You can use attributes like `required` (must not be empty), `minlength` (minimum characters), and `pattern` (regular expressions) to enforce rules.',
+    analogy: 'Validation is like a bouncer at a club. If you don\'t have your ID (the right data), you aren\'t allowed to enter (submit the form).',
+    codeExample: '<input type="text" required minlength="5">\n<input type="number" min="18" max="99">',
+    lineByLine: 'required means the field cannot be blank. minlength="5" means it needs at least 5 letters.',
+    commonMistakes: [
+      'Relying *only* on HTML validation (smart users can bypass it—always validate on the server too!).',
+      'Making too many fields required, which can annoy users.',
+      'Not providing clear error messages when validation fails.'
+    ],
+    practice: 'Make a "Username" field that is required and must be at least 3 characters long.',
+    challenge: 'How do you use the "pattern" attribute to only allow numbers? (Hint: search for "HTML pattern regex").',
+    reflectionQuestion: 'Why is it better to catch an error in the browser than on the server?',
+    quiz: [
+      {
+        question: 'Which attribute makes a field mandatory?',
+        options: ['must', 'needed', 'required', 'force'],
+        correctIndex: 2,
+        explanation: 'The "required" attribute prevents form submission if the field is empty.'
+      },
+      {
+        question: 'What does minlength="10" do?',
+        options: ['Limits the width of the box', 'Requires at least 10 characters', 'Only allows 10 characters', 'Makes the font size 10'],
+        correctIndex: 1,
+        explanation: 'minlength enforces a minimum number of characters in a text input.'
+      }
+    ],
+    recap: 'Use validation attributes to ensure your data is clean and complete.'
+  },
+  'html-forms-adv-5': {
+    id: 'html-forms-adv-5',
+    title: 'Grouping Inputs',
+    todayYouAreLearning: 'How to organize large, complex forms into logical sections.',
+    whyItMatters: 'Long forms can be overwhelming. Grouping related questions makes them much easier to understand and complete.',
+    explanation: 'Use the `<fieldset>` tag to group related inputs together, and the `<legend>` tag to provide a title for that group.',
+    analogy: 'Grouping is like putting related questions into a "box" on a paper form, like a section for "Personal Information" and another for "Shipping Address".',
+    codeExample: '<fieldset>\n  <legend>Contact Info</legend>\n  <label>Email:</label> <input type="email">\n  <label>Phone:</label> <input type="tel">\n</fieldset>',
+    lineByLine: '<fieldset> draws a border around the group. <legend> puts a title on that border.',
+    commonMistakes: [
+      'Using <div> instead of <fieldset> (fieldset is more semantic and accessible).',
+      'Forgetting the <legend> tag (without it, the group has no name).',
+      'Nesting fieldsets too deeply, which looks cluttered.'
+    ],
+    practice: 'Create a form with two fieldsets: "Account Details" and "Preferences".',
+    challenge: 'Can you change the color of the fieldset border using CSS?',
+    reflectionQuestion: 'How does grouping help someone who is feeling overwhelmed by a long form?',
+    quiz: [
+      {
+        question: 'Which tag groups related form elements?',
+        options: ['<group>', '<section>', '<fieldset>', '<box>'],
+        correctIndex: 2,
+        explanation: '<fieldset> is used to group related inputs logically.'
+      },
+      {
+        question: 'Which tag provides a title for a <fieldset>?',
+        options: ['<title>', '<caption>', '<legend>', '<label>'],
+        correctIndex: 2,
+        explanation: 'The <legend> tag acts as the title for the fieldset group.'
+      }
+    ],
+    recap: 'Use <fieldset> and <legend> to organize and label sections of your forms.'
+  },
+  'html-media-1': {
+    id: 'html-media-1',
+    title: 'Embedding Audio',
+    todayYouAreLearning: 'How to add music, podcasts, and sound effects to your website.',
+    whyItMatters: 'Audio can make a website more engaging and is essential for accessibility (like providing an audio version of an article).',
+    explanation: 'The `<audio>` tag is used to embed sound. You must include the `controls` attribute so the user can play, pause, and adjust the volume.',
+    analogy: 'The `<audio>` tag is like a mini MP3 player that you stick onto your webpage.',
+    codeExample: '<audio src="podcast.mp3" controls>\n  Your browser does not support the audio element.\n</audio>',
+    lineByLine: 'src="..." is the path to the audio file. controls adds the play/pause buttons. The text inside is a fallback for old browsers.',
+    commonMistakes: [
+      'Forgetting the "controls" attribute (the audio will be invisible!).',
+      'Using an unsupported audio format (MP3 is the most safe).',
+      'Autoplaying loud music (this is very annoying to users!).'
+    ],
+    practice: 'Add an audio tag to your page with a sample MP3 link.',
+    challenge: 'How do you make the audio start over automatically when it ends? (Hint: use the "loop" attribute).',
+    reflectionQuestion: 'When is it appropriate to have audio play automatically?',
+    quiz: [
+      {
+        question: 'Which attribute is required to show the play/pause buttons?',
+        options: ['play', 'buttons', 'controls', 'show'],
+        correctIndex: 2,
+        explanation: 'The "controls" attribute tells the browser to display the native audio player UI.'
+      },
+      {
+        question: 'What happens if the browser doesn\'t support the <audio> tag?',
+        options: ['The computer crashes', 'It shows the fallback text inside the tags', 'It downloads the file automatically', 'Nothing happens'],
+        correctIndex: 1,
+        explanation: 'Browsers ignore tags they don\'t understand and show the content inside them instead.'
+      }
+    ],
+    recap: 'Use <audio src="..." controls> to add sound to your site.'
+  },
+  'html-media-2': {
+    id: 'html-media-2',
+    title: 'Embedding Video',
+    todayYouAreLearning: 'How to add movies and animations directly to your webpage.',
+    whyItMatters: 'Video is the most powerful way to tell a story or demonstrate a product on the web.',
+    explanation: 'The `<video>` tag works similarly to the `<audio>` tag. You should always provide a `width` and `height` to prevent the page from "jumping" while the video loads.',
+    analogy: 'The `<video>` tag is like a TV screen that you\'ve built into your website\'s wall.',
+    codeExample: '<video src="demo.mp4" width="640" height="360" controls>\n  Video not supported.\n</video>',
+    lineByLine: 'width and height set the size. controls adds the player UI. src is the video file path.',
+    commonMistakes: [
+      'Not setting a width/height (causes "layout shift").',
+      'Forgetting the "controls" attribute.',
+      'Using massive video files that take forever to load.'
+    ],
+    practice: 'Embed a sample video and set its width to 400 pixels.',
+    challenge: 'How do you provide multiple video formats (like MP4 and WebM) for better browser support? (Hint: use the <source> tag).',
+    reflectionQuestion: 'Why is it often better to use YouTube instead of hosting your own video files?',
+    quiz: [
+      {
+        question: 'Which tag is used to embed a video file?',
+        options: ['<movie>', '<media>', '<video>', '<screen>'],
+        correctIndex: 2,
+        explanation: '<video> is the standard HTML5 tag for video content.'
+      },
+      {
+        question: 'Why should you set a width and height for your video?',
+        options: ['To make it load faster', 'To prevent the page layout from jumping', 'To change the video color', 'It is required by law'],
+        correctIndex: 1,
+        explanation: 'Setting dimensions reserves space on the page before the video actually loads.'
+      }
+    ],
+    recap: 'Use <video src="..." controls> to add video content.'
+  },
+  'html-media-3': {
+    id: 'html-media-3',
+    title: 'Video Controls',
+    todayYouAreLearning: 'How to customize how your video behaves (autoplay, loop, and more).',
+    whyItMatters: 'Sometimes you want a video to act like a background animation (looping and muted) or a standard movie.',
+    explanation: 'You can use attributes like `autoplay` (starts immediately), `muted` (no sound), `loop` (starts over), and `poster` (an image to show before the video starts).',
+    analogy: 'Video attributes are like the settings on your DVD player or streaming app.',
+    codeExample: '<video src="bg.mp4" autoplay muted loop poster="preview.jpg" width="100%">\n</video>',
+    lineByLine: 'autoplay muted loop makes it act like a GIF. poster="..." shows an image while the video is downloading.',
+    commonMistakes: [
+      'Trying to autoplay a video with sound (most browsers will block this!).',
+      'Using autoplay on a long video that users might not want to watch.',
+      'Forgetting to mute an autoplaying video.'
+    ],
+    practice: 'Create a video that loops automatically and is muted.',
+    challenge: 'Why do browsers require a video to be "muted" before it can "autoplay"?',
+    reflectionQuestion: 'How does a "poster" image improve the user experience on a slow connection?',
+    quiz: [
+      {
+        question: 'Which attribute makes a video start over when it ends?',
+        options: ['repeat', 'again', 'loop', 'circle'],
+        correctIndex: 2,
+        explanation: 'The "loop" attribute tells the video to restart automatically.'
+      },
+      {
+        question: 'What does the "poster" attribute do?',
+        options: ['It prints the video', 'It shows an image before the video plays', 'It adds a title to the video', 'It makes the video full screen'],
+        correctIndex: 1,
+        explanation: 'The poster attribute specifies an image to be shown while the video is downloading, or until the user hits the play button.'
+      }
+    ],
+    recap: 'Use video attributes to fine-tune the user experience.'
+  },
+  'html-media-4': {
+    id: 'html-media-4',
+    title: 'iFrames',
+    todayYouAreLearning: 'How to embed content from other websites (like YouTube or Google Maps).',
+    whyItMatters: 'iFrames allow you to bring in powerful tools and content from across the web without having to build them yourself.',
+    explanation: 'The `<iframe>` tag (Inline Frame) creates a "window" to another website inside your own page. You use the `src` attribute to point to the external URL.',
+    analogy: 'An iFrame is like a picture-in-picture window on your TV, or a window in your house that lets you look into your neighbor\'s yard.',
+    codeExample: '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" width="560" height="315" frameborder="0"></iframe>',
+    lineByLine: 'src is the URL of the external content. width and height set the frame size.',
+    commonMistakes: [
+      'Using iFrames for your own site\'s navigation (this is bad for SEO!).',
+      'Forgetting to set a title attribute for accessibility (e.g., title="YouTube video player").',
+      'Embedding sites that block iFrames for security reasons.'
+    ],
+    practice: 'Try to find the "Embed" code on a YouTube video and look at the <iframe> tag.',
+    challenge: 'What does the "loading=\'lazy\'" attribute do for an iFrame?',
+    reflectionQuestion: 'Why might a website block itself from being put in an iFrame?',
+    quiz: [
+      {
+        question: 'What does "iFrame" stand for?',
+        options: ['Internet Frame', 'Inline Frame', 'Image Frame', 'Internal Frame'],
+        correctIndex: 1,
+        explanation: 'iFrame stands for Inline Frame, which embeds another document within the current HTML document.'
+      },
+      {
+        question: 'Which attribute tells the iFrame which website to show?',
+        options: ['href', 'link', 'src', 'url'],
+        correctIndex: 2,
+        explanation: 'The src attribute specifies the address of the document to embed.'
+      }
+    ],
+    recap: 'Use <iframe> to embed external content like maps and videos.'
+  },
+  'html-media-5': {
+    id: 'html-media-5',
+    title: 'SVG Graphics',
+    todayYouAreLearning: 'How to add sharp, scalable icons and illustrations to your site.',
+    whyItMatters: 'SVGs (Scalable Vector Graphics) never get blurry, no matter how much you zoom in. They are also very small in file size.',
+    explanation: 'SVGs are actually written in XML (which looks just like HTML). You can embed the code directly in your HTML or use an `<img>` tag.',
+    analogy: 'A regular image (like a JPG) is like a painting made of dots. An SVG is like a set of instructions for drawing a shape. You can follow the instructions at any size!',
+    codeExample: '<svg width="100" height="100">\n  <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />\n</svg>',
+    lineByLine: '<svg> is the container. <circle> draws a circle. cx/cy are the center coordinates. r is the radius.',
+    commonMistakes: [
+      'Using a complex SVG that has thousands of lines of code (it can slow down your page).',
+      'Forgetting to add an "alt" text equivalent if using SVG as an image.',
+      'Not understanding that SVGs can be styled with CSS!'
+    ],
+    practice: 'Create a simple SVG rectangle in your HTML.',
+    challenge: 'How do you change the color of an SVG circle using CSS? (Hint: use the "fill" property).',
+    reflectionQuestion: 'Why are SVGs perfect for company logos?',
+    quiz: [
+      {
+        question: 'What is the main advantage of SVG over JPG?',
+        options: ['It has more colors', 'It can be scaled to any size without losing quality', 'It is easier to take with a camera', 'It is always a square'],
+        correctIndex: 1,
+        explanation: 'SVGs are vector-based, meaning they are drawn using math, so they stay perfectly sharp at any size.'
+      },
+      {
+        question: 'Can you write SVG code directly inside your HTML file?',
+        options: ['Yes', 'No'],
+        correctIndex: 0,
+        explanation: 'Yes, browsers can read SVG code directly when it is placed inside HTML tags.'
+      }
+    ],
+    recap: 'Use SVG for icons and illustrations that need to be sharp and scalable.'
+  },
+  'html-seo-1': {
+    id: 'html-seo-1',
+    title: 'The <title> Tag',
+    todayYouAreLearning: 'How to name your page so it appears correctly in browser tabs and search results.',
+    whyItMatters: 'The title is the most important piece of SEO (Search Engine Optimization). It\'s the first thing people see on Google.',
+    explanation: 'The `<title>` tag goes inside the `<head>` section. It defines the text shown in the browser tab and the main link in search results.',
+    analogy: 'The `<title>` is like the title on the spine of a book. It tells you exactly what is inside before you even open it.',
+    codeExample: '<head>\n  <title>My Awesome Portfolio | Web Developer</title>\n</head>',
+    lineByLine: 'The text between the tags is what the world sees as the name of your page.',
+    commonMistakes: [
+      'Leaving the title as "Document" or "Home" (this is terrible for SEO!).',
+      'Making the title too long (Google will cut it off after about 60 characters).',
+      'Using the same title for every page on your website.'
+    ],
+    practice: 'Change the title of your current project to something descriptive.',
+    challenge: 'What is the ideal length for a page title?',
+    reflectionQuestion: 'How does a good title help a user who has 20 tabs open?',
+    quiz: [
+      {
+        question: 'Where does the <title> tag belong?',
+        options: ['In the <body>', 'In the <head>', 'In the <footer>', 'In the <header>'],
+        correctIndex: 1,
+        explanation: 'The <title> is metadata and belongs in the <head> section.'
+      },
+      {
+        question: 'Does the <title> appear directly on the webpage content?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'No, it appears in the browser tab and search engine results, not the page body.'
+      }
+    ],
+    recap: 'Always give every page a unique, descriptive <title>.'
+  },
+  'html-seo-2': {
+    id: 'html-seo-2',
+    title: 'Meta Descriptions',
+    todayYouAreLearning: 'How to provide a summary of your page for search engines.',
+    whyItMatters: 'The meta description is the "snippet" of text that appears under your title in Google. A good one can convince people to click on your link.',
+    explanation: 'Use the `<meta>` tag with `name="description"` and a `content` attribute to provide your summary.',
+    analogy: 'A meta description is like the "blurb" on the back of a book. It gives you a quick taste of the story to see if you want to read it.',
+    codeExample: '<meta name="description" content="Learn HTML from scratch with our beginner-friendly course. Start your coding journey today!">',
+    lineByLine: 'name="description" tells the browser what this meta tag is for. content="..." is the actual text.',
+    commonMistakes: [
+      'Not including a meta description at all.',
+      'Stuffing it with keywords instead of writing a helpful sentence.',
+      'Making it too long (keep it under 155 characters).'
+    ],
+    practice: 'Write a meta description for your personal homepage.',
+    challenge: 'Does the meta description directly affect your ranking on Google? (Hint: No, but it affects your "Click-Through Rate").',
+    reflectionQuestion: 'What kind of information makes you want to click a link in a search result?',
+    quiz: [
+      {
+        question: 'What is the purpose of the meta description?',
+        options: ['To set the page background', 'To provide a summary for search results', 'To list all the images', 'To hide the page from users'],
+        correctIndex: 1,
+        explanation: 'Meta descriptions provide the snippet of text seen in search engine results.'
+      },
+      {
+        question: 'What is the recommended maximum length for a meta description?',
+        options: ['50 characters', '155 characters', '500 characters', 'Unlimited'],
+        correctIndex: 1,
+        explanation: 'Around 155 characters is the sweet spot before search engines start cutting off the text.'
+      }
+    ],
+    recap: 'Use meta descriptions to "sell" your page to potential visitors on search engines.'
+  },
+  'html-seo-3': {
+    id: 'html-seo-3',
+    title: 'Favicons',
+    todayYouAreLearning: 'How to add a small icon to your browser tab.',
+    whyItMatters: 'Favicons make your site look professional and help users find your tab when they have many open.',
+    explanation: 'You use a `<link>` tag in the `<head>` to point to a small image file (usually a .ico or .png).',
+    analogy: 'A favicon is like a tiny logo on a business card. It\'s a small detail that makes a big impression.',
+    codeExample: '<link rel="icon" type="image/x-icon" href="/favicon.ico">',
+    lineByLine: 'rel="icon" tells the browser this is the tab icon. href is the path to the image.',
+    commonMistakes: [
+      'Using a favicon that is too complex (it will just look like a blob at 16x16 pixels).',
+      'Forgetting to include one (browsers will show a generic "blank page" icon).',
+      'Using a very large image file for a tiny icon.'
+    ],
+    practice: 'Find a small icon online and try to add it as a favicon to your page.',
+    challenge: 'What are the standard dimensions for a favicon? (Hint: 16x16 or 32x32).',
+    reflectionQuestion: 'How does a favicon help with "branding" your website?',
+    quiz: [
+      {
+        question: 'Which tag is used to add a favicon?',
+        options: ['<icon>', '<meta>', '<link>', '<image>'],
+        correctIndex: 2,
+        explanation: 'The <link> tag is used to connect external resources like icons and stylesheets.'
+      },
+      {
+        question: 'Where does the favicon appear?',
+        options: ['In the middle of the page', 'In the browser tab', 'At the bottom of the page', 'Only on mobile'],
+        correctIndex: 1,
+        explanation: 'Favicons appear in browser tabs, bookmarks, and address bars.'
+      }
+    ],
+    recap: 'Add a favicon to give your site a professional, branded look.'
+  },
+  'html-seo-4': {
+    id: 'html-seo-4',
+    title: 'Social Media Meta',
+    todayYouAreLearning: 'How to control how your site looks when shared on Facebook or Twitter.',
+    whyItMatters: 'When you share a link, you want it to show a nice image and a clear title, not just a plain URL.',
+    explanation: 'We use "Open Graph" (og:) tags for Facebook and "Twitter Cards" for Twitter. These are special meta tags.',
+    analogy: 'Social media meta tags are like the "packaging" on a product. They make the link look attractive so people want to "open" it.',
+    codeExample: '<meta property="og:title" content="My Awesome Site">\n<meta property="og:image" content="preview.jpg">\n<meta name="twitter:card" content="summary_large_image">',
+    lineByLine: 'og:title is the title for Facebook. og:image is the picture that shows up.',
+    commonMistakes: [
+      'Not testing your links (use the "Facebook Sharing Debugger"!).',
+      'Using an image that is the wrong size (it might get cropped weirdly).',
+      'Forgetting to update these tags when you change your site content.'
+    ],
+    practice: 'Look at the source code of a news site and search for "og:".',
+    challenge: 'What is the "Open Graph" protocol?',
+    reflectionQuestion: 'Why do companies spend so much time on their social media preview images?',
+    quiz: [
+      {
+        question: 'Which prefix is used for Facebook social tags?',
+        options: ['fb:', 'social:', 'og:', 'meta:'],
+        correctIndex: 2,
+        explanation: 'og: stands for Open Graph, the standard created by Facebook.'
+      },
+      {
+        question: 'What does og:image define?',
+        options: ['The background of your site', 'The image shown when the link is shared', 'The logo in the header', 'The user\'s profile picture'],
+        correctIndex: 1,
+        explanation: 'og:image specifies the preview image for social media shares.'
+      }
+    ],
+    recap: 'Use Open Graph and Twitter meta tags to control your site\'s appearance on social media.'
+  },
+  'html-seo-5': {
+    id: 'html-seo-5',
+    title: 'The Viewport Meta',
+    todayYouAreLearning: 'How to make sure your website looks good on mobile phones.',
+    whyItMatters: 'Without this tag, mobile browsers will try to show your desktop site at a tiny size, making it impossible to read.',
+    explanation: 'The viewport meta tag tells the browser to set the width of the page to the width of the device screen.',
+    analogy: 'The viewport tag is like a pair of glasses for a mobile phone. It helps the phone "see" the website at the correct size.',
+    codeExample: '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+    lineByLine: 'width=device-width makes the site match the phone width. initial-scale=1.0 sets the zoom level to normal.',
+    commonMistakes: [
+      'Forgetting this tag (your site will look tiny on mobile!).',
+      'Setting "user-scalable=no" (this prevents users from zooming in, which is bad for accessibility).',
+      'Using a fixed width like 1200px instead of device-width.'
+    ],
+    practice: 'Check if your current project has the viewport meta tag in the <head>.',
+    challenge: 'What happens if you remove the viewport tag and view your site on a phone?',
+    reflectionQuestion: 'Why is "mobile-first" design so important today?',
+    quiz: [
+      {
+        question: 'What is the primary purpose of the viewport meta tag?',
+        options: ['To change the page color', 'To make the site responsive on mobile', 'To speed up the site', 'To track users'],
+        correctIndex: 1,
+        explanation: 'The viewport tag ensures the site scales correctly on different screen sizes.'
+      },
+      {
+        question: 'What does "initial-scale=1.0" mean?',
+        options: ['The site is 100 years old', 'The default zoom level is 100%', 'The site only has one page', 'The site is very small'],
+        correctIndex: 1,
+        explanation: 'It sets the initial zoom level when the page is first loaded.'
+      }
+    ],
+    recap: 'Always include the viewport meta tag for a mobile-friendly website.'
+  },
+  'html-a11y-1': {
+    id: 'html-a11y-1',
+    title: 'What is Accessibility?',
+    todayYouAreLearning: 'The practice of making your website usable by everyone, including people with disabilities.',
+    whyItMatters: 'The web should be for everyone. Good accessibility (a11y) helps people who are blind, deaf, or have motor impairments.',
+    explanation: 'Accessibility means using proper HTML tags, providing text for images, and ensuring your site can be used with just a keyboard.',
+    analogy: 'Accessibility is like building a ramp next to a set of stairs. It doesn\'t hurt the people using the stairs, but it\'s essential for the person in a wheelchair.',
+    codeExample: '<!-- Good: Descriptive link -->\n<a href="/docs">Download the HTML Guide (PDF)</a>\n\n<!-- Bad: Vague link -->\n<a href="/docs">Click here</a>',
+    lineByLine: 'Descriptive links tell screen reader users exactly where they are going.',
+    commonMistakes: [
+      'Thinking accessibility is "extra work" (it should be part of your normal workflow!).',
+      'Only designing for people who use a mouse.',
+      'Ignoring color contrast (making text too light to read).'
+    ],
+    practice: 'Try navigating a website using only your "Tab" and "Enter" keys.',
+    challenge: 'What does the abbreviation "a11y" stand for? (Hint: count the letters between A and Y in "accessibility").',
+    reflectionQuestion: 'How does a well-structured website help someone who is blind?',
+    quiz: [
+      {
+        question: 'Who benefits from web accessibility?',
+        options: ['Only blind people', 'Only elderly people', 'Everyone', 'Only developers'],
+        correctIndex: 2,
+        explanation: 'Accessibility improvements often make the site better for all users.'
+      },
+      {
+        question: 'What is a common tool used by blind people to browse the web?',
+        options: ['A magnifying glass', 'A screen reader', 'A special mouse', 'A louder speaker'],
+        correctIndex: 1,
+        explanation: 'Screen readers turn on-screen text into speech or braille.'
+      }
+    ],
+    recap: 'Accessibility (a11y) is about making the web inclusive for all users.'
+  },
+  'html-a11y-2': {
+    id: 'html-a11y-2',
+    title: 'Alt Text Revisited',
+    todayYouAreLearning: 'How to write truly helpful descriptions for your images.',
+    whyItMatters: 'Alt text is the only way a blind person knows what is in an image. It also shows up if the image fails to load.',
+    explanation: 'Good alt text describes the *purpose* and *content* of the image. If an image is just for decoration, you should use an empty alt attribute (`alt=""`).',
+    analogy: 'Alt text is like describing a photo to a friend over the phone. You don\'t need to describe every pixel, just what matters.',
+    codeExample: '<img src="dog.jpg" alt="A golden retriever puppy playing in the grass.">\n<img src="divider.png" alt=""> <!-- Decorative -->',
+    lineByLine: 'The first alt is descriptive. The second is empty because the image is just a decoration.',
+    commonMistakes: [
+      'Starting with "Image of..." or "Photo of..." (the screen reader already says it\'s an image).',
+      'Leaving the alt attribute out entirely (this is a big error!).',
+      'Using the filename (like "IMG_1234.jpg") as the alt text.'
+    ],
+    practice: 'Write alt text for a photo of your favorite food.',
+    challenge: 'When should you use an empty alt attribute (alt="")?',
+    reflectionQuestion: 'How would you feel if you were browsing a site and every image was described as "image"?',
+    quiz: [
+      {
+        question: 'What should you do for a decorative image that adds no meaning?',
+        options: ['Delete it', 'Use alt="decoration"', 'Use an empty alt=""', 'Write a long description'],
+        correctIndex: 2,
+        explanation: 'An empty alt attribute tells screen readers to skip the image.'
+      },
+      {
+        question: 'Should you start alt text with "A picture of..."?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'No, screen readers already announce that it is an image.'
+      }
+    ],
+    recap: 'Write descriptive, meaningful alt text for all important images.'
+  },
+  'html-a11y-3': {
+    id: 'html-a11y-3',
+    title: 'ARIA Roles',
+    todayYouAreLearning: 'How to give extra meaning to elements when standard HTML tags aren\'t enough.',
+    whyItMatters: 'ARIA (Accessible Rich Internet Applications) helps bridge the gap between complex web apps and assistive technology.',
+    explanation: 'ARIA attributes like `role`, `aria-label`, and `aria-hidden` provide extra information to screen readers. You should only use them if there isn\'t a semantic HTML tag that does the job.',
+    analogy: 'ARIA is like a sticky note you put on a generic box to explain what\'s inside.',
+    codeExample: '<div role="button" aria-label="Close modal">X</div>\n<span aria-hidden="true">★</span>',
+    lineByLine: 'role="button" tells the browser to treat the div like a button. aria-hidden="true" hides the star from screen readers.',
+    commonMistakes: [
+      'Using ARIA when a semantic tag exists (e.g., using <div role="button"> instead of <button>).',
+      'Using ARIA incorrectly, which can actually make the site *less* accessible.',
+      'Overusing ARIA (the first rule of ARIA is: Don\'t use ARIA if you don\'t have to!).'
+    ],
+    practice: 'Find an example of an `aria-label` on a website (often found on "Close" buttons with icons).',
+    challenge: 'What is the "First Rule of ARIA"?',
+    reflectionQuestion: 'Why is it better to use a real <button> than a <div role="button">?',
+    quiz: [
+      {
+        question: 'What does ARIA stand for?',
+        options: ['Advanced Responsive Image Area', 'Accessible Rich Internet Applications', 'Always Read Important Assets', 'Automated Robot Interaction Area'],
+        correctIndex: 1,
+        explanation: 'ARIA is a set of attributes that make web content more accessible.'
+      },
+      {
+        question: 'When should you use ARIA?',
+        options: ['For every tag', 'Only when standard HTML tags are not enough', 'To make the site faster', 'To hide code from Google'],
+        correctIndex: 1,
+        explanation: 'Standard semantic HTML is always preferred over ARIA.'
+      }
+    ],
+    recap: 'Use ARIA sparingly to enhance accessibility when semantic HTML is not enough.'
+  },
+  'html-a11y-4': {
+    id: 'html-a11y-4',
+    title: 'Keyboard Navigation',
+    todayYouAreLearning: 'How to ensure your site can be used without a mouse.',
+    whyItMatters: 'Many users (including those with motor impairments or power users) rely on the keyboard to navigate.',
+    explanation: 'Interactive elements like links, buttons, and form inputs are "focusable" by default. You should never remove the "focus ring" (the outline that shows which element is selected).',
+    analogy: 'Keyboard navigation is like using the remote to move through a Netflix menu. You need to see the highlight to know what you\'re picking.',
+    codeExample: '<!-- Good: Standard button is focusable -->\n<button>Click Me</button>\n\n<!-- Bad: Div is NOT focusable by default -->\n<div onclick="doSomething()">Click Me</div>',
+    lineByLine: 'The <button> can be reached with the Tab key. The <div> cannot.',
+    commonMistakes: [
+      'Removing the CSS focus outline (outline: none) without providing a better alternative.',
+      'Using non-interactive tags (like <div> or <span>) for buttons.',
+      'Creating a "trap" where a user can get into a section but can\'t Tab out of it.'
+    ],
+    practice: 'Try to "Tab" through your entire project. Can you reach every link and button?',
+    challenge: 'How do you make a <div> focusable? (Hint: search for the "tabindex" attribute).',
+    reflectionQuestion: 'How does it feel to try and use a site when you can\'t see where the "focus" is?',
+    quiz: [
+      {
+        question: 'Which key is most commonly used to move between interactive elements?',
+        options: ['Space', 'Enter', 'Tab', 'Shift'],
+        correctIndex: 2,
+        explanation: 'The Tab key moves the focus forward through the page.'
+      },
+      {
+        question: 'Is it okay to remove the focus outline from buttons?',
+        options: ['Yes, it looks better', 'No, it breaks navigation for keyboard users', 'Only if the button is red', 'Only on mobile'],
+        correctIndex: 1,
+        explanation: 'The focus outline is essential for knowing which element is currently active.'
+      }
+    ],
+    recap: 'Ensure all interactive elements are reachable and visible via the keyboard.'
+  },
+  'html-a11y-5': {
+    id: 'html-a11y-5',
+    title: 'Color Contrast',
+    todayYouAreLearning: 'How to ensure your text is easy to read against its background.',
+    whyItMatters: 'Millions of people have low vision or color blindness. If your contrast is too low, they won\'t be able to read your content.',
+    explanation: 'You should always aim for a contrast ratio of at least 4.5:1 for normal text. There are many free tools to check this.',
+    analogy: 'Color contrast is like the volume of a voice. If it\'s too quiet (low contrast), nobody can hear (read) what you\'re saying.',
+    codeExample: '<!-- Good: High contrast -->\n<p style="color: black; background: white;">Readable text</p>\n\n<!-- Bad: Low contrast -->\n<p style="color: #ccc; background: #eee;">Hard to read</p>',
+    lineByLine: 'Black on white is the highest contrast. Light gray on off-white is very poor.',
+    commonMistakes: [
+      'Using light gray text on a white background.',
+      'Putting text over a busy image without a background color.',
+      'Relying *only* on color to convey meaning (e.g., "Click the red button" - what if the user is colorblind?).'
+    ],
+    practice: 'Use a "Color Contrast Checker" tool on your favorite website.',
+    challenge: 'What is the WCAG (Web Content Accessibility Guidelines) standard for contrast?',
+    reflectionQuestion: 'How does high contrast help you when you are outside in bright sunlight?',
+    quiz: [
+      {
+        question: 'What is the recommended minimum contrast ratio for normal text?',
+        options: ['1:1', '2:1', '4.5:1', '10:1'],
+        correctIndex: 2,
+        explanation: '4.5:1 is the standard for "Level AA" accessibility.'
+      },
+      {
+        question: 'Should you use color as the ONLY way to show an error?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'No, you should also use icons or text labels for users who can\'t distinguish colors.'
+      }
+    ],
+    recap: 'Always use high-contrast colors to ensure your text is readable by everyone.'
+  },
+  'html-best-1': {
+    id: 'html-best-1',
+    title: 'Clean Code',
+    todayYouAreLearning: 'How to write code that is easy for humans to read and maintain.',
+    whyItMatters: 'You spend more time reading code than writing it. Clean code makes debugging and collaboration much easier.',
+    explanation: 'Clean HTML uses consistent indentation (usually 2 spaces), lowercase tag names, and meaningful attribute values.',
+    analogy: 'Clean code is like a well-organized library. You can find exactly what you need without searching through piles of messy papers.',
+    codeExample: '<!-- Good: Clean and readable -->\n<div>\n  <h1>Welcome</h1>\n  <p>This is a clean paragraph.</p>\n</div>\n\n<!-- Bad: Messy and hard to read -->\n<DIV><h1>Welcome</h1><p>This is messy.</p></DIV>',
+    lineByLine: 'The good example uses indentation to show that <h1> and <p> are inside the <div>.',
+    commonMistakes: [
+      'Mixing uppercase and lowercase tags (e.g., <DIV> instead of <div>).',
+      'Inconsistent indentation (makes it hard to see which tags are nested).',
+      'Leaving unnecessary empty lines everywhere.'
+    ],
+    practice: 'Take a messy piece of HTML and reformat it with proper indentation.',
+    challenge: 'What is a "Linter" and how does it help with clean code?',
+    reflectionQuestion: 'Why does clean code matter even if the browser can still read messy code?',
+    quiz: [
+      {
+        question: 'Which of these is a characteristic of clean HTML?',
+        options: ['Using all caps for tags', 'Consistent indentation', 'No comments allowed', 'Putting all code on one line'],
+        correctIndex: 1,
+        explanation: 'Indentation helps visualize the structure of the document.'
+      },
+      {
+        question: 'Why should you use lowercase for HTML tags?',
+        options: ['It is a law', 'It is the industry standard and easier to read', 'Uppercase tags don\'t work', 'It saves battery life'],
+        correctIndex: 1,
+        explanation: 'While HTML is case-insensitive, lowercase is the universal standard for modern web development.'
+      }
+    ],
+    recap: 'Write clean, indented, lowercase code for better readability.'
+  },
+  'html-best-2': {
+    id: 'html-best-2',
+    title: 'Commenting Your Code',
+    todayYouAreLearning: 'How to leave notes for yourself and other developers inside your code.',
+    whyItMatters: 'Comments explain the "why" behind your code, helping you remember what you were doing when you come back to it later.',
+    explanation: 'HTML comments start with `<!--` and end with `-->`. The browser completely ignores them, so they don\'t show up on the page.',
+    analogy: 'Comments are like sticky notes you put in a textbook to remind yourself of important points.',
+    codeExample: '<!-- This section contains the main navigation menu -->\n<nav>\n  <ul>\n    <li>Home</li>\n  </ul>\n</nav>',
+    lineByLine: 'The text inside the <!-- and --> is a comment. It won\'t be visible to users.',
+    commonMistakes: [
+      'Commenting every single line (this makes the code harder to read).',
+      'Leaving "dead code" (old code you don\'t use) inside comments instead of deleting it.',
+      'Putting sensitive information (like passwords) in comments (anyone can see them in the source code!).'
+    ],
+    practice: 'Add a comment to your project explaining what the "header" section does.',
+    challenge: 'Can you put a comment inside an HTML tag? (e.g., <p <!-- comment -->>). Try it and see!',
+    reflectionQuestion: 'When is a comment more helpful than just having clean code?',
+    quiz: [
+      {
+        question: 'How do you start an HTML comment?',
+        options: ['//', '/*', '<!--', '#'],
+        correctIndex: 2,
+        explanation: '<!-- is the opening tag for an HTML comment.'
+      },
+      {
+        question: 'Will users see your comments on the actual webpage?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'Comments are only visible in the source code, not the rendered page.'
+      }
+    ],
+    recap: 'Use comments to explain complex sections of your code.'
+  },
+  'html-best-3': {
+    id: 'html-best-3',
+    title: 'Naming Conventions',
+    todayYouAreLearning: 'How to name your files and IDs so they are professional and bug-free.',
+    whyItMatters: 'Inconsistent naming can lead to broken links and confusion when working in a team.',
+    explanation: 'For filenames, always use lowercase and hyphens (kebab-case). Avoid spaces and special characters.',
+    analogy: 'Naming conventions are like a filing system in an office. If everyone uses a different system, nobody can find anything.',
+    codeExample: '<!-- Good filenames -->\nabout-us.html\ncontact-page.html\n\n<!-- Bad filenames -->\nAbout Us.html\nContactPage.HTML',
+    lineByLine: 'The good examples use all lowercase and hyphens instead of spaces.',
+    commonMistakes: [
+      'Using spaces in filenames (this creates messy URLs like %20).',
+      'Using uppercase letters (some servers are case-sensitive, which can break links).',
+      'Using vague names like "page1.html" or "stuff.html".'
+    ],
+    practice: 'Rename any files in your project that use spaces or uppercase letters.',
+    challenge: 'Why is "index.html" a special filename in web development?',
+    reflectionQuestion: 'Why is "kebab-case" (my-file-name) preferred over "snake_case" (my_file_name) for URLs?',
+    quiz: [
+      {
+        question: 'Which of these is the best filename for a "Contact Us" page?',
+        options: ['Contact Us.html', 'contact_us.html', 'contact-us.html', 'ContactUs.HTML'],
+        correctIndex: 2,
+        explanation: 'Kebab-case (lowercase with hyphens) is the web standard for filenames.'
+      },
+      {
+        question: 'Why should you avoid spaces in filenames?',
+        options: ['They make the file bigger', 'They are converted to %20 in URLs, which is messy', 'Computers can\'t read spaces', 'They are illegal'],
+        correctIndex: 1,
+        explanation: 'Spaces in URLs are encoded as %20, making them hard to read and share.'
+      }
+    ],
+    recap: 'Use lowercase and hyphens for all your filenames and IDs.'
+  },
+  'html-best-4': {
+    id: 'html-best-4',
+    title: 'Validation',
+    todayYouAreLearning: 'How to check your code for errors using official tools.',
+    whyItMatters: 'Even if a page looks fine, hidden errors can cause problems in different browsers or for screen readers.',
+    explanation: 'The W3C Markup Validation Service is the official tool for checking if your HTML follows the rules.',
+    analogy: 'Validation is like a grammar and spell checker for your code. It ensures you haven\'t missed any "punctuation" (like closing tags).',
+    codeExample: '<!-- A common error that a validator would catch -->\n<p>This tag is never closed.\n<div>Something else</div>',
+    lineByLine: 'The validator would warn you that the <p> tag is missing its closing </p>.',
+    commonMistakes: [
+      'Ignoring validation errors because the site "looks okay" in your browser.',
+      'Thinking that a "warning" is the same as an "error" (warnings are suggestions, errors are broken rules).',
+      'Not validating your code regularly during development.'
+    ],
+    practice: 'Go to validator.w3.org and paste your HTML code to see if it has any errors.',
+    challenge: 'Can you get a "Perfect" score with zero errors and zero warnings?',
+    reflectionQuestion: 'Why do different browsers sometimes show the same broken code differently?',
+    quiz: [
+      {
+        question: 'What is the official tool for checking HTML code?',
+        options: ['Google Search', 'W3C Validator', 'Adobe Photoshop', 'Microsoft Word'],
+        correctIndex: 1,
+        explanation: 'The W3C Validator is the industry standard for checking HTML syntax.'
+      },
+      {
+        question: 'Does a page have to be 100% valid to show up in a browser?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'Browsers try their best to show even broken code, but it can lead to unpredictable bugs.'
+      }
+    ],
+    recap: 'Always validate your code to ensure it follows web standards.'
+  },
+  'html-best-5': {
+    id: 'html-best-5',
+    title: 'Avoiding Deprecated Tags',
+    todayYouAreLearning: 'How to stay up-to-date by avoiding old, "retired" HTML tags.',
+    whyItMatters: 'Deprecated tags are no longer supported by modern standards and might stop working in future browsers.',
+    explanation: 'Tags like `<center>`, `<font>`, and `<big>` should be avoided. Use CSS for all styling and layout instead.',
+    analogy: 'Using deprecated tags is like using a rotary phone in the age of smartphones. It might still work, but it\'s outdated and inefficient.',
+    codeExample: '<!-- Bad: Deprecated tag -->\n<center>This is old</center>\n\n<!-- Good: Modern CSS -->\n<div style="text-align: center;">This is modern</div>',
+    lineByLine: 'The second example uses a style attribute (CSS) instead of an old HTML tag.',
+    commonMistakes: [
+      'Using old tags found in outdated tutorials or forum posts.',
+      'Using HTML tags for styling (like <center>) instead of CSS.',
+      'Thinking that "deprecated" means "it doesn\'t work at all" (it still works, but it\'s bad practice).'
+    ],
+    practice: 'Check your project for any old tags like <center> or <font> and replace them.',
+    challenge: 'What replaced the `<strike>` tag in modern HTML? (Hint: search for the `<s>` and `<del>` tags).',
+    reflectionQuestion: 'Why does the web evolve and retire old tags?',
+    quiz: [
+      {
+        question: 'What does "deprecated" mean in web development?',
+        options: ['The tag is brand new', 'The tag is no longer recommended and is being retired', 'The tag is only for mobile', 'The tag is a secret'],
+        correctIndex: 1,
+        explanation: 'Deprecated features are outdated and should be replaced with modern alternatives.'
+      },
+      {
+        question: 'Which of these tags is deprecated?',
+        options: ['<div>', '<center>', '<main>', '<section>'],
+        correctIndex: 1,
+        explanation: '<center> is an old tag that has been replaced by CSS styling.'
+      }
+    ],
+    recap: 'Use modern HTML5 tags and keep styling in CSS.'
+  },
+  'html-perf-1': {
+    id: 'html-perf-1',
+    title: 'Lazy Loading Images',
+    todayYouAreLearning: 'How to make your website load faster by only loading images when they are needed.',
+    whyItMatters: 'Loading all images at once can make a page very slow, especially on mobile phones with slow internet.',
+    explanation: 'By adding `loading="lazy"` to your `<img>` tags, the browser will wait to download the image until the user scrolls near it.',
+    analogy: 'Lazy loading is like a restaurant only bringing out your main course when you\'ve finished your appetizer, instead of putting all the food on the table at once.',
+    codeExample: '<img src="large-photo.jpg" alt="A beautiful landscape" loading="lazy">',
+    lineByLine: 'loading="lazy" tells the browser: "Don\'t download this yet if it\'s not on the screen."',
+    commonMistakes: [
+      'Lazy loading images at the very top of the page (this actually makes the page feel slower!).',
+      'Forgetting to set width and height on lazy-loaded images (causes layout jumps).',
+      'Using it on every single small icon (it\'s best for large photos).'
+    ],
+    practice: 'Add loading="lazy" to an image that is located at the bottom of your page.',
+    challenge: 'How can you verify that an image is being "lazy loaded" using the browser\'s Network tab?',
+    reflectionQuestion: 'How does lazy loading help users who have to pay for every megabyte of data they use?',
+    quiz: [
+      {
+        question: 'What does loading="lazy" do?',
+        options: ['Makes the image blurry', 'Delays loading the image until it is near the viewport', 'Makes the image smaller', 'Deletes the image'],
+        correctIndex: 1,
+        explanation: 'Lazy loading saves bandwidth by only downloading images when the user is likely to see them.'
+      },
+      {
+        question: 'Should you lazy load the main logo at the top of your page?',
+        options: ['Yes', 'No'],
+        correctIndex: 1,
+        explanation: 'No, images at the top of the page should load immediately so the user sees them right away.'
+      }
+    ],
+    recap: 'Use loading="lazy" to speed up your site for images further down the page.'
+  },
+  'html-perf-2': {
+    id: 'html-perf-2',
+    title: 'Preloading Assets',
+    todayYouAreLearning: 'How to tell the browser which files are the most important to download first.',
+    whyItMatters: 'Sometimes the browser doesn\'t realize it needs a file (like a font or a main style) until it\'s too late. Preloading fixes this.',
+    explanation: 'Use the `<link>` tag with `rel="preload"` in the `<head>` to start downloading critical files immediately.',
+    analogy: 'Preloading is like calling a restaurant to order your food before you even leave your house, so it\'s ready the moment you arrive.',
+    codeExample: '<head>\n  <link rel="preload" href="main-font.woff2" as="font" type="font/woff2" crossorigin>\n</head>',
+    lineByLine: 'rel="preload" starts the download. as="font" tells the browser what kind of file it is.',
+    commonMistakes: [
+      'Preloading too many files (this clogs up the connection and slows everything down).',
+      'Forgetting the "as" attribute (the browser won\'t know how to handle the file).',
+      'Preloading files that aren\'t actually used on the page.'
+    ],
+    practice: 'Write a preload tag for a hypothetical CSS file named "critical.css".',
+    challenge: 'What is the difference between "preload" and "prefetch"?',
+    reflectionQuestion: 'What are the top 3 most important files on a typical website?',
+    quiz: [
+      {
+        question: 'Where should you put your preload tags?',
+        options: ['At the bottom of the <body>', 'Inside the <head>', 'In a separate file', 'In the <footer>'],
+        correctIndex: 1,
+        explanation: 'Preload tags belong in the <head> so the browser sees them as early as possible.'
+      },
+      {
+        question: 'What happens if you preload too many assets?',
+        options: ['The site gets faster', 'The site might get slower because of too many simultaneous downloads', 'The browser crashes', 'Nothing happens'],
+        correctIndex: 1,
+        explanation: 'Preloading should be reserved for the most critical resources only.'
+      }
+    ],
+    recap: 'Use rel="preload" for critical assets like fonts and main stylesheets.'
+  },
+  'html-perf-3': {
+    id: 'html-perf-3',
+    title: 'Minimizing HTML Size',
+    todayYouAreLearning: 'How to reduce the weight of your HTML files so they travel faster.',
+    whyItMatters: 'Smaller files mean faster downloads, which is crucial for users on slow mobile networks.',
+    explanation: 'Minimization involves removing unnecessary spaces, new lines, and comments from your final code.',
+    analogy: 'Minimizing code is like vacuum-sealing your clothes for a trip. It\'s the same stuff, but it takes up much less space.',
+    codeExample: '<!-- Before -->\n<div>\n  <p> Hello </p>\n</div>\n\n<!-- After -->\n<div><p>Hello</p></div>',
+    lineByLine: 'The "After" version has no extra spaces or new lines, making it a smaller file.',
+    commonMistakes: [
+      'Minifying your *source* code (you should keep your working code readable and only minify the version you send to the server).',
+      'Thinking that a few spaces don\'t matter (on a large site, they can add up to a lot of extra data).',
+      'Manually minifying code (use a tool instead!).'
+    ],
+    practice: 'Search for an "HTML Minifier" online and see how much it shrinks a piece of code.',
+    challenge: 'How much space can you save on a typical webpage by minifying the HTML?',
+    reflectionQuestion: 'Does the computer care if the code is pretty or ugly?',
+    quiz: [
+      {
+        question: 'What is "minification"?',
+        options: ['Making the font smaller', 'Removing unnecessary characters like spaces and comments', 'Deleting half the code', 'Compressing images'],
+        correctIndex: 1,
+        explanation: 'Minification reduces file size without changing how the code works.'
+      },
+      {
+        question: 'Should you minify the code you are currently editing?',
+        options: ['Yes', 'No, keep it readable for yourself'],
+        correctIndex: 1,
+        explanation: 'Always keep your source code readable. Minification is for the final "production" version.'
+      }
+    ],
+    recap: 'Smaller HTML files lead to faster page loads and happier users.'
+  },
+  'html-perf-4': {
+    id: 'html-perf-4',
+    title: 'Critical CSS & Scripts',
+    todayYouAreLearning: 'How to organize your files so the page shows up as quickly as possible.',
+    whyItMatters: 'If you load a huge JavaScript file at the top of your page, the user will see a blank screen until it finishes downloading.',
+    explanation: 'Put your CSS in the `<head>` so the page is styled immediately. Put your `<script>` tags at the very end of the `<body>` so they don\'t block the content.',
+    analogy: 'It\'s like putting the instructions for a toy at the top of the box, but the batteries at the bottom. You need the instructions first to know what you\'re building!',
+    codeExample: '<head>\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n  <h1>Content</h1>\n  <script src="app.js"></script>\n</body>',
+    lineByLine: 'The stylesheet is in the head. The script is at the very bottom of the body.',
+    commonMistakes: [
+      'Putting large scripts in the <head> (this causes "render blocking").',
+      'Loading unnecessary scripts on pages that don\'t need them.',
+      'Not using the "async" or "defer" attributes for modern script loading.'
+    ],
+    practice: 'Move any script tags in your project to the bottom of the <body>.',
+    challenge: 'What is the "Flash of Unstyled Content" (FOUC)?',
+    reflectionQuestion: 'Why is it better for a user to see unstyled text than a blank screen?',
+    quiz: [
+      {
+        question: 'Where is the best place to put your main <script> tags?',
+        options: ['In the <head>', 'At the top of the <body>', 'At the bottom of the <body>', 'In the <footer>'],
+        correctIndex: 2,
+        explanation: 'Putting scripts at the bottom prevents them from slowing down the initial page display.'
+      },
+      {
+        question: 'Why do we put CSS in the <head>?',
+        options: ['To make the file smaller', 'So the page is styled as it loads', 'Because it is required by law', 'To hide it from users'],
+        correctIndex: 1,
+        explanation: 'Loading CSS early prevents the user from seeing a messy, unstyled page.'
+      }
+    ],
+    recap: 'Load styles early and scripts late to optimize the user experience.'
+  },
+  'html-perf-5': {
+    id: 'html-perf-5',
+    title: 'Resource Hints',
+    todayYouAreLearning: 'How to help the browser prepare for connections to other websites.',
+    whyItMatters: 'Connecting to a new site (like Google Fonts or an API) takes time. Resource hints speed this up.',
+    explanation: 'Use `dns-prefetch` (looks up the IP address) and `preconnect` (starts the full connection) in your `<head>`.',
+    analogy: 'Resource hints are like looking up the directions to a friend\'s house before you even get in the car. You\'re ready to go the moment you start.',
+    codeExample: '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="dns-prefetch" href="https://api.example.com">',
+    lineByLine: 'preconnect is for very important connections. dns-prefetch is a lighter version for less critical ones.',
+    commonMistakes: [
+      'Using preconnect for every single link on your page (it\'s too much work for the browser).',
+      'Using it for your own website (the browser is already connected to your site!).',
+      'Forgetting the "crossorigin" attribute for fonts.'
+    ],
+    practice: 'Add a preconnect hint for Google Fonts to your project.',
+    challenge: 'Which is more powerful: preconnect or dns-prefetch?',
+    reflectionQuestion: 'How many different websites does a typical modern page connect to?',
+    quiz: [
+      {
+        question: 'What does "preconnect" do?',
+        options: ['Downloads the whole website', 'Starts the connection process to another site early', 'Deletes old files', 'Changes the font'],
+        correctIndex: 1,
+        explanation: 'Preconnect handles the DNS lookup, TCP handshake, and TLS negotiation ahead of time.'
+      },
+      {
+        question: 'When should you use dns-prefetch?',
+        options: ['For your own site', 'For external sites you might need later', 'To make images smaller', 'To hide your IP address'],
+        correctIndex: 1,
+        explanation: 'dns-prefetch is a good "just in case" hint for external resources.'
+      }
+    ],
+    recap: 'Use resource hints to shave precious milliseconds off your load time.'
+  },
+  'html-real-1': {
+    id: 'html-real-1',
+    title: 'Structuring a Blog Post',
+    todayYouAreLearning: 'How to use everything you\'ve learned to build a professional article layout.',
+    whyItMatters: 'Blog posts are one of the most common things you\'ll build. A good structure is essential for SEO and readability.',
+    explanation: 'A blog post should use an `<article>` tag, with a `<header>` for the title/date, `<section>` tags for the content, and a `<footer>` for author info.',
+    analogy: 'Structuring a blog post is like writing a well-organized essay with a clear title, introduction, body paragraphs, and conclusion.',
+    codeExample: '<article>\n  <header>\n    <h1>My First Blog Post</h1>\n    <p>Published on April 3, 2026</p>\n  </header>\n  <section>\n    <p>This is the first paragraph of my amazing story...</p>\n  </section>\n  <footer>\n    <p>Written by: Jane Doe</p>\n  </footer>\n</article>',
+    lineByLine: '<article> wraps the whole post. <header> holds the metadata. <section> holds the main text.',
+    commonMistakes: [
+      'Using only <div> tags instead of semantic tags like <article>.',
+      'Not using heading levels (h1, h2, h3) correctly to show hierarchy.',
+      'Forgetting to wrap the author info in a <footer>.'
+    ],
+    practice: 'Create a basic HTML structure for a blog post about your favorite hobby.',
+    challenge: 'How would you add a "Table of Contents" using internal links (anchors)?',
+    reflectionQuestion: 'How does this structure help a screen reader user navigate the post?',
+    quiz: [
+      {
+        question: 'Which tag is best for wrapping a single, independent blog post?',
+        options: ['<section>', '<article>', '<div>', '<main>'],
+        correctIndex: 1,
+        explanation: '<article> is designed for self-contained content like blog posts or news stories.'
+      },
+      {
+        question: 'Where should the "Published Date" usually go?',
+        options: ['In the <header> of the article', 'In the <footer> of the page', 'Outside the article', 'In a <nav>'],
+        correctIndex: 0,
+        explanation: 'The article header is the perfect place for titles, dates, and author names.'
+      }
+    ],
+    recap: 'Use <article>, <header>, and <section> to build a solid blog post structure.'
+  },
+  'html-real-2': {
+    id: 'html-real-2',
+    title: 'Structuring a Product Page',
+    todayYouAreLearning: 'How to build a layout for an e-commerce store.',
+    whyItMatters: 'Product pages need to be clear, attractive, and easy to navigate to help people buy things.',
+    explanation: 'Use a `<main>` tag for the product, a `<figure>` for the product image, and a `<table>` or `<ul>` for the technical specifications.',
+    analogy: 'A product page is like a digital store shelf. You want the product to be front and center, with all the details clearly labeled.',
+    codeExample: '<main>\n  <figure>\n    <img src="phone.jpg" alt="Latest Smartphone">\n    <figcaption>The new X-Phone 5000</figcaption>\n  </figure>\n  <section>\n    <h2>Features</h2>\n    <ul>\n      <li>5G Capable</li>\n      <li>100MP Camera</li>\n    </ul>\n    <button>Add to Cart</button>\n  </section>\n</main>',
+    lineByLine: '<figure> groups the image and its caption. <section> holds the details and the buy button.',
+    commonMistakes: [
+      'Making the "Add to Cart" button hard to find.',
+      'Not providing alt text for the product image.',
+      'Using a table for the whole layout instead of just for data.'
+    ],
+    practice: 'Structure a product page for a pair of shoes.',
+    challenge: 'How would you add a "Customer Reviews" section using the <aside> tag?',
+    reflectionQuestion: 'What is the most important piece of information on a product page?',
+    quiz: [
+      {
+        question: 'Which tag is great for grouping a product image and its caption?',
+        options: ['<div>', '<figure>', '<section>', '<aside>'],
+        correctIndex: 1,
+        explanation: '<figure> and <figcaption> are perfect for images with descriptions.'
+      },
+      {
+        question: 'What is the best way to list product features?',
+        options: ['One long paragraph', 'An unordered list (<ul>)', 'A table', 'A series of headings'],
+        correctIndex: 1,
+        explanation: 'Lists are easy for users to scan quickly.'
+      }
+    ],
+    recap: 'Organize product info logically to make it easy for customers to shop.'
+  },
+  'html-real-3': {
+    id: 'html-real-3',
+    title: 'Structuring a Dashboard',
+    todayYouAreLearning: 'How to organize complex data and navigation for an app.',
+    whyItMatters: 'Dashboards can be overwhelming. A clear HTML structure helps keep the information organized.',
+    explanation: 'Use a `<nav>` for the sidebar, a `<header>` for the top bar, and a `<main>` area filled with `<section>` "widgets".',
+    analogy: 'A dashboard is like the cockpit of an airplane. Everything has its place, and the most important gauges are right in front of you.',
+    codeExample: '<div class="dashboard">\n  <nav>Sidebar Links</nav>\n  <div class="content">\n    <header>User Profile & Search</header>\n    <main>\n      <section>Recent Activity</section>\n      <section>Statistics Table</section>\n    </main>\n  </div>\n</div>',
+    lineByLine: 'The layout is split into a sidebar (<nav>) and a main content area.',
+    commonMistakes: [
+      'Not using a <main> tag for the primary data.',
+      'Making the navigation too complex for mobile users.',
+      'Forgetting to use headings for each "widget" or section.'
+    ],
+    practice: 'Sketch out the HTML structure for a "Music Player" dashboard.',
+    challenge: 'How would you use a <table> to show a list of recent transactions?',
+    reflectionQuestion: 'How do you decide what information goes in the "main" area vs. the "sidebar"?',
+    quiz: [
+      {
+        question: 'Which tag should you use for the dashboard\'s side navigation?',
+        options: ['<aside>', '<nav>', '<header>', '<section>'],
+        correctIndex: 1,
+        explanation: '<nav> is the correct tag for any major navigation block.'
+      },
+      {
+        question: 'What is a "widget" in a dashboard context?',
+        options: ['A small bug', 'A self-contained section of data or tools', 'A type of button', 'A broken link'],
+        correctIndex: 1,
+        explanation: 'Dashboards are often made of multiple "widgets" like charts, lists, or stats.'
+      }
+    ],
+    recap: 'Use clear, semantic sections to manage complex dashboard layouts.'
+  },
+  'html-real-4': {
+    id: 'html-real-4',
+    title: 'Structuring a Landing Page',
+    todayYouAreLearning: 'How to build a high-impact marketing page.',
+    whyItMatters: 'Landing pages are designed to get users to take one specific action (like signing up).',
+    explanation: 'A landing page usually has a "Hero" section (introduction), a "Features" section, a "Testimonials" section, and a "Call to Action" (CTA).',
+    analogy: 'A landing page is like a high-quality brochure or a movie trailer. It\'s designed to get you excited and make you want to see more.',
+    codeExample: '<header>Logo & CTA</header>\n<main>\n  <section id="hero">\n    <h1>The Future of Coding</h1>\n    <button>Get Started</button>\n  </section>\n  <section id="features">...</section>\n  <section id="testimonials">...</section>\n</main>\n<footer>Links & Copyright</footer>',
+    lineByLine: 'Each major part of the marketing story is in its own <section>.',
+    commonMistakes: [
+      'Having too many competing "Call to Action" buttons.',
+      'Not using IDs to allow users to jump to different sections.',
+      'Making the hero section too cluttered with text.'
+    ],
+    practice: 'Outline a landing page for a new mobile app.',
+    challenge: 'Where is the best place to put the primary "Sign Up" button?',
+    reflectionQuestion: 'Why do landing pages often have very little navigation in the header?',
+    quiz: [
+      {
+        question: 'What is a "Hero Section"?',
+        options: ['A section about superheroes', 'The main introductory part of a landing page', 'The footer', 'A hidden menu'],
+        correctIndex: 1,
+        explanation: 'The hero section is the first thing a user sees, usually containing a big headline and a button.'
+      },
+      {
+        question: 'What does "CTA" stand for?',
+        options: ['Code To Action', 'Call To Action', 'Click To Answer', 'Central Text Area'],
+        correctIndex: 1,
+        explanation: 'A Call to Action is a button or link that tells the user what to do next.'
+      }
+    ],
+    recap: 'Structure landing pages to guide the user toward a single goal.'
+  },
+  'html-real-5': {
+    id: 'html-real-5',
+    title: 'Final Review',
+    todayYouAreLearning: 'How to bring everything together and prepare for your next steps.',
+    whyItMatters: 'You\'ve covered a lot of ground! This review ensures you have a solid foundation before moving on to CSS.',
+    explanation: 'We\'ve learned about tags, attributes, structure, semantic HTML, forms, media, SEO, and accessibility. You are now ready to build real, professional websites.',
+    analogy: 'This final review is like a pre-flight check for a pilot. You\'re making sure everything is in working order before you take off into the world of web development.',
+    codeExample: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>My Final Project</title>\n</head>\n<body>\n  <header><h1>Success!</h1></header>\n  <main><p>I am an HTML Specialist.</p></main>\n</body>\n</html>',
+    lineByLine: 'This is a complete, valid HTML5 document using everything we\'ve learned.',
+    commonMistakes: [
+      'Thinking you know everything (the web is always changing!).',
+      'Forgetting the basics (like <!DOCTYPE>) when starting a new project.',
+      'Not practicing regularly.'
+    ],
+    practice: 'Build a one-page portfolio using at least 10 different HTML tags you\'ve learned.',
+    challenge: 'What is the next language you should learn to make your HTML look beautiful? (Hint: CSS).',
+    reflectionQuestion: 'What was the most surprising thing you learned about HTML?',
+    quiz: [
+      {
+        question: 'What is the primary role of HTML on a website?',
+        options: ['Styling and colors', 'Interactivity and logic', 'Structure and content', 'Database management'],
+        correctIndex: 2,
+        explanation: 'HTML provides the skeleton and content of the page.'
+      },
+      {
+        question: 'Are you ready to start styling your pages with CSS?',
+        options: ['Yes!', 'Not yet'],
+        correctIndex: 0,
+        explanation: 'With a strong HTML foundation, you are perfectly prepared for CSS.'
+      }
+    ],
+    recap: 'Congratulations! You are now an HTML Specialist. Keep building and keep learning.'
+  },
   'what-is-coding': {
     id: 'what-is-coding',
     title: 'What is Coding?',
@@ -9,7 +2375,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     explanation: 'Coding is the process of writing instructions for a computer to execute. Computers are incredibly fast but not very smart—they need precise, step-by-step guidance to perform even the simplest tasks. We use programming languages as a bridge between human logic and machine execution.',
     analogy: 'Think of coding like writing a recipe. If you tell a robot to "make a sandwich," it won\'t know where to start. You must tell it: 1. Open the cupboard. 2. Take out two slices of bread. 3. Spread peanut butter on one slice. That level of detail is exactly what coding is.',
     codeExample: '// A simple instruction to display text\nconsole.log("Hello, Future Developer!");',
-    stepByStep: 'The "console.log" command tells the computer to output whatever is inside the parentheses to the screen. The text inside the quotes is called a "string".',
+    lineByLine: 'The "console.log" command tells the computer to output whatever is inside the parentheses to the screen. The text inside the quotes is called a "string".',
     commonMistakes: [
       'Assuming the computer can guess your intent.',
       'Overcomplicating simple logic.',
@@ -51,7 +2417,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     explanation: 'A computer consists of hardware (the physical parts) and software (the code). The CPU (Central Processing Unit) is the brain that executes instructions. RAM (Random Access Memory) is the short-term memory where active data lives. When you run code, the CPU fetches instructions from memory and processes them at lightning speed.',
     analogy: 'Imagine a chef (CPU) in a kitchen. The recipe (Code) is on the counter (RAM). The chef reads the recipe and uses tools to create a dish. If the recipe is missing a step, the chef gets stuck.',
     codeExample: 'let x = 5;\nlet y = 10;\nconsole.log(x + y);',
-    stepByStep: 'First, we store 5 in a memory slot named "x". Then we store 10 in "y". Finally, the CPU adds them and sends the result to the console.',
+    lineByLine: 'First, we store 5 in a memory slot named "x". Then we store 10 in "y". Finally, the CPU adds them and sends the result to the console.',
     commonMistakes: [
       'Thinking computers are "smart"—they are just very fast at following rules.',
       'Confusing storage (Hard Drive) with active memory (RAM).',
@@ -88,7 +2454,7 @@ export const LESSON_CONTENT: Record<string, LessonContent> = {
     explanation: 'When you type a URL, your browser (the Client) sends a request over the internet to another computer (the Server). The server finds the requested files (HTML, CSS, JS) and sends them back. Your browser then "renders" these files, turning code into the visual page you see.',
     analogy: 'Think of a restaurant. You are the customer (Client). The waiter is the internet. The kitchen is the Server. You ask for a menu (Request), the waiter brings it, and the kitchen prepares your food (Response).',
     codeExample: '<!-- This is what the server sends -->\n<!DOCTYPE html>\n<html>\n  <body>\n    <h1>Welcome to the Web!</h1>\n  </body>\n</html>',
-    stepByStep: 'The server sends this text. The browser sees the "h1" tag and knows to display "Welcome to the Web!" as a large heading.',
+    lineByLine: 'The server sends this text. The browser sees the "h1" tag and knows to display "Welcome to the Web!" as a large heading.',
     commonMistakes: [
       'Thinking websites live "inside" your browser.',
       'Forgetting that the server can be anywhere in the world.',
