@@ -16,13 +16,3 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getDatabase(app);
-
-export const sanitizeFirebaseKey = (key: string): string => {
-  if (!key) return '';
-  return key
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[.#$[\]\/]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
-};

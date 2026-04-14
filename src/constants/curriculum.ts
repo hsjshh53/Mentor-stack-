@@ -150,54 +150,36 @@ export const PROJECTS: Project[] = [
     xpReward: 1200
   },
   {
-    id: 'html-proj-beginner',
-    title: 'Personal Profile Page',
-    path: 'HTML',
-    description: 'Create a simple personal profile page using basic HTML tags.',
-    objective: 'Build a single HTML page with your personal information.',
+    id: 'js-logic-project',
+    title: 'Interactive Web Game',
+    path: 'JavaScript Programming',
+    description: 'Build a complex browser-based game using pure JavaScript.',
+    objective: 'Master DOM manipulation, event handling, and game logic.',
     steps: [
-      'Create the basic HTML structure with <!DOCTYPE>, <html>, <head>, and <body>',
-      'Add a heading with your name using <h1>',
-      'Add a paragraph about yourself using <p>',
-      'Add an image of yourself or a placeholder using <img>',
-      'Add a list of your hobbies using <ul> and <li>',
-      'Add a link to your social media using <a>'
+      'Design the game mechanics and state management',
+      'Implement the game loop and rendering',
+      'Add collision detection and scoring',
+      'Create a responsive UI for game controls',
+      'Implement local storage for high scores'
     ],
-    output: 'A single HTML file with your profile.',
-    xpReward: 300
+    output: 'A playable web game.',
+    xpReward: 700
   },
   {
-    id: 'html-proj-intermediate',
-    title: 'Multi-page Website',
-    path: 'HTML',
-    description: 'Build a multi-page website with a Home, About, and Contact page.',
-    objective: 'Create a functional 3-page website with navigation.',
+    id: 'python-automation-project',
+    title: 'Data Scraping & Analysis Tool',
+    path: 'Python Programming',
+    description: 'Build a tool that scrapes data from the web and performs analysis.',
+    objective: 'Master Python libraries like BeautifulSoup and Pandas.',
     steps: [
-      'Create three separate HTML files: index.html, about.html, and contact.html',
-      'Implement a navigation bar that links all pages using <nav> and <a>',
-      'Use semantic HTML tags like <header>, <main>, and <footer>',
-      'Add a contact form on the Contact page with various input types',
-      'Ensure all pages have a consistent structure and title'
+      'Identify a target website for data extraction',
+      'Implement a web scraper using BeautifulSoup or Scrapy',
+      'Clean and structure the extracted data',
+      'Perform statistical analysis using Pandas',
+      'Generate a visual report using Matplotlib'
     ],
-    output: 'A folder containing 3 linked HTML files.',
-    xpReward: 600
-  },
-  {
-    id: 'html-proj-advanced',
-    title: 'Full Landing Page',
-    path: 'HTML',
-    description: 'Create a professional landing page for a startup.',
-    objective: 'Build a high-quality, production-ready landing page structure.',
-    steps: [
-      'Design a hero section with a clear call to action',
-      'Add a features section with icons and descriptions using <section> and <article>',
-      'Include a pricing table using <table> or semantic divs',
-      'Add a testimonials section with <figure> and <blockquote>',
-      'Implement a footer with site links and copyright information',
-      'Focus on clean, semantic structure and SEO best practices'
-    ],
-    output: 'A complete, semantic landing page structure.',
-    xpReward: 1000
+    output: 'A functional Python script and data report.',
+    xpReward: 750
   }
 ];
 
@@ -206,7 +188,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'frontend',
     title: 'Frontend Developer',
     description: 'Master the art of building beautiful, interactive user interfaces.',
-    category: 'Core Software Development',
+    category: 'career-path',
     status: 'active',
     icon: 'Layout',
     skills: ['HTML', 'CSS', 'JavaScript', 'React'],
@@ -286,7 +268,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'backend',
     title: 'Backend Developer',
     description: 'Build powerful servers, APIs, and database systems.',
-    category: 'Core Software Development',
+    category: 'career-path',
     status: 'active',
     icon: 'Database',
     skills: ['Node.js', 'Express', 'Firebase', 'SQL'],
@@ -380,7 +362,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'fullstack',
     title: 'Full-Stack Developer',
     description: 'Master both frontend and backend to build complete applications.',
-    category: 'Core Software Development',
+    category: 'career-path',
     status: 'active',
     icon: 'Globe',
     skills: ['Frontend', 'Backend', 'DevOps'],
@@ -474,7 +456,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'mobile',
     title: 'Mobile App Developer',
     description: 'Build native and cross-platform mobile applications.',
-    category: 'Core Software Development',
+    category: 'career-path',
     status: 'active',
     icon: 'Smartphone',
     skills: ['React Native', 'Swift', 'Kotlin'],
@@ -540,7 +522,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'data-analyst',
     title: 'Data Analyst',
     description: 'Turn raw data into meaningful insights and stories.',
-    category: 'Data & AI',
+    category: 'career-path',
     status: 'active',
     icon: 'BarChart',
     skills: ['Python', 'SQL', 'Excel', 'Pandas'],
@@ -627,7 +609,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'ai-engineer',
     title: 'AI Engineer',
     description: 'Build intelligent systems using machine learning and neural networks.',
-    category: 'Data & AI',
+    category: 'career-path',
     status: 'active',
     icon: 'Cpu',
     skills: ['PyTorch', 'NLP', 'Computer Vision'],
@@ -710,147 +692,11 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     tools: ['python', 'tensorflow', 'pytorch', 'opencv', 'numpy', 'pandas', 'scikit-learn'],
     finalExamId: 'ai-final-exam'
   },
-  'HTML': {
-    id: 'html-path',
-    title: 'HTML Specialist',
-    description: 'Master the language of the web from zero to professional.',
-    category: 'Core Software Development',
-    status: 'active',
-    icon: 'Code',
-    skills: ['HTML', 'Semantic Web', 'Accessibility', 'SEO'],
-    recommended: true,
-    levels: {
-      beginner: {
-        id: 'beginner',
-        title: 'Beginner foundations',
-        description: 'Learn the core building blocks of HTML.',
-        modules: [
-          {
-            id: 'html-intro',
-            title: 'Introduction to HTML',
-            description: 'The absolute basics of the web.',
-            lessons: ['html-intro-1', 'html-intro-2', 'html-intro-3', 'html-intro-4', 'html-intro-5'],
-            testId: 'html-intro-test'
-          },
-          {
-            id: 'html-structure-mod',
-            title: 'Basic Structure',
-            description: 'The skeleton of every website.',
-            lessons: ['html-struct-1', 'html-struct-2', 'html-struct-3', 'html-struct-4', 'html-struct-5'],
-            testId: 'html-struct-test'
-          },
-          {
-            id: 'html-text-mod',
-            title: 'Text & Formatting',
-            description: 'Mastering content presentation.',
-            lessons: ['html-text-1', 'html-text-2', 'html-text-3', 'html-text-4', 'html-text-5'],
-            testId: 'html-text-test'
-          },
-          {
-            id: 'html-links-images-mod',
-            title: 'Links & Images',
-            description: 'Connecting the web and adding visuals.',
-            lessons: ['html-links-1', 'html-links-2', 'html-links-3', 'html-links-4', 'html-links-5'],
-            testId: 'html-links-test'
-          },
-          {
-            id: 'html-lists-tables-mod',
-            title: 'Lists & Tables',
-            description: 'Organizing data effectively.',
-            lessons: ['html-lists-1', 'html-lists-2', 'html-lists-3', 'html-lists-4', 'html-lists-5'],
-            testId: 'html-lists-test'
-          },
-          {
-            id: 'html-forms-basics-mod',
-            title: 'Forms Basics',
-            description: 'Collecting user input.',
-            lessons: ['html-forms-1', 'html-forms-2', 'html-forms-3', 'html-forms-4', 'html-forms-5'],
-            testId: 'html-forms-test'
-          }
-        ],
-        projects: [PROJECTS[PROJECTS.length - 3]]
-      },
-      intermediate: {
-        id: 'intermediate',
-        title: 'Intermediate HTML',
-        description: 'Master semantic web and advanced features.',
-        modules: [
-          {
-            id: 'html-semantic-mod',
-            title: 'Semantic HTML',
-            description: 'Writing meaningful code.',
-            lessons: ['html-sem-1', 'html-sem-2', 'html-sem-3', 'html-sem-4', 'html-sem-5'],
-            testId: 'html-sem-test'
-          },
-          {
-            id: 'html-forms-adv-mod',
-            title: 'Forms Advanced',
-            description: 'Complex user interactions.',
-            lessons: ['html-forms-adv-1', 'html-forms-adv-2', 'html-forms-adv-3', 'html-forms-adv-4', 'html-forms-adv-5'],
-            testId: 'html-forms-adv-test'
-          },
-          {
-            id: 'html-media-mod',
-            title: 'Media (Audio/Video)',
-            description: 'Rich media integration.',
-            lessons: ['html-media-1', 'html-media-2', 'html-media-3', 'html-media-4', 'html-media-5'],
-            testId: 'html-media-test'
-          },
-          {
-            id: 'html-seo-mod',
-            title: 'SEO Basics',
-            description: 'Optimizing for search engines.',
-            lessons: ['html-seo-1', 'html-seo-2', 'html-seo-3', 'html-seo-4', 'html-seo-5'],
-            testId: 'html-seo-test'
-          },
-          {
-            id: 'html-a11y-mod',
-            title: 'Accessibility',
-            description: 'Building for everyone.',
-            lessons: ['html-a11y-1', 'html-a11y-2', 'html-a11y-3', 'html-a11y-4', 'html-a11y-5'],
-            testId: 'html-a11y-test'
-          }
-        ],
-        projects: [PROJECTS[PROJECTS.length - 2]]
-      },
-      advanced: {
-        id: 'advanced',
-        title: 'Advanced HTML',
-        description: 'Performance and real-world architecture.',
-        modules: [
-          {
-            id: 'html-best-mod',
-            title: 'HTML Best Practices',
-            description: 'Professional coding standards.',
-            lessons: ['html-best-1', 'html-best-2', 'html-best-3', 'html-best-4', 'html-best-5'],
-            testId: 'html-best-test'
-          },
-          {
-            id: 'html-perf-mod',
-            title: 'Performance Optimization',
-            description: 'Making the web faster.',
-            lessons: ['html-perf-1', 'html-perf-2', 'html-perf-3', 'html-perf-4', 'html-perf-5'],
-            testId: 'html-perf-test'
-          },
-          {
-            id: 'html-real-mod',
-            title: 'Real-world Structure',
-            description: 'Building production-ready layouts.',
-            lessons: ['html-real-1', 'html-real-2', 'html-real-3', 'html-real-4', 'html-real-5'],
-            testId: 'html-real-test'
-          }
-        ],
-        projects: [PROJECTS[PROJECTS.length - 1]]
-      }
-    },
-    tools: ['html', 'vscode', 'terminal', 'github'],
-    finalExamId: 'html-final-exam'
-  },
   'Machine Learning': {
     id: 'ml',
     title: 'Machine Learning',
     description: 'Build and deploy predictive models.',
-    category: 'Data & AI',
+    category: 'career-path',
     status: 'active',
     icon: 'Activity',
     skills: ['Scikit-Learn', 'TensorFlow', 'Math'],
@@ -908,7 +754,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'data-scientist',
     title: 'Data Scientist',
     description: 'Solve complex problems with data science.',
-    category: 'Data & AI',
+    category: 'career-path',
     status: 'active',
     icon: 'Database',
     skills: ['R', 'Statistics', 'Big Data'],
@@ -950,7 +796,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'data-engineer',
     title: 'Data Engineer',
     description: 'Build data pipelines and infrastructure.',
-    category: 'Data & AI',
+    category: 'career-path',
     status: 'active',
     icon: 'Layers',
     skills: ['Spark', 'Hadoop', 'ETL'],
@@ -984,7 +830,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'cybersecurity',
     title: 'Cybersecurity',
     description: 'Protect systems and networks from digital attacks.',
-    category: 'Security',
+    category: 'career-path',
     status: 'active',
     icon: 'Shield',
     skills: ['Ethical Hacking', 'Network Security'],
@@ -1064,7 +910,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'ethical-hacking',
     title: 'Ethical Hacking',
     description: 'Offensive security techniques.',
-    category: 'Security',
+    category: 'career-path',
     status: 'active',
     icon: 'Terminal',
     skills: ['PenTesting', 'Linux', 'Metasploit'],
@@ -1106,7 +952,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'network-security',
     title: 'Network Security',
     description: 'Securing network infrastructure.',
-    category: 'Security',
+    category: 'career-path',
     status: 'active',
     icon: 'Globe',
     skills: ['Firewalls', 'VPNs', 'Protocols'],
@@ -1140,7 +986,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'app-security',
     title: 'Application Security',
     description: 'Securing software applications.',
-    category: 'Security',
+    category: 'career-path',
     status: 'active',
     icon: 'Lock',
     skills: ['OWASP', 'Code Audit'],
@@ -1174,7 +1020,7 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     id: 'devops',
     title: 'DevOps Engineer',
     description: 'Bridge the gap between development and operations.',
-    category: 'Infrastructure & Systems',
+    category: 'career-path',
     status: 'active',
     icon: 'Server',
     skills: ['Docker', 'K8s', 'CI/CD', 'AWS'],
@@ -2950,5 +2796,564 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
     },
     tools: ['google-workspace', 'slack', 'calendly'],
     finalExamId: 'va-final-exam'
+  },
+  'JavaScript Programming': {
+    id: 'js-programming',
+    title: 'JavaScript Programming',
+    description: 'Master the language of the web from zero to professional.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Code',
+    skills: ['ES6+', 'DOM', 'Async JS', 'Web APIs'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'JS Foundations',
+        description: 'Learn the core syntax and logic of JavaScript.',
+        modules: [
+          {
+            id: 'js-syntax',
+            title: 'Syntax & Types',
+            description: 'Variables, data types, and basic operators.',
+            lessons: ['js-variables', 'js-data-types', 'js-operators', 'js-control-flow'],
+            testId: 'js-syntax-test'
+          },
+          {
+            id: 'js-functions',
+            title: 'Functions & Scope',
+            description: 'Writing reusable code and understanding scope.',
+            lessons: ['js-function-basics', 'js-arrow-functions', 'js-scope-closures'],
+            testId: 'js-functions-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'DOM & Events',
+        description: 'Make websites interactive with JavaScript.',
+        modules: [
+          {
+            id: 'js-dom',
+            title: 'DOM Manipulation',
+            description: 'Selecting and modifying HTML elements.',
+            lessons: ['js-dom-selectors', 'js-modifying-elements', 'js-event-listeners'],
+            testId: 'js-dom-test'
+          },
+          {
+            id: 'js-async',
+            title: 'Asynchronous JS',
+            description: 'Promises, Async/Await, and Fetch API.',
+            lessons: ['js-promises', 'js-async-await', 'js-fetch-api'],
+            testId: 'js-async-test'
+          }
+        ],
+        projects: [PROJECTS[PROJECTS.length - 2]]
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Modern JS & Tooling',
+        description: 'Master ES6+ features and professional development tools.',
+        modules: [
+          {
+            id: 'js-es6',
+            title: 'ES6+ Features',
+            description: 'Destructuring, spread/rest, and classes.',
+            lessons: ['js-destructuring', 'js-classes-oop', 'js-modules'],
+            testId: 'js-es6-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['javascript', 'npm', 'webpack', 'babel'],
+    finalExamId: 'js-final-exam'
+  },
+  'Python Programming': {
+    id: 'python-programming',
+    title: 'Python Programming',
+    description: 'Master Python for automation, data science, and web development.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Terminal',
+    skills: ['Python Syntax', 'OOP', 'Data Structures', 'Automation'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'Python Basics',
+        description: 'Learn the fundamentals of Python programming.',
+        modules: [
+          {
+            id: 'py-syntax',
+            title: 'Python Syntax',
+            description: 'Variables, loops, and conditionals.',
+            lessons: ['py-intro', 'py-variables', 'py-loops', 'py-conditionals'],
+            testId: 'py-syntax-test'
+          },
+          {
+            id: 'py-data-structures',
+            title: 'Data Structures',
+            description: 'Lists, dictionaries, tuples, and sets.',
+            lessons: ['py-lists', 'py-dicts', 'py-tuples-sets'],
+            testId: 'py-ds-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'OOP & Modules',
+        description: 'Organize your code with classes and modules.',
+        modules: [
+          {
+            id: 'py-oop',
+            title: 'Object-Oriented Python',
+            description: 'Classes, inheritance, and polymorphism.',
+            lessons: ['py-classes', 'py-inheritance', 'py-dunder-methods'],
+            testId: 'py-oop-test'
+          },
+          {
+            id: 'py-libs',
+            title: 'Standard Libraries',
+            description: 'Working with OS, Sys, and Datetime.',
+            lessons: ['py-os-module', 'py-datetime', 'py-json-csv'],
+            testId: 'py-libs-test'
+          }
+        ],
+        projects: [PROJECTS[PROJECTS.length - 1]]
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Advanced Python',
+        description: 'Decorators, generators, and concurrency.',
+        modules: [
+          {
+            id: 'py-advanced',
+            title: 'Advanced Topics',
+            description: 'Mastering Python\'s advanced features.',
+            lessons: ['py-decorators', 'py-generators', 'py-concurrency'],
+            testId: 'py-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['python', 'pip', 'venv', 'pytest'],
+    finalExamId: 'python-final-exam'
+  },
+  'Java Programming': {
+    id: 'java-programming',
+    title: 'Java Programming',
+    description: 'Master Java for enterprise and Android development.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Coffee',
+    skills: ['Java Syntax', 'OOP', 'Collections', 'Multithreading'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'Java Foundations',
+        description: 'Learn the core syntax and OOP principles of Java.',
+        modules: [
+          {
+            id: 'java-syntax',
+            title: 'Java Syntax',
+            description: 'Variables, types, and control flow.',
+            lessons: ['java-intro', 'java-variables', 'java-operators', 'java-conditionals'],
+            testId: 'java-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'Advanced OOP',
+        description: 'Interfaces, abstract classes, and exceptions.',
+        modules: [
+          {
+            id: 'java-oop',
+            title: 'OOP Mastery',
+            description: 'Deep dive into Java OOP.',
+            lessons: ['java-interfaces', 'java-abstract-classes', 'java-exceptions'],
+            testId: 'java-oop-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Collections & Concurrency',
+        description: 'Master Java collections and multithreading.',
+        modules: [
+          {
+            id: 'java-advanced',
+            title: 'Advanced Java',
+            description: 'Collections and Threads.',
+            lessons: ['java-collections', 'java-generics', 'java-multithreading'],
+            testId: 'java-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['java', 'maven', 'gradle', 'intellij'],
+    finalExamId: 'java-final-exam'
+  },
+  'C++ Programming': {
+    id: 'cpp-programming',
+    title: 'C++ Programming',
+    description: 'Master C++ for high-performance systems and game development.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Terminal',
+    skills: ['C++ Syntax', 'Memory Management', 'STL', 'Templates'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'C++ Foundations',
+        description: 'Learn the core syntax and memory basics of C++.',
+        modules: [
+          {
+            id: 'cpp-syntax',
+            title: 'C++ Syntax',
+            description: 'Variables, loops, and pointers.',
+            lessons: ['cpp-intro', 'cpp-variables', 'cpp-pointers', 'cpp-references'],
+            testId: 'cpp-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'OOP & Memory',
+        description: 'Classes and dynamic memory management.',
+        modules: [
+          {
+            id: 'cpp-memory',
+            title: 'Memory Management',
+            description: 'Stack vs Heap and Smart Pointers.',
+            lessons: ['cpp-dynamic-memory', 'cpp-smart-pointers', 'cpp-classes'],
+            testId: 'cpp-memory-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'STL & Templates',
+        description: 'Master the Standard Template Library.',
+        modules: [
+          {
+            id: 'cpp-advanced',
+            title: 'Advanced C++',
+            description: 'Templates and STL.',
+            lessons: ['cpp-templates', 'cpp-stl-containers', 'cpp-stl-algorithms'],
+            testId: 'cpp-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['cpp', 'cmake', 'gdb', 'visual-studio'],
+    finalExamId: 'cpp-final-exam'
+  },
+  'C# Programming': {
+    id: 'csharp-programming',
+    title: 'C# Programming',
+    description: 'Master C# for .NET and Unity development.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Code',
+    skills: ['C# Syntax', '.NET Core', 'LINQ', 'Unity Basics'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'C# Foundations',
+        description: 'Learn the core syntax of C#.',
+        modules: [
+          {
+            id: 'cs-syntax',
+            title: 'C# Syntax',
+            description: 'Variables, types, and basic logic.',
+            lessons: ['cs-intro', 'cs-variables', 'cs-control-flow'],
+            testId: 'cs-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: '.NET & OOP',
+        description: 'Building applications with .NET.',
+        modules: [
+          {
+            id: 'cs-dotnet',
+            title: '.NET Fundamentals',
+            description: 'Working with the .NET ecosystem.',
+            lessons: ['cs-dotnet-core', 'cs-linq', 'cs-async-await'],
+            testId: 'cs-dotnet-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Advanced C#',
+        description: 'Delegates, events, and performance.',
+        modules: [
+          {
+            id: 'cs-advanced',
+            title: 'Advanced Topics',
+            description: 'Mastering C# features.',
+            lessons: ['cs-delegates-events', 'cs-reflection', 'cs-performance'],
+            testId: 'cs-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['csharp', 'dotnet', 'visual-studio', 'unity'],
+    finalExamId: 'csharp-final-exam'
+  },
+  'Go Programming': {
+    id: 'go-programming',
+    title: 'Go Programming',
+    description: 'Master Go for cloud-native and concurrent systems.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Zap',
+    skills: ['Go Syntax', 'Goroutines', 'Channels', 'Interfaces'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'Go Foundations',
+        description: 'Learn the core syntax of Go.',
+        modules: [
+          {
+            id: 'go-syntax',
+            title: 'Go Syntax',
+            description: 'Variables, types, and loops.',
+            lessons: ['go-intro', 'go-variables', 'go-types', 'go-control-flow'],
+            testId: 'go-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'Concurrency & Interfaces',
+        description: 'Master Go\'s unique features.',
+        modules: [
+          {
+            id: 'go-concurrency',
+            title: 'Concurrency',
+            description: 'Goroutines and Channels.',
+            lessons: ['go-goroutines', 'go-channels', 'go-select'],
+            testId: 'go-concurrency-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Advanced Go',
+        description: 'Microservices and performance.',
+        modules: [
+          {
+            id: 'go-advanced',
+            title: 'Advanced Topics',
+            description: 'Testing and performance.',
+            lessons: ['go-testing', 'go-benchmarking', 'go-microservices'],
+            testId: 'go-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['go', 'docker', 'kubernetes'],
+    finalExamId: 'go-final-exam'
+  },
+  'Rust Programming': {
+    id: 'rust-programming',
+    title: 'Rust Programming',
+    description: 'Master Rust for safe and fast systems programming.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Shield',
+    skills: ['Ownership', 'Borrowing', 'Traits', 'Concurrency'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'Rust Foundations',
+        description: 'Learn the core syntax and ownership basics.',
+        modules: [
+          {
+            id: 'rust-syntax',
+            title: 'Rust Syntax',
+            description: 'Variables, types, and functions.',
+            lessons: ['rust-intro', 'rust-variables', 'rust-types'],
+            testId: 'rust-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'Ownership & Borrowing',
+        description: 'Master Rust\'s memory safety model.',
+        modules: [
+          {
+            id: 'rust-memory',
+            title: 'Memory Safety',
+            description: 'Ownership, Borrowing, and Lifetimes.',
+            lessons: ['rust-ownership', 'rust-borrowing', 'rust-lifetimes'],
+            testId: 'rust-memory-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Traits & Generics',
+        description: 'Advanced Rust features.',
+        modules: [
+          {
+            id: 'rust-advanced',
+            title: 'Advanced Rust',
+            description: 'Traits and Generics.',
+            lessons: ['rust-traits', 'rust-generics', 'rust-macros'],
+            testId: 'rust-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['rust', 'cargo', 'wasm'],
+    finalExamId: 'rust-final-exam'
+  },
+  'Swift Programming': {
+    id: 'swift-programming',
+    title: 'Swift Programming',
+    description: 'Master Swift for iOS and Apple ecosystem.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Smartphone',
+    skills: ['Swift Syntax', 'SwiftUI', 'Combine', 'Core Data'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'Swift Foundations',
+        description: 'Learn the core syntax of Swift.',
+        modules: [
+          {
+            id: 'swift-syntax',
+            title: 'Swift Syntax',
+            description: 'Variables, types, and optionals.',
+            lessons: ['swift-intro', 'swift-variables', 'swift-optionals'],
+            testId: 'swift-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'SwiftUI & Layout',
+        description: 'Building UIs with SwiftUI.',
+        modules: [
+          {
+            id: 'swift-ui',
+            title: 'SwiftUI Basics',
+            description: 'Views and Modifiers.',
+            lessons: ['swiftui-intro', 'swiftui-state', 'swiftui-layout'],
+            testId: 'swiftui-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Advanced Swift',
+        description: 'Combine and Core Data.',
+        modules: [
+          {
+            id: 'swift-advanced',
+            title: 'Advanced Topics',
+            description: 'Data and Reactive programming.',
+            lessons: ['swift-combine', 'swift-core-data', 'swift-networking'],
+            testId: 'swift-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['swift', 'xcode', 'swiftui'],
+    finalExamId: 'swift-final-exam'
+  },
+  'PHP Programming': {
+    id: 'php-programming',
+    title: 'PHP Programming',
+    description: 'Master PHP for modern web development.',
+    category: 'coding-languages',
+    status: 'active',
+    icon: 'Globe',
+    skills: ['PHP Syntax', 'OOP', 'MySQL', 'Composer'],
+    recommended: true,
+    levels: {
+      beginner: {
+        id: 'beginner',
+        title: 'PHP Foundations',
+        description: 'Learn the core syntax of PHP.',
+        modules: [
+          {
+            id: 'php-syntax',
+            title: 'PHP Syntax',
+            description: 'Variables, loops, and arrays.',
+            lessons: ['php-intro', 'php-variables', 'php-arrays', 'php-loops'],
+            testId: 'php-syntax-test'
+          }
+        ],
+        projects: []
+      },
+      intermediate: {
+        id: 'intermediate',
+        title: 'OOP & Databases',
+        description: 'Building dynamic sites with PHP.',
+        modules: [
+          {
+            id: 'php-oop',
+            title: 'PHP OOP',
+            description: 'Classes and Objects.',
+            lessons: ['php-classes', 'php-inheritance', 'php-namespaces'],
+            testId: 'php-oop-test'
+          }
+        ],
+        projects: []
+      },
+      advanced: {
+        id: 'advanced',
+        title: 'Advanced PHP',
+        description: 'Security and Frameworks.',
+        modules: [
+          {
+            id: 'php-advanced',
+            title: 'Advanced Topics',
+            description: 'Security and Composer.',
+            lessons: ['php-security', 'php-composer', 'php-laravel-intro'],
+            testId: 'php-adv-test'
+          }
+        ],
+        projects: []
+      }
+    },
+    tools: ['php', 'mysql', 'composer', 'apache'],
+    finalExamId: 'php-final-exam'
   }
 };

@@ -15,7 +15,16 @@ import { TestPage } from './pages/TestPage';
 import { ExamPage } from './pages/ExamPage';
 import { VerificationPage } from './pages/VerificationPage';
 import { CertificatePage } from './pages/CertificatePage';
-import { AILessonGenerator } from './components/AILessonGenerator';
+import { AcademyPathPage } from './pages/AcademyPathPage';
+import { CodingLanguagesPage } from './pages/CodingLanguagesPage';
+import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AIGenerator } from './pages/admin/AIGenerator';
+import { ManageLessons } from './pages/admin/ManageLessons';
+import { ManageSkills } from './pages/admin/ManageSkills';
+import { ManageUsers } from './pages/admin/ManageUsers';
+import { ManageCurriculum } from './pages/admin/ManageCurriculum';
+import { ReviewLessonsPage } from './pages/admin/ReviewLessonsPage';
+import { useAdmin } from './hooks/useAdmin';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -23,11 +32,18 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return user ? <>{children}</> : <Navigate to="/login" />;
 };
 
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  
+  if (authLoading || adminLoading) return null;
+  return user && isAdmin ? <>{children}</> : <Navigate to="/dashboard" />;
+};
+
 export default function App() {
   return (
     <AuthProvider>
       <Router>
-        <AILessonGenerator />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthPage mode="login" />} />
@@ -104,6 +120,55 @@ export default function App() {
             <PrivateRoute>
               <CertificatePage />
             </PrivateRoute>
+          } />
+
+          <Route path="/academy/:pathName" element={
+            <PrivateRoute>
+              <AcademyPathPage />
+            </PrivateRoute>
+          } />
+
+          <Route path="/coding-languages" element={
+            <PrivateRoute>
+              <CodingLanguagesPage />
+            </PrivateRoute>
+          } />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } />
+          <Route path="/admin/generator" element={
+            <AdminRoute>
+              <AIGenerator />
+            </AdminRoute>
+          } />
+          <Route path="/admin/lessons" element={
+            <AdminRoute>
+              <ManageLessons />
+            </AdminRoute>
+          } />
+          <Route path="/admin/skills" element={
+            <AdminRoute>
+              <ManageSkills />
+            </AdminRoute>
+          } />
+          <Route path="/admin/users" element={
+            <AdminRoute>
+              <ManageUsers />
+            </AdminRoute>
+          } />
+          <Route path="/admin/curriculum" element={
+            <AdminRoute>
+              <ManageCurriculum />
+            </AdminRoute>
+          } />
+          <Route path="/admin/review-lessons/:skillId/:moduleId" element={
+            <AdminRoute>
+              <ReviewLessonsPage />
+            </AdminRoute>
           } />
 
           <Route path="*" element={<Navigate to="/" />} />

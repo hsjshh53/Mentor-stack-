@@ -1,31 +1,21 @@
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs 
-} from 'firebase/firestore';
-import { firestore } from '../lib/firebase';
-import { Certificate, UserProgress, CareerPath, CertificateTier, PathData, Level, Module, PathLevel } from '../types/index';
+import { ref, set, get, push, update } from 'firebase/database';
+import { db } from '../lib/firebase';
+import { Certificate, UserProgress, CareerPath, CertificateTier } from '../types';
 import { CURRICULUM, PROJECTS } from '../constants/curriculum';
 
 export const checkCertificateEligibility = (progress: UserProgress, path: CareerPath): boolean => {
-  const pathData = CURRICULUM[path] as PathData;
+  const pathData = CURRICULUM[path];
   if (!pathData) return false;
 
   // 1. All lessons completed
-  const allLessons = Object.values(pathData.levels).flatMap((level: PathLevel) => 
-    level.modules.flatMap((m: Module) => m.lessons)
+  const allLessons = Object.values(pathData.levels).flatMap(level => 
+    level.modules.flatMap(m => m.lessons)
   );
   const allLessonsCompleted = allLessons.every(id => progress.completedLessons?.includes(id));
 
   // 2. All module tests passed
-  const allTests = Object.values(pathData.levels).flatMap((level: PathLevel) => 
-    level.modules.filter((m: Module) => m.testId).map((m: Module) => m.testId!)
+  const allTests = Object.values(pathData.levels).flatMap(level => 
+    level.modules.filter(m => m.testId).map(m => m.testId!)
   );
   const allTestsPassed = allTests.every(id => progress.completedTests?.includes(id));
 
@@ -33,8 +23,8 @@ export const checkCertificateEligibility = (progress: UserProgress, path: Career
   const examPassed = progress.completedExams?.includes(pathData.finalExamId);
 
   // 4. All projects in the path must be submitted with a GitHub link
-  const pathProjectIds = Object.values(pathData.levels).flatMap((level: PathLevel) => 
-    level.modules.filter((m: any) => m.projectId).map((m: any) => m.projectId!)
+  const pathProjectIds = Object.values(pathData.levels).flatMap(level => 
+    level.modules.filter(m => m.projectId).map(m => m.projectId!)
   );
   const allProjectsSubmitted = pathProjectIds.every(id => {
     const submission = progress.submissions?.[id];
@@ -52,26 +42,25 @@ export const generateCertificate = async (
   progress: UserProgress,
   tier: CertificateTier = 'Professional'
 ): Promise<Certificate> => {
-  const pathData = CURRICULUM[path] as PathData;
+  const pathData = CURRICULUM[path];
   
   // Check if user already has a certificate for this path
-  const userRef = doc(firestore, 'users', userId);
-  const userSnap = await getDoc(userRef);
-  if (userSnap.exists()) {
-    const userData = userSnap.data();
-    const existingCerts = userData.progress?.certificates || [];
-    
-    for (const certId of existingCerts) {
-      const certSnap = await getDoc(doc(firestore, 'certificates', certId));
-      if (certSnap.exists() && certSnap.data().pathName === path) {
-        return certSnap.data() as Certificate;
-      }
+  const userCertsRef = ref(db, `users/${userId}/progress/certificates`);
+  const userCertsSnapshot = await get(userCertsRef);
+  const userCertIds = userCertsSnapshot.exists() ? userCertsSnapshot.val() : [];
+  
+  // Fetch existing certificates to check for path
+  for (const certId of userCertIds) {
+    const certRef = ref(db, `certificates/${certId}`);
+    const certSnapshot = await get(certRef);
+    if (certSnapshot.exists() && certSnapshot.val().pathName === path) {
+      return certSnapshot.val();
     }
   }
 
   // Get project details from submissions
-  const pathProjectIds = Object.values(pathData.levels).flatMap((level: PathLevel) => 
-    level.modules.filter((m: any) => m.projectId).map((m: any) => m.projectId!)
+  const pathProjectIds = Object.values(pathData.levels).flatMap(level => 
+    level.modules.filter(m => m.projectId).map(m => m.projectId!)
   );
   const certProjects = pathProjectIds.map(id => {
     const submission = progress.submissions[id];
@@ -83,54 +72,47 @@ export const generateCertificate = async (
     };
   });
 
-  const certRef = collection(firestore, 'certificates');
-  const newCertDoc = await addDoc(certRef, {
+  const certsRef = ref(db, 'certificates');
+  const newCertRef = push(certsRef);
+  const certId = newCertRef.key!;
+
+  const certificate: Certificate = {
+    id: certId,
     userId,
     fullName,
     pathName: path,
     tier,
-    level: 'Advanced',
+    level: 'Advanced', // Defaulting to Advanced for path completion
     issueDate: new Date().toISOString(),
     finalScore: score,
-    skills: (pathData as any).skills || [],
+    skills: pathData.skills || [],
     projectTitle: certProjects[certProjects.length - 1]?.title || 'Capstone Project',
     projects: certProjects,
+    verificationUrl: `${window.location.origin}/verify/${certId}`,
     isValid: true,
     issuedBy: "MentorStack AI by OLYNQ SOCIAL"
-  });
+  };
 
-  const certId = newCertDoc.id;
-  const verificationUrl = `${window.location.origin}/verify/${certId}`;
-  
-  await updateDoc(newCertDoc, { id: certId, verificationUrl });
+  await set(newCertRef, certificate);
 
   // Update user progress with new certificate ID
-  const userSnap2 = await getDoc(userRef);
-  if (userSnap2.exists()) {
-    const userData = userSnap2.data();
-    const certs = userData.progress?.certificates || [];
-    await updateDoc(userRef, {
-      'progress.certificates': [...certs, certId]
-    });
-  }
+  await set(userCertsRef, [...userCertIds, certId]);
 
-  const finalCertSnap = await getDoc(newCertDoc);
-  return finalCertSnap.data() as Certificate;
+  return certificate;
 };
 
 export const getCertificate = async (certId: string): Promise<Certificate | null> => {
-  const certRef = doc(firestore, 'certificates', certId);
-  const snapshot = await getDoc(certRef);
-  return snapshot.exists() ? snapshot.data() as Certificate : null;
+  const certRef = ref(db, `certificates/${certId}`);
+  const snapshot = await get(certRef);
+  return snapshot.exists() ? snapshot.val() : null;
 };
 
 export const getUserCertificates = async (userId: string): Promise<Certificate[]> => {
-  const userRef = doc(firestore, 'users', userId);
-  const snapshot = await getDoc(userRef);
+  const userCertsRef = ref(db, `users/${userId}/progress/certificates`);
+  const snapshot = await get(userCertsRef);
   if (!snapshot.exists()) return [];
   
-  const data = snapshot.data();
-  const certIds = data.progress?.certificates || [];
+  const certIds = snapshot.val();
   const certificates: Certificate[] = [];
   
   for (const certId of certIds) {

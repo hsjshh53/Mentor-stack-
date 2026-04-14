@@ -42,9 +42,6 @@ export const ProfilePage: React.FC = () => {
     navigate('/');
   };
 
-  const ADMIN_EMAIL = 'olynqsociallimited@gmail.com';
-  const isAdmin = user?.email === ADMIN_EMAIL;
-
   const stats = [
     { label: 'Streak', value: `${progress.streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
     { label: 'XP', value: progress.xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
@@ -74,13 +71,7 @@ export const ProfilePage: React.FC = () => {
         { id: 'help', icon: <HelpCircle size={20} />, label: 'Help Center', desc: 'Get support and find answers' },
         { id: 'subscription', icon: <CreditCard size={20} />, label: 'Subscription', desc: 'Manage your premium benefits' }
       ]
-    },
-    ...(isAdmin ? [{
-      title: 'Administration',
-      items: [
-        { id: 'admin', icon: <Shield size={20} />, label: 'Admin Console', desc: 'Manage platform curriculum and users' }
-      ]
-    }] : [])
+    }
   ];
 
   return (
@@ -304,13 +295,7 @@ export const ProfilePage: React.FC = () => {
                   {section.items.map((item) => (
                     <Card 
                       key={item.id}
-                      onClick={() => {
-                        if (item.id === 'admin') {
-                          navigate('/admin');
-                        } else {
-                          setActiveModal(item.id);
-                        }
-                      }}
+                      onClick={() => setActiveModal(item.id)}
                       className="p-6 flex items-center justify-between group cursor-pointer hover:bg-white/5 transition-all border-white/5 active:scale-[0.98]"
                     >
                       <div className="flex gap-6 items-center">

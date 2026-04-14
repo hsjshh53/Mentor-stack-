@@ -1,91 +1,112 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Badge } from '../components/ui';
-import { ShieldCheck, CheckCircle2, User, Calendar, Award, Globe, ExternalLink, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ShieldCheck, ShieldAlert, Zap, ArrowLeft, Loader2 } from 'lucide-react';
+import { getCertificate } from '../services/certificateService';
+import { Certificate } from '../types';
+import { CertificateView } from '../components/CertificateView';
 
 export const VerificationPage: React.FC = () => {
-  const { id } = useParams();
+  const { certificateId } = useParams<{ certificateId: string }>();
+  const [certificate, setCertificate] = useState<Certificate | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col items-center justify-center p-8 space-y-12">
-      <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
-          <Zap size={20} fill="currentColor" />
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      if (!certificateId) return;
+      try {
+        const cert = await getCertificate(certificateId);
+        if (cert) {
+          setCertificate(cert);
+        } else {
+          setError('Certificate not found');
+        }
+      } catch (err) {
+        setError('Invalid certificate ID');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCertificate();
+  }, [certificateId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mx-auto" />
+          <p className="text-white/40 font-medium tracking-widest uppercase text-xs">Verifying Certificate...</p>
         </div>
-        <span className="font-black text-2xl tracking-tighter">MentorStack</span>
       </div>
+    );
+  }
 
-      <Card className="p-16 w-full max-w-4xl space-y-12 border-white/[0.05] bg-white/[0.01] relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500" />
-        <div className="absolute top-8 right-8 text-emerald-500/10">
-          <ShieldCheck size={160} />
+  return (
+    <div className="min-h-screen bg-[#0A0A0B] text-white">
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-50 bg-[#050506]/60 backdrop-blur-2xl border-b border-white/[0.05] px-8 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
+            <Zap size={20} fill="currentColor" />
+          </div>
+          <span className="font-black text-2xl tracking-tighter text-gradient">MentorStack</span>
         </div>
-
-        <div className="space-y-8 relative">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-emerald-400 font-black text-sm uppercase tracking-widest">
-              <ShieldCheck size={20} />
-              Verified Credential
-            </div>
-            <h1 className="text-6xl font-black tracking-tighter leading-[0.9]">Frontend <span className="text-emerald-400">Development</span></h1>
-            <p className="text-white/40 text-xl font-medium">Credential ID: {id || 'MS-772-991-X'}</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-12 pt-12 border-t border-white/5">
-            <div className="space-y-8">
-              <div className="space-y-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Recipient</div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 border border-white/10">
-                    <User size={20} />
-                  </div>
-                  <div className="text-2xl font-black tracking-tighter">Alex Johnson</div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Issue Date</div>
-                <div className="flex items-center gap-3">
-                  <Calendar className="text-emerald-500" size={20} />
-                  <div className="text-xl font-bold">April 1, 2026</div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-8">
-              <div className="space-y-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Issuer</div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black">
-                    <Zap size={18} fill="currentColor" />
-                  </div>
-                  <div className="text-2xl font-black tracking-tighter">MentorStack Academy</div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Status</div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="text-emerald-500" size={20} />
-                  <div className="text-xl font-bold text-emerald-400">Active & Verified</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-12 border-t border-white/5 flex items-center justify-between">
-            <div className="flex gap-4">
-              <button className="flex items-center gap-2 bg-white/5 border border-white/10 px-6 py-3 rounded-xl font-black text-sm hover:bg-white/10 transition-all">
-                <Globe size={18} />
-                Public Profile
-              </button>
-              <button className="flex items-center gap-2 bg-white/5 border border-white/10 px-6 py-3 rounded-xl font-black text-sm hover:bg-white/10 transition-all">
-                <ExternalLink size={18} />
-                View on Blockchain
-              </button>
-            </div>
-            <Badge className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400 px-4 py-2 text-xs">Level 4 Certified</Badge>
-          </div>
+        <div className="flex items-center gap-2 text-emerald-500">
+          <ShieldCheck size={20} />
+          <span className="text-xs font-black uppercase tracking-widest">Official Verification</span>
         </div>
-      </Card>
+      </header>
+
+      <main className="max-w-6xl mx-auto p-8 md:p-16 space-y-12">
+        {error ? (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-md mx-auto text-center space-y-8 py-20"
+          >
+            <div className="w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mx-auto border border-red-500/20">
+              <ShieldAlert size={48} />
+            </div>
+            <div className="space-y-4">
+              <h1 className="text-4xl font-black tracking-tighter">Verification Failed</h1>
+              <p className="text-white/40 font-medium text-lg leading-relaxed">
+                {error}. This certificate ID could not be verified in our database. 
+                Please ensure you have the correct link.
+              </p>
+            </div>
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black hover:bg-white/10 transition-all mx-auto"
+            >
+              <ArrowLeft size={20} />
+              Return to MentorStack
+            </button>
+          </motion.div>
+        ) : certificate ? (
+          <div className="space-y-12">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-2xl shadow-emerald-500/10">
+                <ShieldCheck size={24} />
+                <span className="text-lg font-black uppercase tracking-[0.2em]">Verified Certificate</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
+                Official Credential for <span className="text-gradient">{certificate.fullName}</span>
+              </h1>
+            </div>
+
+            <CertificateView certificate={certificate} isPublic={true} />
+          </div>
+        ) : null}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/[0.05] py-12 text-center text-white/20">
+        <p className="text-sm font-medium">© 2026 MentorStack Academy. All rights reserved.</p>
+        <p className="text-[10px] font-black uppercase tracking-widest mt-2">Verified Skill Proof System</p>
+      </footer>
     </div>
   );
 };

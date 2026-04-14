@@ -6,15 +6,16 @@ import {
   CheckCircle2, Zap, MessageSquare, Code,
   ChevronRight, Play, HelpCircle, Terminal,
   AlertCircle, Lightbulb, Target, RefreshCcw,
-  Bell, User, Menu, X, Sparkles, Star
+  Bell, User, Menu, X, Sparkles, Star, Layers
 } from 'lucide-react';
+import { ref, get } from 'firebase/database';
+import { db } from '../lib/firebase';
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
-import { useCurriculum } from '../hooks/useCurriculum';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { useAuth } from '../context/AuthContext';
 import { generateLesson } from '../lib/gemini';
-import { LessonContent, CareerPath } from '../types/index';
+import { LessonContent } from '../types/index';
 import { MentorChat } from '../components/MentorChat';
 import { AnimatePresence } from 'motion/react';
 
@@ -23,20 +24,6 @@ export const LessonPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
-  const { curriculum: currentPathData, loading: curriculumLoading } = useCurriculum(progress?.selectedPath as CareerPath);
-  
-  const nextLessonId = React.useMemo(() => {
-    if (!currentPathData || !topic) return null;
-    const allLessons = Object.values(currentPathData.levels || {}).flatMap(level => 
-      level.modules.flatMap(m => m.lessons || [])
-    );
-    const currentIndex = allLessons.indexOf(topic);
-    if (currentIndex !== -1 && currentIndex < allLessons.length - 1) {
-      return allLessons[currentIndex + 1];
-    }
-    return null;
-  }, [currentPathData, topic]);
-
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,9 +63,34 @@ export const LessonPage: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        console.log("LessonPage: Fetching lesson content for", topic, "in path", progress.selectedPath);
-        const content = await generateLesson(progress.selectedPath, progress.currentStage, topic);
-        console.log("LessonPage: Lesson content received:", content);
+        console.log("LessonPage: Fetching lesson content for", topic);
+        
+        // 1. Try to fetch from approved lessons first
+        const lessonRef = ref(db, `lessons/${topic}`);
+        const lessonSnap = await get(lessonRef);
+        
+        if (lessonSnap.exists()) {
+          console.log("LessonPage: Approved lesson found in DB");
+          setLesson(lessonSnap.val());
+          setLoading(false);
+          return;
+        }
+
+        // 2. Try to fetch from pending AI lessons (for preview/review if needed, or fallback)
+        if (progress.activeProgramId) {
+          const pendingRef = ref(db, `ai_generated_lessons/${progress.activeProgramId}/${topic}`);
+          const pendingSnap = await get(pendingRef);
+          if (pendingSnap.exists()) {
+            console.log("LessonPage: Pending AI lesson found in DB");
+            setLesson(pendingSnap.val());
+            setLoading(false);
+            return;
+          }
+        }
+
+        // 3. Fallback to on-the-fly generation if enabled (or if it's a legacy topic)
+        console.log("LessonPage: No DB lesson found, falling back to on-the-fly generation");
+        const content = await generateLesson(progress.selectedPath, progress.currentStage, topic, progress.activeProgramId);
         
         if (content) {
           setLesson(content);
@@ -96,7 +108,7 @@ export const LessonPage: React.FC = () => {
     fetchLesson();
   }, [progress, topic, userLoading, navigate]);
 
-  if (userLoading || loading || curriculumLoading) return <LoadingScreen message="PREPARING LESSON..." />;
+  if (userLoading || loading) return <LoadingScreen message="PREPARING LESSON..." />;
 
   if (error || !lesson) {
     return (
@@ -122,7 +134,7 @@ export const LessonPage: React.FC = () => {
   }
 
   const handleComplete = async () => {
-    if (!lesson || !progress || !topic) return;
+    if (!lesson || !progress) return;
     
     // Check if all quiz questions are answered correctly
     const allCorrect = lesson.quiz.every((q, idx) => selectedAnswers[idx] === q.correctIndex);
@@ -131,18 +143,12 @@ export const LessonPage: React.FC = () => {
       return;
     }
 
-    if (!progress.completedLessons.includes(topic)) {
-      await addXP(50);
-      await updateProgress({
-        completedLessons: [...progress.completedLessons, topic]
-      });
-    }
-    
-    if (nextLessonId) {
-      navigate(`/lesson/${nextLessonId}`);
-    } else {
-      navigate('/dashboard');
-    }
+    await addXP(50);
+    await updateProgress({
+      completedLessons: [...progress.completedLessons, lesson.id]
+    });
+
+    navigate('/dashboard');
   };
 
   return (
@@ -172,8 +178,8 @@ export const LessonPage: React.FC = () => {
           >
             <div className="text-right hidden sm:block">
               <p className="text-xs font-black truncate max-w-[120px] group-hover:text-emerald-400 transition-colors">{user?.displayName || 'Developer'}</p>
-              <p className={`text-[10px] font-black uppercase tracking-widest ${progress.isPremium ? 'text-emerald-500' : 'text-white/30'}`}>
-                {progress.isPremium ? 'Pro Member' : 'Free Account'}
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/30">
+                Verified Learner
               </p>
             </div>
             <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden group-hover:border-emerald-500/50 transition-colors">
@@ -219,6 +225,9 @@ export const LessonPage: React.FC = () => {
                   <div className="space-y-1">
                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Today you are learning:</p>
                     <p className="text-lg text-white/80 font-medium leading-relaxed">{lesson?.todayYouAreLearning || 'Loading objective...'}</p>
+                    {(lesson as any).objectives && (
+                      <p className="text-xs text-white/40 mt-2">{(lesson as any).objectives}</p>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -249,46 +258,43 @@ export const LessonPage: React.FC = () => {
             </div>
           </section>
 
+          {/* Career & Interview Tips (New) */}
+          {((lesson as any).interviewTips || (lesson as any).careerTips) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {(lesson as any).interviewTips && (
+                <Card className="p-6 border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-400">
+                    <MessageSquare size={16} />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest">Interview Tip</h4>
+                  </div>
+                  <p className="text-sm text-white/70 leading-relaxed italic">"{(lesson as any).interviewTips}"</p>
+                </Card>
+              )}
+              {(lesson as any).careerTips && (
+                <Card className="p-6 border-purple-500/20 bg-purple-500/5 space-y-3">
+                  <div className="flex items-center gap-2 text-purple-400">
+                    <Trophy size={16} />
+                    <h4 className="text-[10px] font-black uppercase tracking-widest">Career Advice</h4>
+                  </div>
+                  <p className="text-sm text-white/70 leading-relaxed italic">"{(lesson as any).careerTips}"</p>
+                </Card>
+              )}
+            </div>
+          )}
+
           {/* Pro Tip Section */}
-          <Card className={`p-8 border-2 relative overflow-hidden group ${
-            progress.isPremium 
-              ? 'border-emerald-500/20 bg-emerald-500/5' 
-              : 'border-white/5 bg-white/[0.02] opacity-80'
-          }`}>
+          <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden group">
             <div className="flex items-start gap-6 relative z-10">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                progress.isPremium ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/20'
-              }`}>
-                <Star size={24} fill={progress.isPremium ? 'currentColor' : 'none'} />
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-emerald-500/20 text-emerald-400">
+                <Star size={24} fill="currentColor" />
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <h4 className={`font-black uppercase text-xs tracking-[0.2em] ${
-                    progress.isPremium ? 'text-emerald-400' : 'text-white/40'
-                  }`}>Pro Tip & Best Practices</h4>
-                  {!progress.isPremium && (
-                    <Badge className="bg-emerald-500 text-black border-none text-[8px] font-black">PRO</Badge>
-                  )}
+                  <h4 className="font-black uppercase text-xs tracking-[0.2em] text-emerald-400">Pro Tip & Best Practices</h4>
                 </div>
-                {progress.isPremium ? (
-                  <p className="text-white/70 leading-relaxed font-medium italic">
-                    "{lesson?.proTip || 'Always keep your code clean and well-documented. It saves hours of debugging later.'}"
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-white/20 leading-relaxed font-medium blur-[4px] select-none">
-                      This advanced insight is reserved for MentorStack Pro members. Upgrade to unlock expert tips and industry secrets.
-                    </p>
-                    <Button 
-                      variant="premium" 
-                      size="sm" 
-                      onClick={() => navigate('/profile')}
-                      className="h-10 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest"
-                    >
-                      Unlock Pro Tip
-                    </Button>
-                  </div>
-                )}
+                <p className="text-white/70 leading-relaxed font-medium italic">
+                  "{lesson?.proTip || 'Always keep your code clean and well-documented. It saves hours of debugging later.'}"
+                </p>
               </div>
             </div>
             <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
@@ -383,6 +389,31 @@ export const LessonPage: React.FC = () => {
               </div>
               <p className="text-white/70 leading-relaxed">{lesson?.challenge || 'Can you modify the code to do something slightly different?'}</p>
             </Card>
+
+            {/* Project Section (New) */}
+            {(lesson as any).project && (
+              <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 space-y-6">
+                <div className="flex items-center gap-3 text-emerald-400">
+                  <Layers size={20} />
+                  <h4 className="font-black uppercase text-xs tracking-[0.2em]">Module Project</h4>
+                </div>
+                <div className="space-y-4">
+                  <h5 className="text-xl font-black">{(lesson as any).project.title}</h5>
+                  <p className="text-white/60 leading-relaxed">{(lesson as any).project.description}</p>
+                  <div className="space-y-3 pt-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Implementation Steps:</p>
+                    {((lesson as any).project.steps || []).map((step: string, i: number) => (
+                      <div key={i} className="flex gap-4 items-start">
+                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-[10px] font-black shrink-0 border border-emerald-500/20">
+                          {i + 1}
+                        </div>
+                        <p className="text-sm text-white/70 leading-relaxed">{step}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
 
           {/* Test (Quiz) Section */}
           <section className="space-y-8">
@@ -523,7 +554,7 @@ export const LessonPage: React.FC = () => {
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-emerald-500 text-black font-black hover:bg-emerald-400 transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
           >
             <CheckCircle2 size={20} />
-            <span className="text-[10px] uppercase tracking-widest">{nextLessonId ? 'Next' : 'Complete'}</span>
+            <span className="text-[10px] uppercase tracking-widest">Complete</span>
           </button>
           
           <button 

@@ -2,36 +2,83 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, Button, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
-import { useCurriculum } from '../hooks/useCurriculum';
 import { useAuth } from '../context/AuthContext';
+import { useAdmin } from '../hooks/useAdmin';
 import { useNavigate } from 'react-router-dom';
 import { 
   Trophy, Flame, Star, Play, ChevronRight, 
   Menu, Bell, User, Zap, Clock, BrainCircuit, 
-  Network, X, LogOut, BookOpen, Terminal, 
+  Network, X, LogOut, BookOpen, Terminal, Code,
   Target, LayoutDashboard, MessageSquare, Search,
   Sparkles, CheckCircle2, Lock, Compass, ArrowRightLeft,
-  Award, ShieldCheck, ExternalLink, Users, TrendingUp
+  Award, ShieldCheck, ExternalLink, Users, TrendingUp,
+  Heart, Map as MapIcon, AlertCircle
 } from 'lucide-react';
-import { auth } from '../lib/firebase';
+import { ref, get } from 'firebase/database';
+import { db, auth } from '../lib/firebase';
 import { MentorChat } from '../components/MentorChat';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { PremiumUpsell } from '../components/PremiumUpsell';
 import { CURRICULUM } from '../constants/curriculum';
 import { STAGE_TESTS } from '../constants/tests';
 import { FINAL_EXAMS } from '../constants/exams';
 import { LESSON_CONTENT } from '../constants/lessons';
-import { CareerPath, Certificate } from '../types';
+import { 
+  CareerPath, 
+  Certificate, 
+  CurriculumPath, 
+  CurriculumStage, 
+  CurriculumModule,
+  Skill 
+} from '../types';
 import { getUserCertificates } from '../services/certificateService';
+import { DEFAULT_SKILLS } from '../constants/skills';
 
 export const DashboardPage: React.FC = () => {
-  const { progress, loading: userLoading, updateProgress } = useUserData();
-  const { curriculum: currentPathData, loading: curriculumLoading } = useCurriculum(progress?.selectedPath as CareerPath);
+  const { progress, loading, updateProgress } = useUserData();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPathSwitcherOpen, setIsPathSwitcherOpen] = useState(false);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+
+  const [allSkills, setAllSkills] = useState<Skill[]>([]);
+  const [allPaths, setAllPaths] = useState<Record<string, any>>({});
+  const [dynamicPath, setDynamicPath] = useState<CurriculumPath | null>(null);
+  const [dynamicStages, setDynamicStages] = useState<CurriculumStage[]>([]);
+  const [dynamicModules, setDynamicModules] = useState<Record<string, CurriculumModule[]>>({});
+  const [dynamicLessons, setDynamicLessons] = useState<any[]>([]);
+  const [activeSkill, setActiveSkill] = useState<Skill | null>(null);
+
+  const groupedPaths = useMemo(() => {
+    const groups: Record<string, Skill[]> = {};
+    const skillsToGroup = allSkills.length > 0 ? allSkills : DEFAULT_SKILLS;
+    
+    skillsToGroup.forEach(skill => {
+      const category = (skill.category as string) || 'Other';
+      if (!groups[category]) groups[category] = [];
+      groups[category].push(skill);
+    });
+    return groups;
+  }, [allSkills]);
+
+  const categoryLabels = useMemo(() => ({
+    'career-path': `Career Paths (${groupedPaths['career-path']?.length || 0})`,
+    'coding-languages': `Programming Languages (${groupedPaths['coding-languages']?.length || 0})`,
+    'programming-language': `Programming Languages (${groupedPaths['programming-language']?.length || 0})`,
+    'development-skill': `Development Skill Programs (${groupedPaths['development-skill']?.length || 0})`,
+    'tool-foundation': `Tools & Foundations (${groupedPaths['tool-foundation']?.length || 0})`,
+    'career-prep': `Career Readiness (${groupedPaths['career-prep']?.length || 0})`
+  }), [groupedPaths]);
+
+  const categoryDescriptions = useMemo(() => ({
+    'career-path': 'Comprehensive programs designed to take you from zero to a professional role in a specific field.',
+    'coding-languages': 'Learn core coding languages like HTML, CSS, JavaScript, Python, Java, C++, and more.',
+    'programming-language': 'Learn core coding languages like HTML, CSS, JavaScript, Python, Java, C++, and more.',
+    'development-skill': 'Master core development domains like Frontend, Backend, or DevOps with deep-dive programs.',
+    'tool-foundation': 'Master essential tools and foundational concepts like Git, Databases, and System Design.',
+    'career-prep': 'Prepare for the job market with resume building, interview prep, and professional networking.'
+  }), []);
 
   useEffect(() => {
     if (user) {
@@ -39,29 +86,142 @@ export const DashboardPage: React.FC = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    const fetchDynamicCurriculum = async () => {
+      const skillsRef = ref(db, 'skills');
+      const pathsRef = ref(db, 'curriculum_paths');
+      
+      const [skillsSnapshot, pathsSnapshot] = await Promise.all([
+        get(skillsRef),
+        get(pathsRef)
+      ]);
+
+      let skills = DEFAULT_SKILLS;
+      
+      if (skillsSnapshot.exists()) {
+        skills = Object.values(skillsSnapshot.val()) as Skill[];
+      }
+      
+      if (pathsSnapshot.exists()) {
+        setAllPaths(pathsSnapshot.val());
+      }
+      
+      setAllSkills(skills);
+      
+      // Find active skill by ID or Title
+        let skill = skills.find(s => s.id === progress?.activeProgramId);
+        if (!skill && progress?.selectedPath) {
+          skill = skills.find(s => s.title === progress.selectedPath);
+        }
+        
+        // Fallback to first active skill if none selected
+        if (!skill) {
+          skill = skills.find(s => s.status === 'active');
+        }
+
+        if (skill) {
+          setActiveSkill(skill);
+          const pathRef = ref(db, `curriculum_paths/${skill.id}`);
+          const stagesRef = ref(db, `curriculum_stages/${skill.id}`);
+          const lessonsRef = ref(db, `ai_generated_lessons/${skill.id}`);
+          
+          const [pathSnap, stagesSnap, lessonsSnap] = await Promise.all([
+            get(pathRef),
+            get(stagesRef),
+            get(lessonsRef)
+          ]);
+
+          if (pathSnap.exists()) setDynamicPath(pathSnap.val());
+          if (lessonsSnap.exists()) {
+            setDynamicLessons(Object.values(lessonsSnap.val()));
+          }
+
+          if (stagesSnap.exists()) {
+            const stagesData = Object.values(stagesSnap.val()) as CurriculumStage[];
+            const sortedStages = stagesData.sort((a, b) => a.order - b.order);
+            setDynamicStages(sortedStages);
+
+            // Fetch modules for each stage
+            const modulesMap: Record<string, CurriculumModule[]> = {};
+            for (const stage of sortedStages) {
+              const modsRef = ref(db, `curriculum_modules/${stage.id}`);
+              const modsSnap = await get(modsRef);
+              if (modsSnap.exists()) {
+                modulesMap[stage.id] = (Object.values(modsSnap.val()) as CurriculumModule[]).sort((a, b) => a.order - b.order);
+              }
+            }
+            setDynamicModules(modulesMap);
+          }
+        }
+    };
+
+    fetchDynamicCurriculum();
+  }, [progress?.selectedPath, progress?.activeProgramId]);
+
+  const currentPathData = useMemo(() => {
+    if (dynamicPath && dynamicStages.length > 0) {
+      return {
+        ...dynamicPath,
+        finalExamId: `exam_${dynamicPath.id}`,
+        levels: dynamicStages.reduce((acc: any, stage) => {
+          const levelKey = stage.levelName.toLowerCase() as any;
+          acc[levelKey] = {
+            id: levelKey,
+            title: stage.title,
+            description: '',
+            modules: dynamicModules[stage.id] || [],
+            projects: []
+          };
+          return acc;
+        }, {} as any)
+      } as any;
+    }
+
+    return null;
+  }, [dynamicPath, dynamicStages, dynamicModules]);
+
   const allLessonsInPath = useMemo(() => {
-    if (!currentPathData) return [];
-    return Object.values(currentPathData.levels || {}).flatMap(level => 
-      level.modules.flatMap(m => m.lessons || [])
-    );
-  }, [currentPathData]);
+    if (dynamicLessons.length > 0) {
+      return dynamicLessons.sort((a, b) => a.order - b.order).map(l => l.id);
+    }
+    return [];
+  }, [dynamicLessons]);
 
   const nextLessonId = useMemo(() => {
     if (!progress || !allLessonsInPath.length) return null;
-    
-    // Check for next lesson
     const lessonId = allLessonsInPath.find(id => !progress.completedLessons?.includes(id));
-    if (lessonId) return lessonId;
-
-    return allLessonsInPath[0];
+    return lessonId || allLessonsInPath[0];
   }, [allLessonsInPath, progress?.completedLessons]);
+
+  const nextLesson = useMemo(() => {
+    if (!nextLessonId) return null;
+    return dynamicLessons.find(l => l.id === nextLessonId);
+  }, [nextLessonId, dynamicLessons]);
+
+  const featuredLessons = useMemo(() => {
+    if (dynamicLessons.length > 0) {
+      return dynamicLessons
+        .filter(l => !progress?.completedLessons?.includes(l.id))
+        .slice(0, 3)
+        .map((l, i) => ({
+          tag: i === 0 ? 'RECOMMENDED' : i === 1 ? 'ESSENTIAL' : 'ADVANCED',
+          id: l.id,
+          title: l.title,
+          desc: l.summary || l.todayYouAreLearning || 'Continue your learning journey.',
+          duration: l.estimatedDuration || '15 mins'
+        }));
+    }
+
+    return [];
+  }, [dynamicLessons, progress?.completedLessons]);
 
   const nextExam = useMemo(() => {
     if (!progress || !currentPathData?.finalExamId) return null;
     
     // If all lessons are done, check for final exam
-    const allDone = allLessonsInPath.every(id => progress.completedLessons?.includes(id));
+    const allDone = allLessonsInPath.length > 0 && allLessonsInPath.every(id => progress.completedLessons?.includes(id));
     if (allDone && !progress.completedExams?.includes(currentPathData.finalExamId)) {
+      // Try to find in dynamic data or fallback to constants if needed for now
       return FINAL_EXAMS.find(e => e.id === currentPathData.finalExamId);
     }
 
@@ -71,68 +231,55 @@ export const DashboardPage: React.FC = () => {
   const nextTest = useMemo(() => {
     if (!progress || !currentPathData) return null;
     
-    for (const level of Object.values(currentPathData.levels)) {
-      for (const module of level.modules) {
-        if (!module.testId) continue;
+    const path = currentPathData as any;
+    for (const level of Object.values(path.levels || {})) {
+      const l = level as any;
+      for (const module of (l.modules || [])) {
+        const m = module as any;
+        if (!m.testId) continue;
         
-        const allLessonsDone = module.lessons.every(id => progress.completedLessons?.includes(id));
-        const testDone = progress.completedTests?.includes(module.testId);
+        const allLessonsDone = (m.lessons || []).length > 0 && (m.lessons || []).every((id: string) => progress.completedLessons?.includes(id));
+        const testDone = progress.completedTests?.includes(m.testId);
         
         if (allLessonsDone && !testDone) {
-          return STAGE_TESTS.find(t => t.id === module.testId);
+          return STAGE_TESTS.find(t => t.id === m.testId);
         }
       }
     }
     return null;
   }, [currentPathData, progress?.completedLessons, progress?.completedTests]);
 
-  const nextLesson = useMemo(() => {
-    if (!nextLessonId) return null;
-    return LESSON_CONTENT[nextLessonId as keyof typeof LESSON_CONTENT];
-  }, [nextLessonId]);
-
-  const groupedPaths = useMemo(() => {
-    const groups: Record<string, CareerPath[]> = {};
-    Object.entries(CURRICULUM).forEach(([path, data]) => {
-      const category = data.category;
-      if (!groups[category]) groups[category] = [];
-      groups[category].push(path as CareerPath);
-    });
-    return groups;
-  }, []);
-
-  if (userLoading || curriculumLoading || !progress) return <LoadingScreen />;
+  if (loading || !progress) return <LoadingScreen />;
 
   const xp = Number(progress.xp) || 0;
   const xpProgress = xp % 100;
   const streak = Number(progress.streak) || 0;
   const currentStage = progress.currentStage || 'Beginner';
 
-  if (!progress.selectedPath || (!CURRICULUM[progress.selectedPath as CareerPath] && !currentPathData)) {
-    navigate('/onboarding');
-    return null;
-  }
-
   const getModuleProgress = (moduleId: string) => {
     if (!progress || !currentPathData) return 0;
     
-    let module;
-    for (const level of Object.values(currentPathData.levels)) {
-      module = level.modules.find(m => m.id === moduleId);
+    let module: any;
+    const path = currentPathData as any;
+    for (const level of Object.values(path.levels || {})) {
+      const l = level as any;
+      module = (l.modules || []).find((m: any) => m.id === moduleId);
       if (module) break;
     }
 
-    if (!module || module.lessons.length === 0) return 0;
+    if (!module || !module.lessons || module.lessons.length === 0) return 0;
     
-    const completed = module.lessons.filter(id => progress.completedLessons?.includes(id)).length;
+    const completed = module.lessons.filter((id: string) => progress.completedLessons?.includes(id)).length;
     return Math.round((completed / module.lessons.length) * 100);
   };
 
-  const handlePathSwitch = async (path: CareerPath) => {
-    const pathData = CURRICULUM[path];
-    if (pathData.status === 'locked') return;
+  const handlePathSwitch = async (skill: Skill) => {
+    if (skill.status === 'draft' && !isAdmin) return;
     
-    await updateProgress({ selectedPath: path });
+    await updateProgress({ 
+      selectedPath: skill.title as CareerPath,
+      activeProgramId: skill.id
+    });
     setIsPathSwitcherOpen(false);
   };
 
@@ -143,6 +290,7 @@ export const DashboardPage: React.FC = () => {
 
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true, path: '/dashboard' },
+    { icon: <Code size={20} />, label: 'Programming Languages', path: '/coding-languages' },
     { icon: <BookOpen size={20} />, label: 'Lessons', path: '/dashboard' },
     { icon: <Zap size={20} />, label: 'AI Tutor', path: '/ai-tutor' },
     { icon: <Terminal size={20} />, label: 'Playground', path: '/playground' },
@@ -150,29 +298,13 @@ export const DashboardPage: React.FC = () => {
     { icon: <User size={20} />, label: 'Profile', path: '/profile' },
   ];
 
-  const featuredLessons = [
-    { 
-      tag: 'RECOMMENDED', 
-      id: allLessonsInPath[0] || 'what-is-coding',
-      title: 'Getting Started', 
-      desc: 'Begin your journey with the fundamentals.', 
-      duration: '10 mins' 
-    },
-    { 
-      tag: 'ESSENTIAL', 
-      id: allLessonsInPath[5] || 'html-structure',
-      title: 'Core Concepts', 
-      desc: 'Master the building blocks of your path.', 
-      duration: '15 mins' 
-    },
-    { 
-      tag: 'ADVANCED', 
-      id: allLessonsInPath[15] || 'js-intro',
-      title: 'Deep Dive', 
-      desc: 'Take your skills to the next level.', 
-      duration: '20 mins' 
-    }
-  ];
+  if (isAdmin) {
+    menuItems.push({ 
+      icon: <ShieldCheck size={20} />, 
+      label: 'Admin Panel', 
+      path: '/admin' 
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col">
@@ -206,9 +338,12 @@ export const DashboardPage: React.FC = () => {
             className="flex items-center gap-4 pl-6 border-l border-white/[0.08] cursor-pointer group active:scale-95"
           >
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-black tracking-tight group-hover:text-emerald-400 transition-colors">{user?.displayName || 'Developer'}</p>
-              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${progress.isPremium ? 'text-emerald-500' : 'text-white/30'}`}>
-                {progress.isPremium ? 'Pro Member' : 'Free Account'}
+              <div className="flex items-center justify-end gap-2">
+                {isAdmin && <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 px-2 py-0 text-[8px] font-black uppercase tracking-widest">Admin</Badge>}
+                <p className="text-sm font-black tracking-tight group-hover:text-emerald-400 transition-colors">{user?.displayName || 'Developer'}</p>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+                Verified Learner
               </p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] p-1 group-hover:border-emerald-500/40 transition-all duration-500">
@@ -316,7 +451,7 @@ export const DashboardPage: React.FC = () => {
                 </button>
               </div>
               <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-[0.9] mb-4">
-                {progress.selectedPath} <br />
+                {activeSkill?.title || progress.selectedPath} <br />
                 <span className="text-gradient">Academy</span>
               </h1>
               <div className="space-y-3 max-w-md">
@@ -327,11 +462,17 @@ export const DashboardPage: React.FC = () => {
                 <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${(progress.completedLessons?.length / allLessonsInPath.length) * 100}%` }}
+                    animate={{ width: `${allLessonsInPath.length > 0 ? (progress.completedLessons?.length / allLessonsInPath.length) * 100 : 0}%` }}
                     className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"
                   />
                 </div>
               </div>
+              {activeSkill && !dynamicPath && !loading && (
+                <p className="text-orange-400/60 text-xs font-bold uppercase tracking-widest mt-4 flex items-center gap-2">
+                  <AlertCircle size={14} />
+                  Curriculum is currently being drafted by Admin
+                </p>
+              )}
               <p className="text-white/40 font-medium text-lg md:text-xl max-w-md leading-relaxed pt-4">
                 Welcome back, <span className="text-white font-black">{user?.displayName?.split(' ')[0] || 'Developer'}</span>. You're on step <span className="text-emerald-400 font-black">{allLessonsInPath.indexOf(nextLessonId || '') + 1}</span> of <span className="text-white/60">{allLessonsInPath.length}</span>.
               </p>
@@ -388,88 +529,114 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Recommended Next Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-            <Card className="lg:col-span-2 p-12 border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.1] via-transparent to-transparent relative overflow-hidden group min-h-[450px] flex items-center">
-              <div className="relative z-10 space-y-10 max-w-lg">
-                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-emerald-500/10">
-                  <Sparkles size={14} fill="currentColor" />
-                  {nextTest ? 'Stage Test Available' : nextExam ? 'Final Exam Ready' : 'Today\'s Focus'}
+          <div className="grid grid-cols-1 gap-10">
+            {(!nextLesson && !nextTest && !nextExam && !loading) ? (
+              <Card className="p-12 border-white/[0.08] bg-white/[0.02] text-center space-y-6">
+                <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center mx-auto text-white/20">
+                  <MapIcon size={40} />
                 </div>
-                <div className="space-y-4">
-                  <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9]">
-                    {nextTest ? nextTest.title : nextExam ? nextExam.title : nextLesson?.title || 'Start Learning'}
-                  </h2>
-                  <p className="text-white/50 text-xl leading-relaxed font-medium">
-                    {nextTest ? nextTest.description : nextExam ? nextExam.description : nextLesson?.todayYouAreLearning || 'Begin your journey into the world of technology with our guided curriculum.'}
-                  </p>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black tracking-tight">Ready to start your journey?</h3>
+                  <p className="text-white/40 max-w-sm mx-auto font-medium">Select a path and start your professional training in the MentorStack Academy.</p>
                 </div>
-                <Button 
-                  onClick={() => {
-                    if (nextTest) navigate(`/test/${nextTest.id}`);
-                    else if (nextExam) navigate(`/exam/${nextExam.id}`);
-                    else navigate(`/lesson/${nextLessonId}`);
-                  }}
-                  variant="premium"
-                  className="group h-20 px-12 text-lg font-black tracking-tight rounded-[2rem]"
-                >
-                  {nextTest ? 'Start Stage Test' : nextExam ? 'Take Final Exam' : progress.completedLessons?.length ? 'Continue Learning' : 'Start First Lesson'}
-                  <ChevronRight size={24} className="group-hover:translate-x-2 transition-transform duration-300 ml-3" />
+                <Button onClick={() => setIsPathSwitcherOpen(true)} className="h-14 px-8 rounded-2xl">
+                  Explore Academy Paths
                 </Button>
-              </div>
-              
-              {/* Decorative Elements */}
-              <div className="absolute -right-20 -bottom-20 p-10 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-1000 pointer-events-none">
-                {nextTest || (nextLesson as any)?.isExam ? <Trophy size={600} /> : <BookOpen size={600} />}
-              </div>
-              <div className="absolute top-1/2 right-24 -translate-y-1/2 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000" />
-            </Card>
-
-            <Card className="p-10 flex flex-col justify-between border-white/[0.08] bg-white/[0.01] relative overflow-hidden group">
-              <div className="space-y-8 relative z-10">
-                <div className="flex items-center gap-4 text-emerald-400">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <TrendingUp size={22} />
+              </Card>
+            ) : (
+              <Card className="p-12 border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.1] via-transparent to-transparent relative overflow-hidden group min-h-[450px] flex items-center">
+                <div className="relative z-10 space-y-10 max-w-lg">
+                  <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-[0.3em] shadow-lg shadow-emerald-500/10">
+                    <Sparkles size={14} fill="currentColor" />
+                    {nextTest ? 'Stage Test Available' : nextExam ? 'Final Exam Ready' : 'Academy Focus'}
                   </div>
-                  <h3 className="font-black uppercase text-sm tracking-[0.2em]">Community Stats</h3>
+                  <div className="space-y-4">
+                    <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9]">
+                      {nextTest ? nextTest.title : nextExam ? nextExam.title : nextLesson?.title || (activeSkill ? `Start ${activeSkill.title}` : 'Start Learning')}
+                    </h2>
+                    <p className="text-white/50 text-xl leading-relaxed font-medium">
+                      {nextTest ? nextTest.description : nextExam ? nextExam.description : nextLesson?.todayYouAreLearning || (activeSkill ? `Begin your professional journey in ${activeSkill.title} with our structured academy curriculum.` : 'Begin your professional journey with our structured academy curriculum.')}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-4">
+                    <Button 
+                      onClick={() => {
+                        if (nextTest) navigate(`/test/${nextTest.id}`);
+                        else if (nextExam) navigate(`/exam/${nextExam.id}`);
+                        else if (nextLessonId) navigate(`/lesson/${nextLessonId}`);
+                        else setIsPathSwitcherOpen(true);
+                      }}
+                      className="group h-20 px-12 text-lg font-black tracking-tight rounded-[2rem] shadow-xl shadow-emerald-500/20"
+                    >
+                      {nextTest ? 'Start Stage Test' : nextExam ? 'Take Final Exam' : progress.completedLessons?.length ? 'Continue Program' : 'Start First Lesson'}
+                      <ChevronRight size={24} className="group-hover:translate-x-2 transition-transform duration-300 ml-3" />
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate(`/academy/${progress.selectedPath}`)}
+                      className="h-20 px-10 text-lg font-black tracking-tight rounded-[2rem] border-white/10 hover:bg-white/5"
+                    >
+                      <MapIcon size={20} className="mr-3" />
+                      View Path
+                    </Button>
+                  </div>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                        <Users size={20} />
-                      </div>
-                      <span className="text-sm font-bold text-white/60">Active Learners</span>
-                    </div>
-                    <span className="text-lg font-black tracking-tight">12,482</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                        <CheckCircle2 size={20} />
-                      </div>
-                      <span className="text-sm font-bold text-white/60">Lessons Done</span>
-                    </div>
-                    <span className="text-lg font-black tracking-tight">1.2M+</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400">
-                        <Trophy size={20} />
-                      </div>
-                      <span className="text-sm font-bold text-white/60">Certificates</span>
-                    </div>
-                    <span className="text-lg font-black tracking-tight">8,291</span>
-                  </div>
+                {/* Decorative Elements */}
+                <div className="absolute -right-20 -bottom-20 p-10 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 group-hover:-rotate-12 transition-all duration-1000 pointer-events-none">
+                  {nextTest || (nextLesson as any)?.isExam ? <Trophy size={600} /> : <BookOpen size={600} />}
                 </div>
-              </div>
-              
-              <div className="pt-8 relative z-10">
-                <p className="text-xs text-white/20 font-medium italic text-center">Join thousands of developers building their future today.</p>
-              </div>
-              
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-emerald-500/5 blur-[60px] rounded-full" />
-            </Card>
+                <div className="absolute top-1/2 right-24 -translate-y-1/2 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000" />
+              </Card>
+            )}
+
+            {/* Value Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              {[
+                {
+                  title: "Structured Learning",
+                  desc: "Follow a clear path from beginner to professional with step-by-step guidance.",
+                  icon: <Compass size={24} />,
+                },
+                {
+                  title: "AI Mentor Guidance",
+                  desc: "Learn with a smart AI mentor that explains, corrects, and guides you in real-time.",
+                  icon: <BrainCircuit size={24} />,
+                },
+                {
+                  title: "Real Projects",
+                  desc: "Build real-world applications and create a portfolio that proves your skills.",
+                  icon: <Code size={24} />,
+                },
+                {
+                  title: "Job-Ready Skills",
+                  desc: "Gain practical skills used by real developers in the industry.",
+                  icon: <Target size={24} />,
+                },
+                {
+                  title: "Verified Certificates",
+                  desc: "Earn certificates backed by real projects and verifiable proof.",
+                  icon: <Award size={24} />,
+                }
+              ].map((item, i) => (
+                <Card key={i} className="p-8 space-y-6 bg-white/[0.01] border-white/[0.05] hover:border-emerald-500/30 transition-all duration-500 group relative overflow-hidden flex flex-col justify-between">
+                  <div className="space-y-6">
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-emerald-500/10 text-emerald-400 group-hover:scale-110 transition-transform duration-500">
+                      {item.icon}
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-black text-lg tracking-tight group-hover:text-emerald-400 transition-colors flex items-center gap-2">
+                        {item.title}
+                      </h4>
+                      <p className="text-sm text-white/40 font-medium leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                  <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity pointer-events-none transform rotate-12 scale-150">
+                     {item.icon}
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
 
           {/* Grid Sections */}
@@ -487,7 +654,7 @@ export const DashboardPage: React.FC = () => {
               </div>
               
               <div className="space-y-10">
-                {Object.values(currentPathData?.levels || {}).flatMap(l => l.modules).slice(0, 5).map((module, i) => (
+                {(Object.values((currentPathData as any)?.levels || {}) as any[]).flatMap(l => l.modules || []).slice(0, 5).map((module: any, i: number) => (
                   <div key={module.id} className="space-y-4">
                     <div className="flex justify-between items-end">
                       <div className="flex items-center gap-2">
@@ -563,7 +730,7 @@ export const DashboardPage: React.FC = () => {
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
                   <Network size={22} />
                 </div>
-                <h3 className="font-black uppercase text-sm tracking-[0.2em]">{progress.selectedPath} Mastery Tree</h3>
+                <h3 className="font-black uppercase text-sm tracking-[0.2em]">{activeSkill?.title || progress.selectedPath} Mastery Tree</h3>
               </div>
               <Badge className="bg-emerald-500 text-black border-none font-black">
                 {Math.floor(xp / 500) > 0 ? `Tier ${Math.floor(xp / 500) + 1} Active` : 'Novice Tier'}
@@ -571,35 +738,46 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             <div className="relative flex flex-col items-center gap-20 py-16 z-10">
-              <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center relative">
-                <SkillNode 
-                  label="Beginner" 
-                  completed={progress.currentStage === 'Intermediate' || progress.currentStage === 'Advanced'} 
-                  progress={progress.currentStage === 'Beginner' ? 50 : 100}
-                />
-                <div className="hidden md:block w-24 h-1 bg-gradient-to-r from-emerald-500 to-white/5" />
-                <SkillNode 
-                  label="Intermediate" 
-                  locked={progress.currentStage === 'Beginner'}
-                  completed={progress.currentStage === 'Advanced'}
-                  progress={progress.currentStage === 'Intermediate' ? 50 : (progress.currentStage === 'Advanced' ? 100 : 0)}
-                />
-              </div>
-              <div className="w-1 h-20 bg-white/5" />
-              <div className="flex flex-col md:flex-row gap-12 md:gap-24 items-center relative">
-                <SkillNode 
-                  label="Advanced" 
-                  locked={progress.currentStage !== 'Advanced'}
-                  completed={progress.completedExams?.includes(currentPathData?.finalExamId || '')}
-                  progress={progress.currentStage === 'Advanced' ? 50 : 0}
-                />
-                <div className="hidden md:block w-24 h-1 bg-white/5" />
-                <SkillNode 
-                  label="Final Exam" 
-                  locked={!progress.completedExams?.includes(currentPathData?.finalExamId || '') && progress.currentStage !== 'Advanced'}
-                  completed={progress.completedExams?.includes(currentPathData?.finalExamId || '')}
-                  progress={progress.completedExams?.includes(currentPathData?.finalExamId || '') ? 100 : 0}
-                />
+              <div className="flex flex-wrap justify-center gap-12 md:gap-24 items-center relative">
+                {dynamicStages.length > 0 ? (
+                  dynamicStages.map((stage, idx) => (
+                    <React.Fragment key={stage.id}>
+                      <SkillNode 
+                        label={stage.levelName} 
+                        completed={
+                          idx < dynamicStages.findIndex(s => s.levelName === progress.currentStage) ||
+                          (progress.currentStage === 'Final Exam' && (stage.levelName as string) !== 'Final Exam')
+                        } 
+                        progress={progress.currentStage === stage.levelName ? 50 : (idx < dynamicStages.findIndex(s => s.levelName === progress.currentStage) ? 100 : 0)}
+                      />
+                      {idx < dynamicStages.length - 1 && (
+                        <div className="hidden md:block w-12 h-1 bg-white/5" />
+                      )}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <>
+                    <SkillNode 
+                      label="Beginner" 
+                      completed={progress.currentStage === 'Intermediate' || progress.currentStage === 'Advanced'} 
+                      progress={progress.currentStage === 'Beginner' ? 50 : 100}
+                    />
+                    <div className="hidden md:block w-24 h-1 bg-gradient-to-r from-emerald-500 to-white/5" />
+                    <SkillNode 
+                      label="Intermediate" 
+                      locked={progress.currentStage === 'Beginner'}
+                      completed={progress.currentStage === 'Advanced'}
+                      progress={progress.currentStage === 'Intermediate' ? 50 : (progress.currentStage === 'Advanced' ? 100 : 0)}
+                    />
+                    <div className="hidden md:block w-24 h-1 bg-white/5" />
+                    <SkillNode 
+                      label="Advanced" 
+                      locked={progress.currentStage !== 'Advanced'}
+                      completed={progress.completedExams?.includes(currentPathData?.finalExamId || '')}
+                      progress={progress.currentStage === 'Advanced' ? 50 : 0}
+                    />
+                  </>
+                )}
               </div>
             </div>
           </Card>
@@ -729,43 +907,41 @@ export const DashboardPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-12 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
-                    {Object.entries(groupedPaths).map(([category, paths]) => (
+                    {Object.entries(groupedPaths).map(([category, categorySkills]) => (
                       <div key={category} className="space-y-6">
                         <div className="flex items-center gap-4">
-                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-500/60">{category}</h3>
+                          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-emerald-500/60">{categoryLabels[category] || category}</h3>
                           <div className="flex-grow h-px bg-white/[0.05]" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {paths.map((path) => {
-                            const pathData = CURRICULUM[path];
-                            const isLocked = pathData.status === 'locked';
-                            const isPartial = pathData.status === 'partial';
-                            const isActive = progress.selectedPath === path;
+                          {categorySkills.map((skill) => {
+                            const isDraft = skill.status === 'draft';
+                            const isActive = progress.activeProgramId === skill.id;
 
                             return (
                               <button
-                                key={path}
-                                onClick={() => handlePathSwitch(path)}
-                                disabled={isLocked}
+                                key={skill.id}
+                                onClick={() => handlePathSwitch(skill)}
+                                disabled={isDraft && !isAdmin}
                                 className={`p-6 rounded-2xl border transition-all text-left group relative overflow-hidden ${
                                   isActive 
                                     ? 'bg-emerald-500 border-emerald-500 text-black' 
-                                    : isLocked
+                                    : isDraft && !isAdmin
                                       ? 'bg-white/[0.01] border-white/[0.03] opacity-40 cursor-not-allowed'
                                       : 'bg-white/[0.02] border-white/[0.05] hover:border-emerald-500/30'
                                 }`}
                               >
                                 <div className="flex justify-between items-start mb-2">
-                                  <h4 className="font-black tracking-tight">{path}</h4>
-                                  {isLocked && <Lock size={14} className="text-white/40" />}
-                                  {isPartial && !isActive && (
-                                    <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 text-[8px] px-2 py-0">PARTIAL</Badge>
+                                  <h4 className="font-black tracking-tight">{skill.title}</h4>
+                                  {isDraft && !isAdmin && <Lock size={14} className="text-white/40" />}
+                                  {isDraft && isAdmin && (
+                                    <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 text-[8px] px-2 py-0">DRAFT</Badge>
                                   )}
                                 </div>
                                 <p className={`text-[10px] font-bold uppercase tracking-widest ${
                                   isActive ? 'text-black/60' : 'text-white/20'
                                 }`}>
-                                  {isActive ? 'Currently Active' : isLocked ? 'Coming Soon' : 'Switch to Path'}
+                                  {isActive ? 'Currently Active' : isDraft && !isAdmin ? 'Coming Soon' : 'Switch to Path'}
                                 </p>
                               </button>
                             );
@@ -780,51 +956,238 @@ export const DashboardPage: React.FC = () => {
           </AnimatePresence>
 
           {/* Explore Other Paths Section */}
-          <div className="space-y-10 pt-12">
+          <div className="space-y-20 pt-20">
             <div className="flex justify-between items-end">
               <div className="space-y-2">
-                <h3 className="font-black text-4xl tracking-tighter">Explore Other Paths</h3>
-                <p className="text-white/30 font-medium">Preview what else you can learn at MentorStack.</p>
+                <h3 className="font-black text-4xl tracking-tighter">Explore the <span className="text-gradient">Academy</span></h3>
+                <p className="text-white/30 font-medium">Browse all professional programs across all categories.</p>
               </div>
+              <button 
+                onClick={() => navigate('/coding-languages')}
+                className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
+              >
+                Programming Languages <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Code size={18} /></div>
+              </button>
               <button 
                 onClick={() => setIsPathSwitcherOpen(true)}
                 className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
               >
-                View All <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Compass size={18} /></div>
+                Quick Switch <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Compass size={18} /></div>
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {Object.keys(CURRICULUM)
-                .filter(p => p !== progress.selectedPath)
-                .slice(0, 3)
-                .map((path) => (
-                  <Card 
-                    key={path}
-                    onClick={() => handlePathSwitch(path as CareerPath)}
-                    className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98]"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
-                      <Compass size={24} />
+            <div className="space-y-24">
+              {/* Explicitly render Programming Languages section first for prominence if it exists */}
+              {(() => {
+                const category = 'coding-languages';
+                const categorySkills = groupedPaths[category] || [];
+                const activeSkills = categorySkills.filter(s => s.status === 'active' && s.id !== progress.activeProgramId);
+                
+                return (
+                  <div key={category} className="space-y-10">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-6">
+                        <h4 className="text-xs font-black uppercase tracking-[0.4em] text-emerald-500/60 whitespace-nowrap">
+                          {categoryLabels[category] || 'Programming Languages (0)'}
+                        </h4>
+                        <div className="h-px flex-grow bg-white/5" />
+                      </div>
+                      <p className="text-white/30 text-sm font-medium">
+                        {(categoryDescriptions as any)[category] || 'Master the world\'s most popular programming languages.'}
+                      </p>
                     </div>
-                    <div className="space-y-2">
-                      <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{path}</h4>
-                      <p className="text-xs text-white/30 font-medium line-clamp-2">Master the skills required for a career as a {path}.</p>
+
+                    {activeSkills.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {activeSkills.map((skill) => {
+                          const pathInfo = allPaths[skill.id] || {};
+                          return (
+                            <Card 
+                              key={skill.id}
+                              onClick={() => handlePathSwitch(skill)}
+                              className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98] relative overflow-hidden"
+                            >
+                              <div className="flex justify-between items-start relative z-10">
+                                <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
+                                  <Code size={24} />
+                                </div>
+                                <Badge className="bg-white/5 text-white/40 border-white/10 text-[8px] uppercase tracking-widest font-black">
+                                  {skill.difficultyRange}
+                                </Badge>
+                              </div>
+
+                              <div className="space-y-3 relative z-10">
+                                <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{skill.title}</h4>
+                                <p className="text-xs text-white/30 font-medium line-clamp-2 leading-relaxed">{skill.description}</p>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
+                                <div className="space-y-1">
+                                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Duration</p>
+                                  <div className="flex items-center gap-1.5 text-emerald-500/60">
+                                    <Clock size={12} />
+                                    <span className="text-xs font-bold">{skill.estimatedWeeks} Weeks</span>
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Curriculum</p>
+                                  <div className="flex items-center gap-1.5 text-emerald-500/60">
+                                    <BookOpen size={12} />
+                                    <span className="text-xs font-bold">
+                                      {pathInfo.totalModules || 0} Modules • {pathInfo.totalLessons || 0} Lessons
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between relative z-10 pt-4">
+                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
+                                  Start Learning <ChevronRight size={12} />
+                                </div>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="rounded-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePathSwitch(skill);
+                                  }}
+                                >
+                                  Switch to Path
+                                </Button>
+                              </div>
+
+                              {/* Background Decoration */}
+                              <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-all duration-700 pointer-events-none transform rotate-12">
+                                <Terminal size={120} />
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="py-12 text-center bg-white/[0.01] border border-dashed border-white/10 rounded-[2rem]">
+                        <p className="text-white/20 font-medium">No programming language programs available yet.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Render other categories */}
+              {Object.entries(groupedPaths).map(([category, categorySkills]) => {
+                if (category === 'coding-languages') return null; // Already rendered above
+                
+                const activeSkills = categorySkills.filter(s => s.status === 'active' && s.id !== progress.activeProgramId);
+                if (activeSkills.length === 0) return null;
+
+                return (
+                  <div key={category} className="space-y-10">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-6">
+                        <h4 className="text-xs font-black uppercase tracking-[0.4em] text-emerald-500/60 whitespace-nowrap">
+                          {(categoryLabels as any)[category] || category}
+                        </h4>
+                        <div className="h-px flex-grow bg-white/5" />
+                      </div>
+                      <p className="text-white/30 text-sm font-medium">
+                        {(categoryDescriptions as any)[category]}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
-                      Explore Path <ChevronRight size={12} />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {activeSkills.map((skill) => {
+                        const pathInfo = allPaths[skill.id] || {};
+                        return (
+                          <Card 
+                            key={skill.id}
+                            onClick={() => handlePathSwitch(skill)}
+                            className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98] relative overflow-hidden"
+                          >
+                            <div className="flex justify-between items-start relative z-10">
+                              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
+                                <Compass size={24} />
+                              </div>
+                              <Badge className="bg-white/5 text-white/40 border-white/10 text-[8px] uppercase tracking-widest font-black">
+                                {skill.difficultyRange}
+                              </Badge>
+                            </div>
+
+                            <div className="space-y-3 relative z-10">
+                              <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{skill.title}</h4>
+                              <p className="text-xs text-white/30 font-medium line-clamp-2 leading-relaxed">{skill.description}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
+                              <div className="space-y-1">
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Duration</p>
+                                <div className="flex items-center gap-1.5 text-emerald-500/60">
+                                  <Clock size={12} />
+                                  <span className="text-xs font-bold">{skill.estimatedWeeks} Weeks</span>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Curriculum</p>
+                                <div className="flex items-center gap-1.5 text-emerald-500/60">
+                                  <BookOpen size={12} />
+                                  <span className="text-xs font-bold">
+                                    {pathInfo.totalModules || 0} Modules • {pathInfo.totalLessons || 0} Lessons
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between relative z-10 pt-4">
+                              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
+                                Explore Program <ChevronRight size={12} />
+                              </div>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="rounded-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePathSwitch(skill);
+                                }}
+                              >
+                                Switch to Path
+                              </Button>
+                            </div>
+                          </Card>
+                        );
+                      })}
                     </div>
-                  </Card>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Premium Upsell Section */}
-          {!progress.isPremium && (
-            <div className="pt-12">
-              <PremiumUpsell />
-            </div>
-          )}
+          {/* Motivation Card */}
+          <div className="pt-12">
+            <Card className="p-12 border-emerald-500/20 bg-emerald-500/[0.02] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-12 opacity-[0.05] pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                <Heart size={160} className="text-emerald-500" />
+              </div>
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                <div className="space-y-6 max-w-xl">
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5">Your Journey</Badge>
+                  <h2 className="text-4xl font-black tracking-tight leading-tight">
+                    You're on the <span className="text-emerald-400">right path</span>
+                  </h2>
+                  <p className="text-white/40 text-lg font-medium">
+                    Keep learning, build projects, and grow your skills step by step. You're ahead of most beginners already.
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => navigate(`/lesson/${nextLessonId}`)}
+                  className="h-16 px-10 rounded-2xl font-black text-lg shadow-xl shadow-emerald-500/20 min-w-[240px]"
+                >
+                  Continue Learning
+                </Button>
+              </div>
+            </Card>
+          </div>
         </div>
       </main>
       <MentorChat />

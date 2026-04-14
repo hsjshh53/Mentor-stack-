@@ -1,17 +1,11 @@
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  onSnapshot 
-} from "firebase/firestore";
-import { firestore } from "../lib/firebase";
-import { UserProjectProgress } from "../types/index";
+import { ref, set, get, update, onValue, off } from "firebase/database";
+import { db } from "../lib/firebase";
+import { UserProjectProgress } from "../types";
 
 export const projectService = {
   // Initialize project progress
   startProject: async (userId: string, projectId: string, initialPhaseId: string) => {
-    const userRef = doc(firestore, 'users', userId);
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
     const now = Date.now();
     
     const initialProgress: UserProjectProgress = {
@@ -25,42 +19,33 @@ export const projectService = {
       completedAt: null
     };
     
-    await updateDoc(userRef, {
-      [`progress.projects.${projectId}`]: initialProgress
-    });
+    await set(projectRef, initialProgress);
     return initialProgress;
   },
 
   // Get project progress
   getProjectProgress: async (userId: string, projectId: string): Promise<UserProjectProgress | null> => {
-    const userRef = doc(firestore, 'users', userId);
-    const snapshot = await getDoc(userRef);
-    if (snapshot.exists()) {
-      const data = snapshot.data();
-      return data.progress?.projects?.[projectId] || null;
-    }
-    return null;
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    const snapshot = await get(projectRef);
+    return snapshot.exists() ? snapshot.val() : null;
   },
 
   // Update current phase
   updateCurrentPhase: async (userId: string, projectId: string, phaseId: string) => {
-    const userRef = doc(firestore, 'users', userId);
-    await updateDoc(userRef, {
-      [`progress.projects.${projectId}.currentPhaseId`]: phaseId,
-      [`progress.projects.${projectId}.updatedAt`]: Date.now()
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    await update(projectRef, {
+      currentPhaseId: phaseId,
+      updatedAt: Date.now()
     });
   },
 
   // Update phase progress
   updatePhaseProgress: async (userId: string, projectId: string, phaseId: string, isCompleted: boolean) => {
-    const userRef = doc(firestore, 'users', userId);
-    const snapshot = await getDoc(userRef);
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    const snapshot = await get(projectRef);
     if (!snapshot.exists()) return;
 
-    const data = snapshot.data();
-    const progress: UserProjectProgress = data.progress?.projects?.[projectId];
-    if (!progress) return;
-
+    const progress: UserProjectProgress = snapshot.val();
     let completedPhases = progress.completedPhases || [];
     
     if (isCompleted && !completedPhases.includes(phaseId)) {
@@ -69,22 +54,19 @@ export const projectService = {
       completedPhases = completedPhases.filter(id => id !== phaseId);
     }
 
-    await updateDoc(userRef, {
-      [`progress.projects.${projectId}.completedPhases`]: completedPhases,
-      [`progress.projects.${projectId}.updatedAt`]: Date.now()
+    await update(projectRef, {
+      completedPhases,
+      updatedAt: Date.now()
     });
   },
 
   // Update checkpoint progress
   updateCheckpointProgress: async (userId: string, projectId: string, checkpointId: string, isCompleted: boolean) => {
-    const userRef = doc(firestore, 'users', userId);
-    const snapshot = await getDoc(userRef);
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    const snapshot = await get(projectRef);
     if (!snapshot.exists()) return;
 
-    const data = snapshot.data();
-    const progress: UserProjectProgress = data.progress?.projects?.[projectId];
-    if (!progress) return;
-
+    const progress: UserProjectProgress = snapshot.val();
     let completedCheckpoints = progress.completedCheckpoints || [];
     
     if (isCompleted && !completedCheckpoints.includes(checkpointId)) {
@@ -93,61 +75,66 @@ export const projectService = {
       completedCheckpoints = completedCheckpoints.filter(id => id !== checkpointId);
     }
 
-    await updateDoc(userRef, {
-      [`progress.projects.${projectId}.completedCheckpoints`]: completedCheckpoints,
-      [`progress.projects.${projectId}.updatedAt`]: Date.now()
+    await update(projectRef, {
+      completedCheckpoints,
+      updatedAt: Date.now()
     });
   },
 
   // Complete project
   completeProject: async (userId: string, projectId: string) => {
-    const userRef = doc(firestore, 'users', userId);
-    await updateDoc(userRef, {
-      [`progress.projects.${projectId}.status`]: 'completed',
-      [`progress.projects.${projectId}.completedAt`]: Date.now(),
-      [`progress.projects.${projectId}.updatedAt`]: Date.now()
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    await update(projectRef, {
+      status: 'completed',
+      completedAt: Date.now(),
+      updatedAt: Date.now()
     });
   },
 
   // Save project draft (playground code)
   saveProjectDraft: async (userId: string, projectId: string, draft: any) => {
-    const userRef = doc(firestore, 'users', userId);
-    await updateDoc(userRef, {
-      [`progress.projects.${projectId}.draft`]: draft,
-      [`progress.projects.${projectId}.updatedAt`]: Date.now()
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    await update(projectRef, {
+      draft,
+      updatedAt: Date.now()
     });
   },
 
   // Submit project
   submitProject: async (userId: string, projectId: string, submission: any) => {
-    const userRef = doc(firestore, 'users', userId);
-    const now = Date.now();
+    const submissionRef = ref(db, `users/${userId}/submissions/${projectId}`);
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
     
-    await updateDoc(userRef, {
-      [`progress.submissions.${projectId}`]: {
-        ...submission,
-        id: projectId,
-        userId,
-        projectId,
-        submittedAt: now,
-        status: 'pending'
-      },
-      [`progress.projects.${projectId}.status`]: 'completed',
-      [`progress.projects.${projectId}.updatedAt`]: now
+    await set(submissionRef, {
+      ...submission,
+      id: projectId,
+      userId,
+      projectId,
+      submittedAt: Date.now(),
+      status: 'pending'
+    });
+
+    await update(projectRef, {
+      status: 'completed', // Or 'submitted' if we add that status
+      updatedAt: Date.now()
+    });
+  },
+
+  // Update project due date
+  updateDueDate: async (userId: string, projectId: string, dueDate: number) => {
+    const projectRef = ref(db, `users/${userId}/projects/${projectId}`);
+    await update(projectRef, {
+      dueDate,
+      updatedAt: Date.now()
     });
   },
 
   // Listen to all user projects
   subscribeToProjects: (userId: string, callback: (projects: Record<string, UserProjectProgress>) => void) => {
-    const userRef = doc(firestore, 'users', userId);
-    const unsubscribe = onSnapshot(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        callback(data.progress?.projects || {});
-      } else {
-        callback({});
-      }
+    const projectsRef = ref(db, `users/${userId}/projects`);
+    onValue(projectsRef, (snapshot) => {
+      callback(snapshot.val() || {});
     });
-    return unsubscribe;
+    return () => off(projectsRef);
   }
 };

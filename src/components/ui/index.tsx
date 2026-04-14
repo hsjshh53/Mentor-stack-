@@ -1,49 +1,55 @@
 import React from 'react';
 
-export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ children, className = '', ...props }) => (
-  <div className={`bg-[#121214] border border-white/5 rounded-2xl ${className}`} {...props}>
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+  role?: string;
+  tabIndex?: number;
+}
+
+export const Card: React.FC<CardProps> = ({ children, className = '', onClick, role, tabIndex }) => (
+  <div 
+    onClick={onClick}
+    role={role}
+    tabIndex={tabIndex}
+    className={`glass-premium rounded-[2.5rem] p-8 transition-all duration-500 border border-white/[0.08] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] ${className} ${onClick ? 'cursor-pointer hover:bg-white/[0.06] hover:border-white/[0.15] hover:-translate-y-1 active:scale-[0.98] hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6)]' : ''}`}
+  >
     {children}
   </div>
 );
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'premium';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'premium';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
   children, 
-  className = '', 
   variant = 'primary', 
-  size = 'md', 
-  fullWidth = false,
+  size = 'md',
+  fullWidth = false, 
+  className = '', 
   ...props 
 }) => {
   const variants = {
-    primary: 'bg-emerald-500 text-black hover:bg-emerald-400',
-    secondary: 'bg-white/10 text-white hover:bg-white/20',
-    outline: 'bg-transparent border border-white/10 text-white hover:bg-white/5',
-    ghost: 'bg-transparent text-white/60 hover:text-white hover:bg-white/5',
-    danger: 'bg-red-500 text-white hover:bg-red-600',
-    premium: 'bg-gradient-to-r from-amber-400 to-orange-500 text-black hover:from-amber-300 hover:to-orange-400 shadow-lg shadow-orange-500/20'
+    primary: 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_10px_30px_-10px_rgba(16,185,129,0.4)] hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.5)] active:shadow-inner',
+    secondary: 'bg-white/[0.08] hover:bg-white/[0.12] text-white backdrop-blur-xl border border-white/[0.05] shadow-xl',
+    outline: 'border border-white/[0.15] hover:bg-white/[0.05] text-white hover:border-white/[0.3] backdrop-blur-md',
+    ghost: 'hover:bg-white/[0.05] text-white/60 hover:text-white',
+    premium: 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black shadow-[0_10px_30px_-10px_rgba(16,185,129,0.4)] font-black uppercase tracking-wider'
   };
 
   const sizes = {
-    sm: 'py-1.5 px-3 text-xs',
-    md: 'py-2 px-4 text-sm',
-    lg: 'py-3 px-6 text-base'
+    sm: 'px-4 py-2 text-[10px] rounded-xl',
+    md: 'px-8 py-4 rounded-2xl font-bold',
+    lg: 'px-10 py-5 text-lg rounded-3xl'
   };
 
   return (
     <button 
-      className={`
-        inline-flex items-center justify-center font-bold rounded-xl transition-all disabled:opacity-50 
-        ${variants[variant]} 
-        ${sizes[size]} 
-        ${fullWidth ? 'w-full' : ''} 
-        ${className}
-      `} 
+      className={`transition-all duration-500 active:scale-95 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 ${fullWidth ? 'w-full' : ''} ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     >
       {children}
@@ -51,15 +57,75 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-export const Badge: React.FC<React.HTMLAttributes<HTMLSpanElement>> = ({ children, className = '', ...props }) => (
-  <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${className}`} {...props}>
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+}
+
+export const Input: React.FC<InputProps> = ({ label, className = '', ...props }) => (
+  <div className="space-y-3 w-full">
+    {label && <label className="text-xs font-black uppercase tracking-[0.2em] text-white/30 ml-1">{label}</label>}
+    <input 
+      className={`w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-6 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all duration-300 ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+export const Badge: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] bg-white/[0.05] text-white/50 border border-white/[0.08] backdrop-blur-md ${className}`}>
     {children}
   </span>
 );
 
-export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className = '', ...props }) => (
-  <input 
-    className={`w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500/50 text-white placeholder-white/20 ${className}`}
-    {...props}
-  />
+export const Modal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}> = ({ isOpen, onClose, title, children, footer }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <div className="relative w-full max-w-2xl bg-[#0D0D0E] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+          <h3 className="text-2xl font-black tracking-tight">{title}</h3>
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div className="p-8 overflow-y-auto custom-scrollbar flex-grow">
+          {children}
+        </div>
+        {footer && (
+          <div className="p-8 border-t border-white/5 bg-white/[0.01] flex justify-end gap-4">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }> = ({ label, className = '', ...props }) => (
+  <div className="space-y-3 w-full">
+    {label && <label className="text-xs font-black uppercase tracking-[0.2em] text-white/30 ml-1">{label}</label>}
+    <textarea 
+      className={`w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-6 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all duration-300 min-h-[120px] ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }> = ({ label, className = '', children, ...props }) => (
+  <div className="space-y-3 w-full">
+    {label && <label className="text-xs font-black uppercase tracking-[0.2em] text-white/30 ml-1">{label}</label>}
+    <select 
+      className={`w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all duration-300 appearance-none ${className}`}
+      {...props}
+    >
+      {children}
+    </select>
+  </div>
 );

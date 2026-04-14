@@ -1,86 +1,184 @@
-import React, { useState } from 'react';
-import { Button, Card, Badge } from '../components/ui';
-import { MessageSquare, Sparkles, Send, Bot, User, Code2, Terminal, BookOpen } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Card, Button, Input } from '../components/ui';
+import { getMentorAdvice } from '../lib/gemini';
+import { useUserData } from '../hooks/useUserData';
+import { useAuth } from '../context/AuthContext';
+import { Sparkles, Send, X, MessageSquare, Bot, ArrowLeft, Zap, BrainCircuit, Terminal, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LoadingScreen } from '../components/LoadingScreen';
 
 export const AITutorPage: React.FC = () => {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: "Hello! I'm your AI Tutor. How can I help you master your tech journey today?" }
-  ]);
+  const [messages, setMessages] = useState<{ role: 'user' | 'model'; content: string }[]>([]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { progress, loading: userLoading } = useUserData();
+  const { user } = useAuth();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    setMessages([...messages, { role: 'user', content: input }]);
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  if (userLoading) return <LoadingScreen />;
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+
+    const userMsg = input;
     setInput('');
-    // Simulate AI response
-    setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: "That's a great question! Let's break it down into simple steps..." }]);
-    }, 1000);
+    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setLoading(true);
+
+    try {
+      const response = await getMentorAdvice(userMsg, messages, progress);
+      setMessages(prev => [...prev, { role: 'model', content: response }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'model', content: "I'm sorry, I'm having trouble connecting right now. Let's try again in a moment." }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const suggestions = [
+    "Explain React hooks",
+    "How do I center a div?",
+    "What is an API?",
+    "Debug my code"
+  ];
+
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col">
-      <div className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-white/[0.02]">
+    <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col h-screen overflow-hidden">
+      {/* Top Navbar */}
+      <header className="bg-[#0A0A0B]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
-            <Sparkles size={20} fill="currentColor" />
-          </div>
-          <div className="space-y-0.5">
-            <span className="font-black tracking-tighter text-xl">AI Tutor</span>
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Always Online
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest text-white/40 hover:text-white transition-all">
-            <BookOpen size={14} />
-            Study Mode
-          </button>
-          <button className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest text-white/40 hover:text-white transition-all">
-            <Code2 size={14} />
-            Code Review
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-8 space-y-8 max-w-4xl mx-auto w-full">
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${msg.role === 'assistant' ? 'bg-emerald-500 text-black shadow-emerald-500/20' : 'bg-white/5 text-white/40 border border-white/10'}`}>
-              {msg.role === 'assistant' ? <Bot size={24} /> : <User size={24} />}
-            </div>
-            <div className={`space-y-2 max-w-2xl ${msg.role === 'user' ? 'text-right' : ''}`}>
-              <div className={`p-6 rounded-2xl text-lg leading-relaxed ${msg.role === 'assistant' ? 'bg-white/[0.03] border border-white/5 text-white/80' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'}`}>
-                {msg.content}
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/20">
-                {msg.role === 'assistant' ? 'AI Mentor' : 'You'} • Just now
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="p-8 border-t border-white/5 bg-white/[0.02]">
-        <div className="max-w-4xl mx-auto relative">
-          <input 
-            type="text" 
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask your mentor anything..." 
-            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-6 pr-16 py-6 text-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
-          />
           <button 
-            onClick={handleSend}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-xl bg-emerald-500 text-black flex items-center justify-center hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+            onClick={() => navigate('/dashboard')}
+            className="p-2 -ml-2 hover:bg-white/5 rounded-xl transition-colors"
           >
-            <Send size={20} fill="currentColor" />
+            <ArrowLeft size={24} />
           </button>
+          <div>
+            <h1 className="font-black text-lg tracking-tighter uppercase">AI Tutor</h1>
+            <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Powered by MentorStack AI</p>
+          </div>
         </div>
-      </div>
+        <div className="flex items-center gap-4">
+          {progress.isPremium && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+              <Sparkles size={12} fill="currentColor" />
+              Pro Mode Active
+            </div>
+          )}
+          <div className="px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Online
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-grow flex flex-col overflow-hidden max-w-4xl mx-auto w-full">
+        {/* Messages Area */}
+        <div ref={scrollRef} className="flex-grow overflow-y-auto p-6 space-y-8 scroll-smooth">
+          {messages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-8 py-20">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
+                <div className="relative w-24 h-24 rounded-[2rem] bg-emerald-500 text-black flex items-center justify-center shadow-2xl shadow-emerald-500/40">
+                  <Bot size={48} />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-black tracking-tight">Ready to level up?</h2>
+                <p className="text-white/40 max-w-md mx-auto leading-relaxed">
+                  "I am your MentorStack AI mentor, here to guide you step-by-step. I am a strict but friendly coach. Type your first question below to start."
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+                {suggestions.map((s) => (
+                  <button 
+                    key={s}
+                    onClick={() => setInput(s)}
+                    className="p-4 rounded-2xl bg-white/5 border border-white/5 text-xs font-bold text-white/40 hover:text-white hover:bg-white/10 hover:border-emerald-500/30 transition-all text-left"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {messages.map((msg, i) => (
+            <motion.div 
+              key={`${msg.role}-${i}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`flex gap-4 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div className={`w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center shadow-lg ${
+                  msg.role === 'user' 
+                    ? 'bg-white/5 text-white/20 border border-white/10' 
+                    : 'bg-emerald-500 text-black shadow-emerald-500/20'
+                }`}>
+                  {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+                </div>
+                <div className={`p-6 rounded-3xl leading-relaxed text-sm whitespace-pre-wrap shadow-2xl ${
+                  msg.role === 'user' 
+                    ? 'bg-emerald-500 text-black rounded-tr-none shadow-emerald-500/10 font-medium' 
+                    : 'bg-white/[0.03] text-white/80 border border-white/10 rounded-tl-none backdrop-blur-md'
+                }`}>
+                  {msg.content}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+
+          {loading && (
+            <div className="flex justify-start">
+              <div className="flex gap-4 max-w-[85%]">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-black flex items-center justify-center shrink-0">
+                  <Bot size={20} />
+                </div>
+                <div className="bg-white/5 p-6 rounded-3xl rounded-tl-none flex gap-2 items-center">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce [animation-delay:0.2s]" />
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div className="p-6 shrink-0">
+          <form onSubmit={handleSend} className="relative max-w-3xl mx-auto">
+            <div className="absolute -inset-1 bg-emerald-500/20 rounded-[2rem] blur-xl opacity-0 focus-within:opacity-100 transition-opacity" />
+            <div className="relative">
+              <Input 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask me anything..."
+                className="pr-16 h-16 rounded-[2rem] bg-[#0D0D0E] border-white/10 focus:border-emerald-500/50"
+              />
+              <button 
+                type="submit"
+                disabled={!input.trim() || loading}
+                className="absolute right-2.5 top-2.5 w-11 h-11 rounded-2xl bg-emerald-500 text-black flex items-center justify-center hover:bg-emerald-600 transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/20"
+              >
+                <Send size={20} />
+              </button>
+            </div>
+          </form>
+          <p className="text-center text-[10px] text-white/20 mt-4 font-black uppercase tracking-widest">
+            MentorStack AI can make mistakes. Check important info.
+          </p>
+        </div>
+      </main>
     </div>
   );
 };

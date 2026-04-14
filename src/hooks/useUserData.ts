@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ref, onValue, set, update, get } from 'firebase/database';
+import { ref, onValue, set, update } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { UserProgress, ProjectSubmission, ProjectStarterCode } from '../types/index';
-import { lessonGeneratorService } from '../services/lessonGeneratorService';
 
 const defaultProgress: UserProgress = {
   selectedPath: null,
+  activeProgramId: '',
   currentStage: 'Beginner',
   xp: 0,
   level: 1,
@@ -28,7 +28,6 @@ export const useUserData = () => {
   const { user } = useAuth();
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [generationProgress, setGenerationProgress] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -36,20 +35,6 @@ export const useUserData = () => {
       setLoading(false);
       return;
     }
-
-    // Check and trigger lesson generation if needed
-    const checkGeneration = async () => {
-      const curriculumRef = ref(db, 'curriculum');
-      const snapshot = await get(curriculumRef);
-      if (!snapshot.exists() || Object.keys(snapshot.val()).length === 0) {
-        setGenerationProgress(0);
-        await lessonGeneratorService.checkAndGenerate((p) => {
-          setGenerationProgress(p);
-        });
-        setGenerationProgress(null);
-      }
-    };
-    checkGeneration();
 
     const userRef = ref(db, `users/${user.uid}/progress`);
     const unsubscribe = onValue(userRef, (snapshot) => {
@@ -132,5 +117,5 @@ export const useUserData = () => {
     });
   };
 
-  return { progress, loading, generationProgress, updateProgress, addXP, submitProject, saveProjectDraft };
+  return { progress, loading, updateProgress, addXP, submitProject, saveProjectDraft };
 };

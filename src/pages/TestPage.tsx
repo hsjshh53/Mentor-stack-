@@ -1,112 +1,254 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  ArrowLeft, CheckCircle2, AlertCircle, 
+  Trophy, Zap, Target, HelpCircle,
+  ChevronRight, RefreshCcw, BookOpen, Sparkles
+} from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
-import { CheckCircle2, XCircle, ArrowRight, Timer, Trophy, BookOpen } from 'lucide-react';
+import { useUserData } from '../hooks/useUserData';
+import { LoadingScreen } from '../components/LoadingScreen';
+import { STAGE_TESTS } from '../constants/tests';
+import { StageTest } from '../types';
 
 export const TestPage: React.FC = () => {
-  const { id } = useParams();
+  const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
-  const [step, setStep] = useState<'intro' | 'quiz' | 'result'>('intro');
-  const [score, setScore] = useState(0);
+  const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
+  const [test, setTest] = useState<StageTest | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [isFinished, setIsFinished] = useState(false);
 
-  const startTest = () => setStep('quiz');
-  const finishTest = () => {
-    setScore(85);
-    setStep('result');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [wrongQuestions, setWrongQuestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const foundTest = STAGE_TESTS.find(t => t.id === testId);
+    if (foundTest) {
+      setTest(foundTest);
+    }
+  }, [testId]);
+
+  if (userLoading || !test) return <LoadingScreen message="PREPARING TEST..." />;
+
+  const handleAnswer = (optionIdx: number) => {
+    if (showFeedback) return;
+    const newAnswers = [...selectedAnswers];
+    newAnswers[currentQuestion] = optionIdx;
+    setSelectedAnswers(newAnswers);
+    setShowFeedback(true);
+
+    if (optionIdx !== test.questions[currentQuestion].correctIndex) {
+      setWrongQuestions(prev => [...prev, test.questions[currentQuestion].question]);
+    }
   };
 
+  const nextQuestion = () => {
+    setShowFeedback(false);
+    if (currentQuestion < test.questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      handleFinish();
+    }
+  };
+
+  const calculateScore = () => {
+    return selectedAnswers.reduce((score, answer, idx) => {
+      return answer === test.questions[idx].correctIndex ? score + 1 : score;
+    }, 0);
+  };
+
+  const handleFinish = async () => {
+    const score = calculateScore();
+    const passed = (score / test.questions.length) * 100 >= test.minScoreToPass;
+
+    if (progress) {
+      const newWeakAreas = [...new Set([...progress.weakAreas, ...wrongQuestions])];
+      await updateProgress({
+        completedTests: passed ? [...progress.completedTests, test.id] : progress.completedTests,
+        weakAreas: newWeakAreas.slice(0, 10) // Keep top 10 weak areas
+      });
+      if (passed) await addXP(test.xpReward);
+    }
+    setShowResults(true);
+  };
+
+  if (showResults) {
+    const score = calculateScore();
+    const passed = score >= test.minScoreToPass;
+
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col items-center justify-center p-6">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="max-w-md w-full space-y-8 text-center"
+        >
+          <div className={`w-24 h-24 rounded-3xl mx-auto flex items-center justify-center ${passed ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}`}>
+            {passed ? <Trophy size={48} /> : <AlertCircle size={48} />}
+          </div>
+          
+          <div className="space-y-2">
+            <h1 className="text-4xl font-black tracking-tight">
+              {passed ? 'Stage Passed!' : 'Try Again'}
+            </h1>
+            <p className="text-white/40">
+              You scored {score} out of {test.questions.length}
+            </p>
+          </div>
+
+          <Card className="p-6 bg-white/[0.02] border-white/5 space-y-4">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-white/40">XP Earned</span>
+              <span className="font-bold text-emerald-400">+{passed ? test.xpReward : 0} XP</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-white/40">Status</span>
+              <span className={`font-bold ${passed ? 'text-emerald-400' : 'text-red-400'}`}>
+                {passed ? 'COMPLETED' : 'FAILED'}
+              </span>
+            </div>
+          </Card>
+
+          <div className="flex flex-col gap-3">
+            {passed ? (
+              <Button onClick={() => navigate('/dashboard')} fullWidth className="h-14 rounded-2xl bg-emerald-500 text-black font-black uppercase tracking-widest">
+                Back to Dashboard
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <Button onClick={() => window.location.reload()} fullWidth className="h-14 rounded-2xl bg-white text-black font-black uppercase tracking-widest">
+                  <RefreshCcw size={18} className="mr-2" />
+                  Retry Test
+                </Button>
+                {progress.isPremium ? (
+                  <Button 
+                    onClick={() => navigate('/ai-tutor')} 
+                    variant="outline" 
+                    fullWidth 
+                    className="h-14 rounded-2xl border-emerald-500/20 text-emerald-400 font-black uppercase tracking-widest bg-emerald-500/5"
+                  >
+                    <Sparkles size={18} className="mr-2" />
+                    Review with AI Coach
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => navigate('/profile')} 
+                    variant="premium" 
+                    fullWidth 
+                    className="h-14 rounded-2xl font-black uppercase tracking-widest"
+                  >
+                    <Sparkles size={18} className="mr-2" />
+                    Unlock AI Review
+                  </Button>
+                )}
+              </div>
+            )}
+            <Button variant="outline" onClick={() => navigate('/dashboard')} fullWidth className="h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase tracking-widest">
+              Exit
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  const question = test.questions[currentQuestion];
+
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col items-center justify-center p-8">
-      {step === 'intro' && (
-        <Card className="p-12 w-full max-w-2xl space-y-10 text-center border-white/[0.05] bg-white/[0.01]">
-          <div className="space-y-4">
-            <div className="w-20 h-20 rounded-3xl bg-emerald-500 flex items-center justify-center text-black mx-auto shadow-lg shadow-emerald-500/20">
-              <BookOpen size={40} />
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tighter">Module <span className="text-emerald-400">Assessment</span></h1>
-              <p className="text-white/40 text-lg font-medium">Verify your knowledge of HTML Fundamentals.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-              <Timer className="mx-auto text-emerald-500" size={24} />
-              <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Duration</div>
-              <div className="text-xl font-black">15 Min</div>
-            </div>
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-              <CheckCircle2 className="mx-auto text-emerald-500" size={24} />
-              <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Questions</div>
-              <div className="text-xl font-black">10 Total</div>
-            </div>
-            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-              <Trophy className="mx-auto text-emerald-500" size={24} />
-              <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Passing</div>
-              <div className="text-xl font-black">80% Score</div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <Button onClick={startTest} className="w-full py-6 text-xl shadow-lg shadow-emerald-500/20">Start Assessment</Button>
-            <button onClick={() => navigate(-1)} className="text-white/40 font-black text-sm uppercase tracking-widest hover:text-white transition-all">Go Back</button>
-          </div>
-        </Card>
-      )}
-
-      {step === 'quiz' && (
-        <div className="w-full max-w-3xl space-y-8">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="text-[10px] font-black uppercase tracking-widest text-white/20">Question 1 of 10</div>
-              <h2 className="text-2xl font-black tracking-tighter">What does HTML stand for?</h2>
-            </div>
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
-              <Timer size={18} className="text-emerald-500" />
-              <span className="font-mono font-bold">14:52</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              'Hyper Text Markup Language',
-              'High Tech Modern Language',
-              'Hyper Transfer Markup Link',
-              'Home Tool Markup Language'
-            ].map((option, i) => (
-              <button 
-                key={i}
-                onClick={finishTest}
-                className="w-full p-6 rounded-2xl bg-white/[0.02] border border-white/5 text-left text-lg font-medium hover:bg-emerald-500/10 hover:border-emerald-500/30 transition-all group flex items-center justify-between"
-              >
-                {option}
-                <ArrowRight size={20} className="text-white/0 group-hover:text-emerald-500 transition-all" />
-              </button>
-            ))}
+    <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col">
+      <header className="sticky top-0 z-50 bg-[#0A0A0B]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/dashboard')} className="p-2 -ml-2 hover:bg-white/5 rounded-xl transition-colors">
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h1 className="font-bold text-lg tracking-tight">{test.title}</h1>
+            <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Question {currentQuestion + 1} of {test.questions.length}</p>
           </div>
         </div>
-      )}
+        <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-emerald-500 transition-all duration-500"
+            style={{ width: `${((currentQuestion + 1) / test.questions.length) * 100}%` }}
+          />
+        </div>
+      </header>
 
-      {step === 'result' && (
-        <Card className="p-12 w-full max-w-2xl space-y-10 text-center border-white/[0.05] bg-white/[0.01]">
-          <div className="space-y-4">
-            <div className="w-24 h-24 rounded-full bg-emerald-500 flex items-center justify-center text-black mx-auto shadow-lg shadow-emerald-500/20">
-              <Trophy size={48} />
+      <main className="flex-grow flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full space-y-8">
+          <motion.div
+            key={currentQuestion}
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="space-y-8"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold leading-tight">
+              {question.question}
+            </h2>
+
+            <div className="grid grid-cols-1 gap-3">
+              {question.options.map((option, idx) => (
+                <button
+                  key={idx}
+                  disabled={showFeedback}
+                  onClick={() => handleAnswer(idx)}
+                  className={`w-full p-6 rounded-2xl border text-left transition-all flex items-center justify-between group ${
+                    selectedAnswers[currentQuestion] === idx
+                      ? idx === question.correctIndex 
+                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400'
+                        : 'bg-red-500/10 border-red-500 text-red-400'
+                      : showFeedback && idx === question.correctIndex
+                        ? 'bg-emerald-500/5 border-emerald-500/50 text-emerald-400'
+                        : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10'
+                  }`}
+                >
+                  <span className="font-medium">{option}</span>
+                  {selectedAnswers[currentQuestion] === idx && (
+                    idx === question.correctIndex 
+                      ? <CheckCircle2 size={20} className="text-emerald-500" />
+                      : <AlertCircle size={20} className="text-red-500" />
+                  )}
+                </button>
+              ))}
             </div>
-            <div className="space-y-2">
-              <h1 className="text-4xl font-black tracking-tighter">Assessment <span className="text-emerald-400">Passed!</span></h1>
-              <p className="text-white/40 text-lg font-medium">You've successfully completed the HTML Basics module.</p>
-            </div>
-          </div>
 
-          <div className="text-6xl font-black tracking-tighter text-emerald-400">{score}%</div>
+            {showFeedback && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-6 rounded-2xl border ${
+                  selectedAnswers[currentQuestion] === question.correctIndex 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {selectedAnswers[currentQuestion] === question.correctIndex ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  <span className="font-black uppercase tracking-widest text-[10px]">
+                    {selectedAnswers[currentQuestion] === question.correctIndex ? 'Correct' : 'Incorrect'}
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed">{question.explanation}</p>
+              </motion.div>
+            )}
+          </motion.div>
 
-          <div className="space-y-4">
-            <Button onClick={() => navigate('/dashboard')} className="w-full py-6 text-xl shadow-lg shadow-emerald-500/20">Continue Journey</Button>
-            <button onClick={() => setStep('intro')} className="text-white/40 font-black text-sm uppercase tracking-widest hover:text-white transition-all">Review Answers</button>
+          <div className="pt-8 flex justify-end">
+            <Button 
+              disabled={selectedAnswers[currentQuestion] === undefined}
+              onClick={nextQuestion}
+              className="h-14 px-12 rounded-2xl shadow-xl shadow-emerald-500/20"
+            >
+              {currentQuestion === test.questions.length - 1 ? 'Finish Test' : 'Next Question'}
+              <ChevronRight size={18} className="ml-2" />
+            </Button>
           </div>
-        </Card>
-      )}
+        </div>
+      </main>
     </div>
   );
 };

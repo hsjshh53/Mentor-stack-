@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
+import { ref, get } from "firebase/database";
+import { db } from "./firebase";
 import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
-import { ref, get } from 'firebase/database';
-import { db, sanitizeFirebaseKey } from './firebase';
 
 // 1. GEMINI SERVICE SETUP
 // Always use process.env.GEMINI_API_KEY as the source of truth
@@ -215,45 +215,38 @@ const getFallbackLesson = (topic: string): LessonContent => {
   };
 };
 
-async function callGeminiWithRetry(fn: () => Promise<any>, maxRetries = 3): Promise<any> {
-  let lastError: any;
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error: any) {
-      lastError = error;
-      const isRateLimit = error.message?.includes('429') || error.message?.includes('RESOURCE_EXHAUSTED');
-      if (isRateLimit) {
-        const delay = Math.pow(2, i) * 5000;
-        console.warn(`Gemini Rate Limit hit. Retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-      throw error;
+export async function generateLesson(path: CareerPath, stage: Stage, topic: string, skillId?: string): Promise<LessonContent | null> {
+  // 1. CHECK DATABASE FIRST (Approved AI Lessons)
+  try {
+    // Check main lessons first
+    const lessonRef = ref(db, `lessons/${topic}`);
+    const snapshot = await get(lessonRef);
+    if (snapshot.exists()) {
+      console.log("Gemini Service: Using approved lesson from database for:", topic);
+      return snapshot.val();
     }
-  }
-  throw lastError;
-}
 
-export async function generateLesson(path: CareerPath, stage: Stage, topic: string): Promise<LessonContent | null> {
-  // 1. CHECK LOCAL CONTENT FIRST
+    // Check AI Generated Pool if skillId provided
+    if (skillId) {
+      const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
+      const poolSnap = await get(poolRef);
+      if (poolSnap.exists()) {
+        const poolData = poolSnap.val();
+        const lesson = Object.values(poolData).find((l: any) => l.id === topic || l.slug === topic) as any;
+        if (lesson) {
+          console.log("Gemini Service: Using AI generated lesson from pool for:", topic);
+          return lesson;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Gemini Service: Error checking database for lesson:", err);
+  }
+
+  // 2. CHECK LOCAL CONTENT
   if (LESSON_CONTENT[topic]) {
     console.log("Gemini Service: Using local lesson content for:", topic);
     return LESSON_CONTENT[topic];
-  }
-
-  // 2. CHECK FIREBASE DB NEXT
-  try {
-    // Normalize topic for ID and remove invalid Firebase characters
-    const lessonId = sanitizeFirebaseKey(topic);
-    const lessonRef = ref(db, `lessons/${lessonId}`);
-    const snapshot = await get(lessonRef);
-    if (snapshot.exists()) {
-      console.log("Gemini Service: Using Firebase lesson content for:", topic);
-      return snapshot.val() as LessonContent;
-    }
-  } catch (error) {
-    console.error("Gemini Service: Error checking Firebase for lesson:", error);
   }
 
   console.log(`Gemini Service: Request started - Generate Lesson (${topic})`);
@@ -263,50 +256,45 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
     return getFallbackLesson(topic);
   }
 
-  try {
-    const lesson = await callGeminiWithRetry(async () => {
-      const prompt = `
-        Generate a structured lesson for a ${path} at the ${stage} stage.
-        Topic: "${topic}".
-        
-        IMPORTANT: You are MentorStack AI, part of OLYNQ SOCIAL LIMITED. 
-        The lesson content must be simple, clear, and beginner-friendly.
-        
-        Return the lesson in JSON format with the following keys:
-        'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine' (MUST be a string, not an object), 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
-        
-        Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
-        Follow this 7-step learning flow logic:
-        1. Simple explanation (beginner-friendly, max 3 lines)
-        2. Real example (real-world scenario)
-        3. Code example (if applicable, clean and commented)
-        4. Practice task (small, active command for the user)
-        5. AI guidance (a "pro-tip" or "mentor-secret")
-        6. Mini challenge (a small twist to the practice task)
-        7. THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
-      `;
+  const prompt = `
+    Generate a structured lesson for a ${path} at the ${stage} stage.
+    Topic: "${topic}".
+    
+    IMPORTANT: You are MentorStack AI, part of OLYNQ SOCIAL LIMITED. 
+    The lesson content must be simple, clear, and beginner-friendly.
+    
+    Return the lesson in JSON format with the following keys:
+    'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine', 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
+    
+    Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
+    Follow this 7-step learning flow logic:
+    1. Simple explanation (beginner-friendly, max 3 lines)
+    2. Real example (real-world scenario)
+    3. Code example (if applicable, clean and commented)
+    4. Practice task (small, active command for the user)
+    5. AI guidance (a "pro-tip" or "mentor-secret")
+    6. Mini challenge (a small twist to the practice task)
+    7. THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
+  `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-      
-      return JSON.parse(response.text);
+  try {
+    const apiCallPromise = ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
+      config: {
+        responseMimeType: "application/json"
+      }
     });
 
+    const response = await apiCallPromise;
     console.log("Gemini Service: Response status - Success");
     
-    // Ensure lineByLine is a string to avoid Firebase key errors
-    const lineByLineStr = typeof lesson.lineByLine === 'object' 
-      ? Object.entries(lesson.lineByLine).map(([k, v]) => `${k}: ${v}`).join('\n')
-      : String(lesson.lineByLine || '');
+    const text = response.text;
+    if (!text) throw new Error("Empty response");
 
+    const lesson = JSON.parse(text);
     return {
       ...lesson,
-      lineByLine: lineByLineStr,
       commonMistakes: lesson.commonMistakes || [],
       quiz: lesson.quiz || []
     };
@@ -316,7 +304,7 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
     // Specific error handling
     if (e.message?.includes("API_KEY_INVALID")) {
       console.error("Gemini Service: Invalid API Key");
-    } else if (e.message?.includes("quota") || e.message?.includes("429")) {
+    } else if (e.message?.includes("quota")) {
       console.error("Gemini Service: Quota exceeded");
     } else if (e.message?.includes("not enabled")) {
       console.error("Gemini Service: API not enabled");
@@ -337,31 +325,28 @@ export async function getMentorAdvice(message: string, history: any[], userConte
   }
 
   try {
-    const text = await callGeminiWithRetry(async () => {
-      const prompt = `
-        User Context: ${JSON.stringify(userContext)}
-        
-        Conversation History:
-        ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
+    const prompt = `
+      User Context: ${JSON.stringify(userContext)}
+      
+      Conversation History:
+      ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
 
-        User Message: ${message}
+      User Message: ${message}
 
-        If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
-      `;
+      If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
+    `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-          {
-            parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
-          }
-        ]
-      });
-
-      return response.text;
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        {
+          parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
+        }
+      ]
     });
 
     console.log("Gemini Service: Response status - Success");
+    const text = response.text;
     if (!text) throw new Error("Empty response from Gemini");
     
     return text;
@@ -373,7 +358,7 @@ export async function getMentorAdvice(message: string, history: any[], userConte
     let errorMessage = "I'm having a moment to think. Let's try that again.";
     if (error.message?.includes("API_KEY_INVALID")) {
       errorMessage = "I'm currently updating my systems. I'll be back to full strength soon!";
-    } else if (error.message?.includes("quota") || error.message?.includes("429")) {
+    } else if (error.message?.includes("quota")) {
       errorMessage = "I've shared so much advice today! Let's take a quick breather and continue in a bit.";
     }
 

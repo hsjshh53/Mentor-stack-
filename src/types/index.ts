@@ -1,5 +1,12 @@
 export type PathStatus = 'active' | 'partial' | 'locked';
 
+export type ProgramCategory = 
+  | 'development-skill'
+  | 'career-path'
+  | 'coding-languages'
+  | 'tool-foundation'
+  | 'career-prep';
+
 export type CareerCategory = 
   | 'Core Software Development'
   | 'Data & AI'
@@ -14,7 +21,6 @@ export type CareerPath =
   | 'Frontend Developer'
   | 'Backend Developer'
   | 'Full-Stack Developer'
-  | 'HTML'
   | 'Mobile App Developer'
   | 'Software Engineer'
   | 'Systems Architect'
@@ -56,7 +62,16 @@ export type CareerPath =
   | 'HR Specialist'
   | 'Sales Specialist'
   | 'Customer Support'
-  | 'Virtual Assistant';
+  | 'Virtual Assistant'
+  | 'JavaScript Programming'
+  | 'Python Programming'
+  | 'Java Programming'
+  | 'C++ Programming'
+  | 'C# Programming'
+  | 'Go Programming'
+  | 'Rust Programming'
+  | 'Swift Programming'
+  | 'PHP Programming';
 
 export type Stage = 'Beginner' | 'Intermediate' | 'Advanced' | 'Projects' | 'Final Exam';
 
@@ -67,16 +82,13 @@ export interface Module {
   lessons: string[]; // Lesson IDs
   testId?: string;
   projectId?: string;
-  skillId?: string;
-  level?: 'beginner' | 'intermediate' | 'advanced';
-  order?: number;
 }
 
 export interface PathCurriculum {
   id: string;
   title: string;
   description: string;
-  category: CareerCategory;
+  category: ProgramCategory | string;
   status: PathStatus;
   icon?: string;
   skills?: string[];
@@ -88,10 +100,6 @@ export interface PathCurriculum {
   };
   tools: string[]; // TechTool IDs
   finalExamId: string;
-  curriculumGenerated?: boolean;
-  lessonsGeneratedCount?: number;
-  targetLessons?: number;
-  generationStatus?: 'idle' | 'generating' | 'completed' | 'failed';
 }
 
 export type TechCategory = 
@@ -179,6 +187,7 @@ export interface GithubRepoMetadata {
 
 export interface UserProgress {
   selectedPath: CareerPath | null;
+  activeProgramId?: string; // ID of the Skill/Program the user is currently focused on
   currentStage: Stage;
   xp: number;
   level: number;
@@ -194,6 +203,9 @@ export interface UserProgress {
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
   isPremium: boolean;
+  role?: 'admin' | 'user';
+  goal?: string;
+  experienceLevel?: string;
 }
 
 export interface UserProfile {
@@ -216,7 +228,6 @@ export interface LessonContent {
   commonMistakes: string[];
   practice: string;
   challenge: string;
-  reflectionQuestion?: string;
   proTip?: string;
   quiz: {
     question: string;
@@ -225,12 +236,118 @@ export interface LessonContent {
     explanation: string;
   }[];
   recap: string;
-  generatedByAI?: boolean;
-  published?: boolean;
-  moduleId?: string;
-  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
-  order?: number;
-  createdAt?: number;
+}
+
+export interface Skill {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  icon: string;
+  category: ProgramCategory;
+  difficultyRange: string;
+  estimatedCompletionTime: string;
+  estimatedWeeks: number;
+  estimatedMonths: number;
+  weeklyStudyPlan?: string;
+  careerOutcome: string;
+  toolsCovered: string[];
+  careerOutcomes: string[];
+  targetLessons?: number;
+  targetModules?: number;
+  targetProjects?: number;
+  totalStages?: number;
+  totalModules?: number;
+  totalLessons?: number;
+  totalProjects?: number;
+  certificateEligible: boolean;
+  lessonCount?: number;
+  published: boolean;
+  status: 'active' | 'draft';
+  dueDate?: number;
+}
+
+export interface CurriculumPath {
+  id: string;
+  skillId: string;
+  title: string;
+  description: string;
+  summary?: string;
+  durationWeeks?: number;
+  targetOutcome?: string;
+  status: 'active' | 'draft';
+  totalModules: number;
+  totalLessons: number;
+  estimatedDuration: string;
+  projectsCount?: number;
+  jobOutcome?: string;
+}
+
+export interface CurriculumStage {
+  id: string;
+  curriculumPathId: string;
+  skillId: string;
+  title: string;
+  levelName: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert' | 'Career Prep';
+  order: number;
+}
+
+export interface CurriculumWeek {
+  id: string;
+  skillId: string;
+  curriculumPathId: string;
+  stageId: string;
+  weekNumber: number;
+  title: string;
+  description: string;
+  learningGoals: string[];
+}
+
+export interface CurriculumModule {
+  id: string;
+  skillId: string;
+  curriculumPathId: string;
+  stageId: string;
+  weekId: string;
+  title: string;
+  description: string;
+  order: number;
+  estimatedDuration: string;
+}
+
+export interface CurriculumLesson extends LessonContent {
+  moduleId: string;
+  weekId: string;
+  skillId: string;
+  curriculumPathId: string;
+  stageId: string;
+  slug: string;
+  summary: string;
+  objectives: string;
+  body: string;
+  order: number;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  estimatedDuration: string;
+  prerequisites: string[];
+  tags: string[];
+  resources?: string[];
+  exercise?: string;
+  project?: {
+    title: string;
+    description: string;
+    steps: string[];
+  };
+  miniProject?: {
+    title: string;
+    description: string;
+  };
+  interviewTips?: string;
+  careerTips?: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface GeneratedLesson extends CurriculumLesson {
+  createdAt: number;
 }
 
 export interface Achievement {
@@ -335,6 +452,7 @@ export interface UserProjectProgress {
   startedAt: number;
   updatedAt: number;
   completedAt: number | null;
+  dueDate?: number;
 }
 
 export interface Project {
