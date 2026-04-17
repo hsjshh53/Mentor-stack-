@@ -372,15 +372,17 @@ export const ManageCurriculum: React.FC = () => {
               {isSeeding ? <Loader2 size={20} className="animate-spin mr-2" /> : <Layers size={20} className="mr-2" />}
               Seed Missing Programs
             </Button>
-            <select 
-              className="h-14 bg-white/5 border border-white/10 rounded-2xl px-6 font-bold outline-none focus:border-emerald-500 transition-all"
+            <Select 
+              className="h-14"
+              placeholder="Choose a program..."
+              displayValue={skills.length > 0 ? (selectedSkill?.title) : (localStorage.getItem('lastSelectedSkillId') ? 'Loading...' : undefined)}
+              value={selectedSkill?.id || ''}
               onChange={(e) => {
                 const skill = skills.find(s => s.id === e.target.value);
                 setSelectedSkill(skill || null);
               }}
-              value={selectedSkill?.id || ''}
             >
-              <option value="">Select a Program to Manage</option>
+              <option value="">Choose a program...</option>
               <optgroup label="Career Paths">
                 {skills.filter(s => s.category === 'career-path').map(s => (
                   <option key={s.id} value={s.id}>{s.title}</option>
@@ -407,11 +409,11 @@ export const ManageCurriculum: React.FC = () => {
                 ))}
               </optgroup>
               <optgroup label="Other">
-                {skills.filter(s => !['career-path', 'coding-languages', 'tool', 'career-prep'].includes(s.category as string)).map(s => (
+                {skills.filter(s => !['career-path', 'coding-languages', 'tool-foundation', 'development-skill', 'career-prep'].includes(s.category as string)).map(s => (
                   <option key={s.id} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
-            </select>
+            </Select>
             <Button 
               onClick={() => {
                 setEditingItem(null);

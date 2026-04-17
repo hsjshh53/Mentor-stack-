@@ -126,7 +126,7 @@ export const TestPage: React.FC = () => {
                 </Button>
                 {progress.isPremium ? (
                   <Button 
-                    onClick={() => navigate('/ai-tutor')} 
+                    onClick={() => navigate('/tutor')} 
                     variant="outline" 
                     fullWidth 
                     className="h-14 rounded-2xl border-emerald-500/20 text-emerald-400 font-black uppercase tracking-widest bg-emerald-500/5"

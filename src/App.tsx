@@ -98,7 +98,7 @@ export default function App() {
             </PrivateRoute>
           } />
 
-          <Route path="/ai-tutor" element={
+          <Route path="/tutor" element={
             <PrivateRoute>
               <AITutorPage />
             </PrivateRoute>

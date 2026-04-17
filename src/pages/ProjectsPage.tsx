@@ -315,7 +315,7 @@ export const ProjectsPage: React.FC = () => {
             />
           </div>
           <Button 
-            onClick={() => navigate('/ai-tutor')}
+            onClick={() => navigate('/tutor')}
             className="h-10 px-4 md:px-6 text-[10px] font-black uppercase tracking-widest bg-[#F27D26] hover:bg-[#F27D26]/90 shadow-lg shadow-[#F27D26]/20 shrink-0"
           >
             <Sparkles size={16} className="md:mr-2" />

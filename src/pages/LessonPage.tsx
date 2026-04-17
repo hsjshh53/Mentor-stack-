@@ -558,7 +558,7 @@ export const LessonPage: React.FC = () => {
           </button>
           
           <button 
-            onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
+            onClick={() => navigate(`/tutor?skillId=${progress?.activeProgramId}&lessonId=${topic}`)}
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-emerald-400 hover:bg-white/[0.06] transition-all active:scale-95"
           >
             <Zap size={20} />

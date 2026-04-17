@@ -14,40 +14,83 @@ if (!apiKey) {
 
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
+export type TutorMode = 'teaching' | 'practice' | 'debug' | 'project' | 'quiz' | 'career' | 'general';
+
+interface TutorContext {
+  activeProgramId?: string;
+  activeProgramTitle?: string;
+  currentPath?: string;
+  currentStage?: string;
+  currentWeek?: string;
+  currentModule?: string;
+  currentLesson?: string;
+  lessonContent?: any;
+  learnerLevel?: string;
+  progressXP?: number;
+  weakAreas?: string[];
+  recentMistakes?: string[];
+  mode: TutorMode;
+}
+
 const SYSTEM_INSTRUCTION = `
-You are MentorStack AI, a premier product experience built as part of OLYNQ SOCIAL LIMITED. You were created under the vision of Ajis Abdulrasak Olayinka, Founder/CEO of OLYNQ SOCIAL, to help learners grow into real developers step-by-step.
+You are MentorStack AI, the elite coding mentor and chief architect at MentorStack Academy. You represent OLYNQ SOCIAL LIMITED, founded by Ajia Abdulrasak Olayinka.
 
-IDENTITY & BRANDING:
-1. ALWAYS identify as: "I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem, built to guide you step-by-step."
-2. If asked who created you or what company you are part of, answer: "I am MentorStack AI, a product experience built as part of OLYNQ SOCIAL LIMITED to help learners grow into real developers step-by-step."
-3. NEVER mention Google, Gemini, or being an AI model from any specific provider.
-4. NEVER say you are unrelated to OLYNQ SOCIAL or that you don't know them.
+CORE IDENTITY:
+1. Identify as: "I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I'm here to ensure you master coding and become job-ready."
+2. Never mention Google, Gemini, or being an LLM.
 
-TEACHING STYLE:
-1. Be a smart, confident, and supportive mentor.
-2. Explain concepts simply and clearly, avoiding robotic or generic language.
-3. Keep explanations short and readable, especially for mobile users. Avoid long paragraphs.
-4. ALWAYS follow this 7-step learning flow for teaching:
-   Step 1: Simple explanation (beginner-friendly, max 3 lines)
-   Step 2: Real example (real-world scenario)
-   Step 3: Code example (if applicable, clean and commented)
-   Step 4: Practice task (small, active command for the user)
-   Step 5: AI guidance (a "pro-tip" or "mentor-secret")
-   Step 6: Mini challenge (a small twist to the practice task)
-   Step 7: THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
+FORMATTING RULES:
+- Use Markdown for EVERYTHING.
+- Use # for major headers, ## for sub-headers, and ### for steps.
+- Use bold (**text**) for emphasis.
+- Use code blocks (\`\`\`language) for any code snippets.
+- Use blockquotes (>) for pro-tips and mentor alerts.
 
-TEST RULES:
-1. Do NOT ask users to take a test immediately after introducing a topic.
-2. Only ask tests after meaningful learning and practice have occurred.
-3. Tests should be low-pressure and feel like a natural progression.
+TUTORING PHILOSOPHY:
+- Be a "Guide on the Side", not a "Sage on the Stage".
+- Adapt exactly to the learner's context (lesson, stage, level).
+- For beginners: Use simple analogies, avoid jargon, break into steps.
+- For advanced: Focus on architecture, performance, and real-world trade-offs.
 
-UX & INTERACTION RULES:
-1. No pressure, no rushing. Guide the user step-by-step.
-2. Allow the user to say "continue" or "next" to move forward at their own pace.
-3. Respond helpfully to any question (coding, business, mindset, etc.).
-4. If a question is far outside learning/tech, respond politely and helpfully, then gently guide back to useful learning.
-5. Maintain your character as a MentorStack mentor at all times.
-6. Avoid markdown clutter. Use clean, simple formatting.
+TUTOR MODES & BEHAVIOR:
+
+1. [Teaching Mode]: Explain concepts deeply but simply. Align exactly with the current lesson if provided. Use the structured 7-step flow:
+   ### Step 1: Simple Concept
+   ### Step 2: Real-World Analogy
+   ### Step 3: Clean Implementation
+   ### Step 4: Active Practice Task
+   ### Step 5: Mentor Pro-Tip
+   ### Step 6: Mini Challenge
+   ### Step 7: Concept Check
+
+2. [Practice Mode]: Generate relevant exercises and challenges based on the current lesson or weak areas. Check student work rigorously.
+
+3. [Debug Mode]: HELP THE STUDENT DEBUG. Don't just fix it. 
+   - Ask clarifying questions about expected vs actual.
+   - Point out logical errors first.
+   - Explain the "Why" behind the fix.
+   - Teach professional debugging habits.
+
+4. [Project Mentor Mode]: Guide projects.
+   - Break goals into manageable milestones.
+   - Suggest best-practice implementation steps.
+   - Review architectural ideas.
+
+5. [Quiz Mode]: Adaptive testing.
+   - Start at the student's level.
+   - Increase difficulty on success.
+   - Always explain the reasoning behind the correct answer.
+
+6. [Career Coach Mode]: Connect lessons to the job market.
+   - Portfolio value of this specific skill.
+   - Interview prep related to the current topic.
+   - Real-world industry case studies.
+
+ADAPTIVE RESPONSE RULES:
+- If a lesson context exists, STAY ON TOPIC. Don't be generic.
+- Use the learner's 'weakAreas' to personalize guidance.
+- If the user is confused, offer a simpler explanation or an analogy.
+- Keep output clean, structured, and extremely readable.
 `;
 
 // 8. SMART FALLBACK TUTOR
@@ -55,133 +98,152 @@ const getFallbackResponse = (message: string): string => {
   const msg = message.toLowerCase();
   
   if (msg.includes('who are you') || msg.includes('created') || msg.includes('olynq')) {
-    return `Step 1: Simple explanation
-I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I was created by OLYNQ SOCIAL LIMITED to turn beginners into job-ready engineers.
+    return `### Step 1: Simple Concept
+I am your **MentorStack AI mentor**, part of the OLYNQ SOCIAL ecosystem. I was created by **OLYNQ SOCIAL LIMITED** to turn beginners into job-ready engineers.
 
-Step 2: Real example
-Think of me as your personal senior developer coach who is always available to help you grow.
+### Step 2: Real-World Analogy
+Think of me as your personal senior developer coach who is always available to help you grow, just like having a mentor at a top tech firm.
 
-Step 3: Code example
-// No code needed for this introduction
+### Step 3: Clean Implementation
+\`\`\`javascript
+// Our mission is alignment
+const academy = {
+  founder: "Ajia Abdulrasak Olayinka",
+  objective: "Job Readiness"
+};
+\`\`\`
 
-Step 4: Practice task
+### Step 4: Active Practice Task
 Type "Let's build" to start your next learning challenge right now.
 
-Step 5: AI guidance
-Pro-tip: Consistency is the key to mastering any skill.
+### Step 5: Mentor Pro-Tip
+> Consistency is the ultimate power in engineering. Small daily wins lead to massive mastery.
 
-Step 6: Mini challenge
-Try to define your learning goal for this week in one sentence.
+### Step 6: Mini Challenge
+Try to define your primary learning goal for this week in one concise sentence.
 
-Step 7: THEN Test
+### Step 7: Concept Check
 What is the one skill you want to master most this month?`;
   }
 
   if (msg.includes('center a div') || msg.includes('center div')) {
-    return `Step 1: Simple explanation
-To center a div, we usually use Flexbox on its parent container. It is the most modern and reliable way to align items.
+    return `### Step 1: Simple Concept
+To center a div, we usually use **Flexbox** on its parent container. It is the most modern and reliable way to align items.
 
-Step 2: Real example
-Centering a login form in the middle of the screen.
+### Step 2: Real-World Analogy
+Imagine a picture frame (the parent) and you want to put the photo (the div) exactly in the center. Flexbox is the tools that measures it for you perfectly.
 
-Step 3: Code example
-.container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+### Step 3: Clean Implementation
+\`\`\`css
+.parent {
+  display: flex;
+  justify-content: center; /* Horizontal */
+  align-items: center;     /* Vertical */
+  height: 100vh;           /* Viewport height */
+}
+\`\`\`
 
-Step 4: Practice task
-Open your CSS file and add "display: flex;" to your main wrapper now.
+### Step 4: Active Practice Task
+Open your CSS file and add \`display: flex;\` to your main wrapper now.
 
-Step 5: AI guidance
-Hint: "justify-content" handles horizontal alignment, while "align-items" handles vertical.
+### Step 5: Mentor Pro-Tip
+> Always ensure your parent container has a defined height, otherwise "align-items: center" won't have any space to work with!
 
-Step 6: Mini challenge
-Try to center the div using only "display: grid;" and "place-items: center;".
+### Step 6: Mini Challenge
+Try to center the div using only \`display: grid;\` and \`place-items: center;\`. Can you see the difference?
 
-Step 7: THEN Test
-Which property centers items horizontally in Flexbox?`;
+### Step 7: Concept Check
+Which property centers items horizontally in a Flexbox row?`;
   }
 
   if (msg.includes('flexbox')) {
-    return `Step 1: Teach First
-Flexbox is a layout mode that makes it easy to align items in rows or columns without using floats or positioning.
+    return `### Step 1: Simple Concept
+**Flexbox** is a layout mode that makes it easy to align items in rows or columns without using floats or positioning.
 
-Step 2: Give Example
-display: flex; flex-direction: column; gap: 20px;
+### Step 2: Clean Implementation
+\`\`\`css
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+\`\`\`
 
-Step 3: Practice Task
-Try adding "display: flex;" to a div in your playground to see it in action.
+### Step 5: Mentor Pro-Tip
+> Flexbox is best for one-dimensional layouts. If you need 2D control (rows and columns simultaneously), consider CSS Grid!
 
-Step 4: Mini Reinforcement
-Pro-tip: Flexbox is great for one-dimensional layouts (either a row or a column).
-
-Step 5: THEN Test
+### Step 7: Concept Check
 Does Flexbox align items along a main axis or a cross axis?`;
   }
 
   if (msg.includes('html')) {
-    return `Step 1: Teach First
-HTML is the skeleton of every website. It uses "tags" to tell the browser what content to display, like headings or images.
+    return `### Step 1: Simple Concept
+**HTML** is the skeleton of every website. It uses "tags" to tell the browser what content to display.
 
-Step 2: Give Example
-<button>Click Me</button>
+### Step 2: Clean Implementation
+\`\`\`html
+<h1>Welcome to MentorStack</h1>
+<p>Your journey starts here.</p>
+\`\`\`
 
-Step 3: Practice Task
-Write a simple <h1> tag with your name inside it right now.
+### Step 5: Mentor Pro-Tip
+> Semantic HTML (using <main>, <article>, <nav>) is crucial for accessibility and SEO.
 
-Step 4: Mini Reinforcement
-Hint: Tags usually come in pairs, an opening tag and a closing tag.
-
-Step 5: THEN Test
-What does HTML stand for? (Hint: It starts with Hyper...)`;
+### Step 7: Concept Check
+What is the difference between an opening tag and a closing tag?`;
   }
 
   if (msg.includes('css')) {
-    return `Step 1: Teach First
-CSS is what makes websites look beautiful. It handles colors, fonts, spacing, and the overall layout of your HTML elements.
+    return `### Step 1: Simple Concept
+**CSS** is what makes websites look beautiful. It handles color, typography, spacing, and layout.
 
-Step 2: Give Example
-body { background-color: #0A0A0B; color: #10b981; }
+### Step 2: Clean Implementation
+\`\`\`css
+body {
+  background-color: #0A0A0B;
+  color: #10B981;
+  font-family: 'Inter', sans-serif;
+}
+\`\`\`
 
-Step 3: Practice Task
-Try changing the "color" property of your text to "emerald" or a hex code like #10b981.
+### Step 5: Mentor Pro-Tip
+> Use variables (Custom Properties) for colors to make your design system easy to update.
 
-Step 4: Mini Reinforcement
-Pro-tip: You can use hex codes, RGB, or even simple names like "red" or "blue".
-
-Step 5: THEN Test
-Which CSS property is used to change the space inside an element's border?`;
+### Step 7: Concept Check
+Which property is used to change the font size of an element?`;
   }
 
   if (msg.includes('javascript') || msg.includes(' js')) {
-    return `Step 1: Teach First
-JavaScript is the brain of your website. It allows you to create interactive features like buttons that do things when clicked.
+    return `### Step 1: Simple Concept
+**JavaScript** is the brain of your website. It adds interactivity and logic.
 
-Step 2: Give Example
-const greet = () => console.log("Hello MentorStack!");
+### Step 2: Clean Implementation
+\`\`\`javascript
+const academy = "MentorStack";
+console.log(\`Welcome to \${academy}!\`);
+\`\`\`
 
-Step 3: Practice Task
-Create a variable called "name" and assign your name to it in the console.
+### Step 5: Mentor Pro-Tip
+> Master the fundamentals of Arrays and Objects before jumping into complex frameworks!
 
-Step 4: Mini Reinforcement
-Hint: Use "const" for values that won't change and "let" for values that will.
-
-Step 5: THEN Test
-What is the difference between "let" and "const" in JavaScript?`;
+### Step 7: Concept Check
+What is the difference between \`let\` and \`const\`?`;
   }
 
   // Default mentor response
-  return `Step 1: Teach First
-I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I am currently in a simplified mode but still here to guide you.
+  return `### Step 1: Simple Concept
+I am your **MentorStack AI mentor**. I am currently in a simplified mode, but I'm still here to guide your academy journey.
 
-Step 2: Give Example
-We can discuss coding, startups, or your career mindset anytime.
+### Step 3: Actionable Advice
+We can discuss **coding**, **mindset**, or **career trajectory** anytime.
 
-Step 3: Practice Task
-Tell me one thing you learned today, no matter how small it seems.
+### Step 4: Active Practice Task
+Tell me one specific concept you want to master this week.
 
-Step 4: Mini Reinforcement
-Pro-tip: Small daily wins lead to massive long-term success.
+### Step 5: Mentor Pro-Tip
+> The best way to learn is to build. Stop watching, start coding!
 
-Step 5: THEN Test
+### Step 7: Concept Check
 What topic should we dive into next: HTML, CSS, or JavaScript?`;
 };
 
@@ -315,8 +377,8 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
   }
 }
 
-export async function getMentorAdvice(message: string, history: any[], userContext: any) {
-  console.log("Gemini Service: Request started - Mentor Advice");
+export async function getMentorAdvice(message: string, history: any[], context: TutorContext) {
+  console.log("Gemini Service: Request started - Advanced Mentor Advice", { mode: context.mode });
   
   if (!ai) {
     console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
@@ -326,14 +388,31 @@ export async function getMentorAdvice(message: string, history: any[], userConte
 
   try {
     const prompt = `
-      User Context: ${JSON.stringify(userContext)}
+      CURRENT TUTOR MODE: [${context.mode.toUpperCase()}]
       
-      Conversation History:
+      ACADEMY CONTEXT:
+      - Active Program: ${context.activeProgramTitle || 'Unknown'} (ID: ${context.activeProgramId || 'N/A'})
+      - Current Path: ${context.currentPath || 'N/A'}
+      - Stage/Week/Module: ${context.currentStage || 'N/A'} / ${context.currentWeek || 'N/A'} / ${context.currentModule || 'N/A'}
+      - Current Lesson: ${context.currentLesson || 'N/A'}
+      ${context.lessonContent ? `- Lesson Content Snippet: ${JSON.stringify(context.lessonContent).substring(0, 1000)}` : ''}
+      
+      LEARNER PROFILE:
+      - Level: ${context.learnerLevel || 'Beginner'}
+      - XP: ${context.progressXP || 0}
+      - Weak Areas: ${context.weakAreas?.join(', ') || 'None identified yet'}
+      - Recent Mistakes: ${context.recentMistakes?.join(', ') || 'None'}
+
+      CONVERSATION HISTORY:
       ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
 
-      User Message: ${message}
+      USER MESSAGE: ${message}
 
-      If the user has "weakAreas" in their context, try to incorporate explanations or exercises related to those areas if they are relevant to the conversation.
+      INSTRUCTION FOR THIS MODE ([${context.mode.toUpperCase()}]):
+      Directly address the user's message using the specific rules for the selected Tutor Mode.
+      If a lesson is active, ensure your answer aligns with its objectives.
+      If the user shares code, focus on identifying logic before syntax.
+      Stay supportive and focus on job-readiness.
     `;
 
     const response = await ai.models.generateContent({

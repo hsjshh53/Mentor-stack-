@@ -15,9 +15,19 @@ export const MentorChat: React.FC = () => {
 
   useEffect(() => {
     const handleOpen = () => setIsOpen(true);
+    const handleCustomPrompt = (e: any) => {
+      setIsOpen(true);
+      if (e.detail?.prompt) {
+        processMessage(e.detail.prompt);
+      }
+    };
     window.addEventListener('open-mentor-chat', handleOpen);
-    return () => window.removeEventListener('open-mentor-chat', handleOpen);
-  }, []);
+    window.addEventListener('mentor-chat-prompt', handleCustomPrompt);
+    return () => {
+      window.removeEventListener('open-mentor-chat', handleOpen);
+      window.removeEventListener('mentor-chat-prompt', handleCustomPrompt);
+    };
+  }, [messages, progress]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -25,23 +35,40 @@ export const MentorChat: React.FC = () => {
     }
   }, [messages]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+  const processMessage = async (text: string) => {
+    if (!text.trim() || loading) return;
 
-    const userMsg = input;
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
     setLoading(true);
 
     try {
-      const response = await getMentorAdvice(userMsg, messages, progress);
+      const response = await getMentorAdvice(text, messages, {
+        activeProgramId: progress?.activeProgramId || undefined,
+        currentPath: progress?.selectedPath || undefined,
+        currentStage: progress?.currentStage,
+        learnerLevel: progress?.currentStage || 'Beginner',
+        progressXP: progress?.xp,
+        weakAreas: progress?.weakAreas,
+        mode: 'general'
+      });
       setMessages(prev => [...prev, { role: 'model', content: response }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'model', content: "I'm sorry, I'm having trouble connecting right now. Let's try again in a moment." }]);
+      setMessages(prev => [...prev, { role: 'model', content: "I'm sorry, I am having trouble connecting right now. Let's try again in a moment." }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    const msg = input;
+    setInput('');
+    await processMessage(msg);
+  };
+
+  const handleAction = (prompt: string) => {
+    processMessage(prompt);
   };
 
   return (
@@ -110,12 +137,29 @@ export const MentorChat: React.FC = () => {
               </div>
 
               {/* Input */}
-              <form onSubmit={handleSend} className="p-6 bg-[#0A0A0B] border-t border-white/5">
-                <div className="relative">
+              <div className="p-6 bg-[#0A0A0B] border-t border-white/5 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: 'Explain Simpler', prompt: 'Can you explain the current topic in simpler terms?' },
+                    { label: 'Give Example', prompt: 'Can you give me a real-world code example for this?' },
+                    { label: 'Quiz Me', prompt: 'Give me a quick 3-question quiz about what I am learning.' },
+                    { label: 'Debug Help', prompt: 'I have a bug in my code, can you help me find it?' },
+                  ].map((btn) => (
+                    <button
+                      key={btn.label}
+                      onClick={() => handleAction(btn.prompt)}
+                      className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-white/40 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all outline-none"
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+
+                <form onSubmit={handleSend} className="relative">
                   <Input 
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask a question..."
+                    placeholder="Ask anything..."
                     className="pr-14 h-14"
                   />
                   <button 
@@ -125,8 +169,8 @@ export const MentorChat: React.FC = () => {
                   >
                     <Send size={18} />
                   </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </Card>
           </motion.div>
         )}

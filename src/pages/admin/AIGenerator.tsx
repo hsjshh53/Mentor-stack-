@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AdminLayout } from '../../components/AdminLayout';
-import { Card, Button, Badge } from '../../components/ui';
+import { Card, Button, Badge, Select } from '../../components/ui';
 import { 
   Sparkles, 
   Play, 
@@ -38,17 +38,23 @@ export const AIGenerator: React.FC = () => {
         const skillsData = Object.values(snapshot.val()) as Skill[];
         setSkills(skillsData);
         
-        // Handle query param
+        // Handle query param or localStorage
         const params = new URLSearchParams(window.location.search);
-        const skillId = params.get('skill');
+        const skillId = params.get('skill') || localStorage.getItem('lastSelectedSkillId');
         if (skillId) {
           setSelectedSkillId(skillId);
-          setGenType('full');
+          if (params.get('skill')) setGenType('full');
         }
       }
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (selectedSkillId) {
+      localStorage.setItem('lastSelectedSkillId', selectedSkillId);
+    }
+  }, [selectedSkillId]);
 
   const addLog = (msg: string) => {
     setLogs(prev => [msg, ...prev].slice(0, 100));
@@ -119,18 +125,19 @@ export const AIGenerator: React.FC = () => {
 
             <div className="space-y-6">
               <div className="space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-white/40">Select Program</label>
-                <select 
+                <Select 
+                  label="Select Program"
+                  placeholder="Choose a program..."
                   value={selectedSkillId}
+                  displayValue={skills.length > 0 ? (skills.find(s => s.id === selectedSkillId)?.title) : (selectedSkillId ? 'Loading...' : undefined)}
                   onChange={(e) => setSelectedSkillId(e.target.value)}
                   disabled={isGenerating}
-                  className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-4 font-bold focus:border-emerald-500 transition-colors outline-none appearance-none"
                 >
                   <option value="">Choose a program...</option>
                   {skills.map(skill => (
                     <option key={skill.id} value={skill.id}>{skill.title}</option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="space-y-3">

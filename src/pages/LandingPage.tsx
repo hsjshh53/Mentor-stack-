@@ -227,7 +227,7 @@ export const LandingPage: React.FC = () => {
       {/* Footer */}
       <footer className="px-6 py-12 border-t border-white/5 text-center text-white/30 text-sm">
         <p>© 2026 MentorStack. All rights reserved.</p>
-        <p className="mt-2">Built under OLYNQ SOCIAL by Ajis Abdulrasak Olayinka</p>
+        <p className="mt-2">Built under OLYNQ SOCIAL by Ajia Abdulrasak Olayinka</p>
       </footer>
     </div>
   );

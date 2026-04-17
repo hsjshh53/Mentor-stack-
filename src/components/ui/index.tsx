@@ -118,14 +118,36 @@ export const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement
   </div>
 );
 
-export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }> = ({ label, className = '', children, ...props }) => (
+export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { 
+  label?: string;
+  displayValue?: string;
+  placeholder?: string;
+}> = ({ label, className = '', children, displayValue, placeholder = "Choose an option...", ...props }) => (
   <div className="space-y-3 w-full">
     {label && <label className="text-xs font-black uppercase tracking-[0.2em] text-white/30 ml-1">{label}</label>}
-    <select 
-      className={`w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all duration-300 appearance-none ${className}`}
-      {...props}
-    >
-      {children}
-    </select>
+    <div className="relative group">
+      <div className={`w-full h-14 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-6 flex items-center justify-between transition-all duration-300 group-focus-within:ring-2 group-focus-within:ring-emerald-500/30 group-focus-within:border-emerald-500/50 ${className}`}>
+        <span className={`font-bold truncate pr-4 ${displayValue ? "text-white" : "text-white/20"}`}>
+          {displayValue || placeholder}
+        </span>
+        <svg 
+          className="w-5 h-5 text-white/20 group-hover:text-emerald-500 transition-colors pointer-events-none flex-shrink-0" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="3" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </div>
+      <select 
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
+        {...props}
+      >
+        {children}
+      </select>
+    </div>
   </div>
 );

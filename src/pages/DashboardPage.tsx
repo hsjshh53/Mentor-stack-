@@ -12,7 +12,7 @@ import {
   Target, LayoutDashboard, MessageSquare, Search,
   Sparkles, CheckCircle2, Lock, Compass, ArrowRightLeft,
   Award, ShieldCheck, ExternalLink, Users, TrendingUp,
-  Heart, Map as MapIcon, AlertCircle
+  Heart, Map as MapIcon, AlertCircle, Bot
 } from 'lucide-react';
 import { ref, get } from 'firebase/database';
 import { db, auth } from '../lib/firebase';
@@ -28,6 +28,8 @@ import {
   CurriculumPath, 
   CurriculumStage, 
   CurriculumModule,
+  CurriculumWeek,
+  DetailedProject,
   Skill 
 } from '../types';
 import { getUserCertificates } from '../services/certificateService';
@@ -47,6 +49,8 @@ export const DashboardPage: React.FC = () => {
   const [dynamicPath, setDynamicPath] = useState<CurriculumPath | null>(null);
   const [dynamicStages, setDynamicStages] = useState<CurriculumStage[]>([]);
   const [dynamicModules, setDynamicModules] = useState<Record<string, CurriculumModule[]>>({});
+  const [dynamicWeeks, setDynamicWeeks] = useState<CurriculumWeek[]>([]);
+  const [dynamicProjects, setDynamicProjects] = useState<DetailedProject[]>([]);
   const [dynamicLessons, setDynamicLessons] = useState<any[]>([]);
   const [activeSkill, setActiveSkill] = useState<Skill | null>(null);
 
@@ -123,17 +127,27 @@ export const DashboardPage: React.FC = () => {
           setActiveSkill(skill);
           const pathRef = ref(db, `curriculum_paths/${skill.id}`);
           const stagesRef = ref(db, `curriculum_stages/${skill.id}`);
+          const weeksRef = ref(db, `curriculum_weeks/${skill.id}`);
+          const projectsRef = ref(db, `curriculum_projects/${skill.id}`);
           const lessonsRef = ref(db, `ai_generated_lessons/${skill.id}`);
           
-          const [pathSnap, stagesSnap, lessonsSnap] = await Promise.all([
+          const [pathSnap, stagesSnap, weeksSnap, projectsSnap, lessonsSnap] = await Promise.all([
             get(pathRef),
             get(stagesRef),
+            get(weeksRef),
+            get(projectsRef),
             get(lessonsRef)
           ]);
 
           if (pathSnap.exists()) setDynamicPath(pathSnap.val());
           if (lessonsSnap.exists()) {
             setDynamicLessons(Object.values(lessonsSnap.val()));
+          }
+          if (weeksSnap.exists()) {
+            setDynamicWeeks((Object.values(weeksSnap.val()) as CurriculumWeek[]).sort((a, b) => a.weekNumber - b.weekNumber));
+          }
+          if (projectsSnap.exists()) {
+            setDynamicProjects(Object.values(projectsSnap.val()) as DetailedProject[]);
           }
 
           if (stagesSnap.exists()) {
@@ -197,6 +211,12 @@ export const DashboardPage: React.FC = () => {
     if (!nextLessonId) return null;
     return dynamicLessons.find(l => l.id === nextLessonId);
   }, [nextLessonId, dynamicLessons]);
+
+  const currentWeek = useMemo(() => {
+    if (!nextLesson || !dynamicWeeks.length) return 1;
+    const week = dynamicWeeks.find(w => w.id === nextLesson.weekId);
+    return week ? week.weekNumber : 1;
+  }, [nextLesson, dynamicWeeks]);
 
   const featuredLessons = useMemo(() => {
     if (dynamicLessons.length > 0) {
@@ -292,7 +312,7 @@ export const DashboardPage: React.FC = () => {
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true, path: '/dashboard' },
     { icon: <Code size={20} />, label: 'Programming Languages', path: '/coding-languages' },
     { icon: <BookOpen size={20} />, label: 'Lessons', path: '/dashboard' },
-    { icon: <Zap size={20} />, label: 'AI Tutor', path: '/ai-tutor' },
+    { icon: <Zap size={20} />, label: 'AI Tutor', path: '/tutor' },
     { icon: <Terminal size={20} />, label: 'Playground', path: '/playground' },
     { icon: <Target size={20} />, label: 'Projects', path: '/projects' },
     { icon: <User size={20} />, label: 'Profile', path: '/profile' },
@@ -437,96 +457,221 @@ export const DashboardPage: React.FC = () => {
         
         <div className="max-w-6xl mx-auto p-8 md:p-16 space-y-16 relative z-10">
           
-          {/* Welcome Area */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-12">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5">Primary Path</Badge>
-                <button 
-                  onClick={() => setIsPathSwitcherOpen(true)}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-emerald-400 transition-colors"
-                >
-                  <ArrowRightLeft size={12} />
-                  Switch Path
-                </button>
-              </div>
-              <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-[0.9] mb-4">
-                {activeSkill?.title || progress.selectedPath} <br />
-                <span className="text-gradient">Academy</span>
-              </h1>
-              <div className="space-y-3 max-w-md">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/40">
-                  <span>Journey Progress</span>
-                  <span className="text-emerald-400">{allLessonsInPath.length > 0 ? Math.round((progress.completedLessons.length / allLessonsInPath.length) * 100) : 0}%</span>
-                </div>
-                <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${allLessonsInPath.length > 0 ? (progress.completedLessons?.length / allLessonsInPath.length) * 100 : 0}%` }}
-                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"
-                  />
-                </div>
-              </div>
-              {activeSkill && !dynamicPath && !loading && (
-                <p className="text-orange-400/60 text-xs font-bold uppercase tracking-widest mt-4 flex items-center gap-2">
-                  <AlertCircle size={14} />
-                  Curriculum is currently being drafted by Admin
-                </p>
-              )}
-              <p className="text-white/40 font-medium text-lg md:text-xl max-w-md leading-relaxed pt-4">
-                Welcome back, <span className="text-white font-black">{user?.displayName?.split(' ')[0] || 'Developer'}</span>. You're on step <span className="text-emerald-400 font-black">{allLessonsInPath.indexOf(nextLessonId || '') + 1}</span> of <span className="text-white/60">{allLessonsInPath.length}</span>.
-              </p>
-            </div>
+          {/* Premium Hero / command Center */}
+          <div className="relative group">
+            {/* Ambient Background Glow for Hero */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
+            
+            <Card className="glass-premium p-10 md:p-14 overflow-hidden relative border-white/10">
+              <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-emerald-500/[0.03] to-transparent pointer-events-none" />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10">
+                {/* Left side: Greeting & Main Progress */}
+                <div className="lg:col-span-7 space-y-8">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5 backdrop-blur-md">Primary Track</Badge>
+                      <button 
+                        onClick={() => setIsPathSwitcherOpen(true)}
+                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-emerald-400 transition-all active:scale-95"
+                      >
+                        <ArrowRightLeft size={12} />
+                        Change Path
+                      </button>
+                    </div>
+                    <div>
+                      <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-2 drop-shadow-2xl">
+                        {activeSkill?.title || progress.selectedPath} <br />
+                        <span className="text-gradient drop-shadow-none">Academy</span>
+                      </h1>
+                      <p className="text-white/40 font-medium text-lg md:text-2xl max-w-lg leading-tight pt-2">
+                        Welcome back, <span className="text-white font-black">{user?.displayName?.split(' ')[0] || 'Developer'}</span>. You're entering <span className="text-emerald-400 font-black tracking-tight underline decoration-emerald-500/30 underline-offset-4">Week {currentWeek}</span> of your professional journey.
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Stats Row */}
-              <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-              {[
-                { label: 'Streak', value: `${streak} Days`, icon: <Flame size={20} fill="currentColor" />, color: 'text-orange-400', bg: 'bg-orange-400/10' },
-                { label: 'XP', value: xp, icon: <Zap size={20} fill="currentColor" />, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-                { label: 'Level', value: currentStage, icon: <Trophy size={20} fill="currentColor" />, color: 'text-indigo-400', bg: 'bg-indigo-400/10' }
-              ].map((stat) => (
-                <Card 
-                  key={stat.label} 
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate('/profile')}
-                  className="flex-grow md:flex-none flex items-center gap-5 px-8 py-6 bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04] hover:border-emerald-500/20 transition-all duration-500 cursor-pointer active:scale-[0.98]"
-                >
-                  <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color} shadow-lg`}>
-                    {stat.icon}
+                  {/* Main Journey Progress Segmented bar */}
+                  <div className="space-y-4 max-w-xl p-6 rounded-3xl bg-white/[0.02] border border-white/5 backdrop-blur-md">
+                    <div className="flex justify-between items-end">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Career Transformation Progress</p>
+                        <h4 className="font-black text-xl tracking-tighter">Level {currentStage} Professional</h4>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-4xl font-black text-emerald-400 tracking-tighter">{allLessonsInPath.length > 0 ? Math.round((progress.completedLessons.length / allLessonsInPath.length) * 100) : 0}%</span>
+                        <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">Complete</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 h-3">
+                      {Array.from({ length: 20 }).map((_, i) => {
+                        const segmentProgress = (allLessonsInPath.length > 0 ? (progress.completedLessons?.length / allLessonsInPath.length) : 0) * 20;
+                        const isActive = i < segmentProgress;
+                        return (
+                          <div 
+                            key={i} 
+                            className={`flex-grow rounded-full transition-all duration-1000 delay-${i * 50} ${
+                              isActive 
+                                ? 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)]' 
+                                : 'bg-white/5'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    {activeSkill && !dynamicPath && !loading && (
+                      <div className="flex items-center gap-2 pt-2 text-orange-400/60 text-[10px] font-black uppercase tracking-widest">
+                        <AlertCircle size={14} />
+                        Curriculum updates pending from Admin
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.2em] mb-1">{stat.label}</p>
-                    <p className="font-black text-xl tracking-tight">{stat.value}</p>
+                </div>
+
+                {/* Right side: Modern Stats Grid */}
+                <div className="lg:col-span-5 flex flex-col justify-center">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { 
+                        label: 'Current Streak', 
+                        value: `${streak} Days`, 
+                        icon: <Flame size={24} fill="currentColor" />, 
+                        color: 'text-orange-400', 
+                        bg: 'bg-orange-400/10',
+                        border: 'border-orange-500/20'
+                      },
+                      { 
+                        label: 'Academy XP', 
+                        value: xp, 
+                        icon: <Zap size={24} fill="currentColor" />, 
+                        color: 'text-emerald-400', 
+                        bg: 'bg-emerald-400/10',
+                        border: 'border-emerald-500/20'
+                      },
+                      { 
+                        label: 'Stage Rank', 
+                        value: `Top 5%`, 
+                        icon: <Trophy size={24} fill="currentColor" />, 
+                        color: 'text-indigo-400', 
+                        bg: 'bg-indigo-400/10',
+                        border: 'border-indigo-500/20'
+                      },
+                      { 
+                        label: 'Certificates', 
+                        value: certificates.length, 
+                        icon: <Award size={24} />, 
+                        color: 'text-purple-400', 
+                        bg: 'bg-purple-400/10',
+                        border: 'border-purple-500/20'
+                      }
+                    ].map((stat) => (
+                      <div 
+                        key={stat.label}
+                        onClick={() => navigate('/profile')}
+                        className={`group/stat glass p-6 rounded-[2rem] border ${stat.border} hover:bg-white/[0.05] transition-all cursor-pointer active:scale-95`}
+                      >
+                        <div className={`w-12 h-12 rounded-2xl ${stat.bg} flex items-center justify-center ${stat.color} mb-4 group-hover/stat:scale-110 transition-transform duration-500`}>
+                          {stat.icon}
+                        </div>
+                        <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.2em] mb-1">{stat.label}</p>
+                        <p className="font-black text-2xl tracking-tighter">{stat.value}</p>
+                      </div>
+                    ))}
                   </div>
-                </Card>
-              ))}
-            </div>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => navigate('/profile')}
+                    className="w-full mt-6 h-14 rounded-2xl border-white/5 bg-white/[0.02] hover:bg-white/5 font-black text-xs uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
+                  >
+                    View Mastery Profile
+                  </Button>
+                </div>
+              </div>
+            </Card>
           </div>
 
-          {/* XP Progress Card */}
-          <div className="space-y-5">
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.2em]">Current Level:</p>
-                <h3 className="font-black text-2xl tracking-tight">Level {Math.floor(xp / 100) + 1} <span className="text-white/20 ml-2">/ 10</span></h3>
+          {/* Weekly Roadmap Section */}
+          {dynamicWeeks.length > 0 && (
+            <div className="space-y-10 pt-8">
+              <div className="flex justify-between items-end">
+                <div className="space-y-2">
+                  <h3 className="font-black text-4xl tracking-tighter">Your <span className="text-gradient">Roadmap</span></h3>
+                  <p className="text-white/30 font-medium">Clear path to your professional career goal.</p>
+                </div>
+                <div className="flex items-center gap-4">
+                   <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Current</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-white/10" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Upcoming</span>
+                   </div>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="text-2xl font-black text-emerald-400 tracking-tight">{xpProgress}</span>
-                <span className="text-sm font-black text-white/20 uppercase tracking-widest ml-1">/ 100 XP</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {dynamicWeeks.map((week) => {
+                  const isCurrent = week.weekNumber === currentWeek;
+                  const isPast = week.weekNumber < currentWeek;
+                  
+                  return (
+                    <div 
+                      key={week.id}
+                      className="group/week relative"
+                    >
+                      {isCurrent && (
+                        <div className="absolute -inset-0.5 bg-gradient-to-b from-emerald-500 to-emerald-800 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition" />
+                      )}
+                      <Card 
+                        className={`h-full p-8 rounded-[2.5rem] border-white/[0.08] relative overflow-hidden transition-all duration-700 ${
+                          isCurrent 
+                            ? 'bg-[#0A0A0B]/80 backdrop-blur-3xl border-emerald-500/40' 
+                            : isPast 
+                              ? 'bg-white/[0.01] border-white/[0.02] opacity-50' 
+                              : 'bg-white/[0.02] border-white/[0.05]'
+                        }`}
+                      >
+                        <div className="space-y-6 relative z-10">
+                          <div className="flex justify-between items-start">
+                            <div className={`px-4 py-2 rounded-2xl ${isCurrent ? 'bg-emerald-500 text-black font-black shadow-lg shadow-emerald-500/30' : 'bg-white/5 text-white/40'}`}>
+                              <span className="text-[10px] font-black uppercase tracking-widest">Week {week.weekNumber}</span>
+                            </div>
+                            {isPast ? (
+                              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                <CheckCircle2 size={18} />
+                              </div>
+                            ) : !isCurrent ? (
+                              <Lock size={16} className="text-white/10" />
+                            ) : (
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                            )}
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className={`text-xl font-black tracking-tight leading-tight ${isCurrent ? 'text-white' : 'text-white/60'}`}>{week.title}</h4>
+                            <p className="text-xs font-medium text-white/30 line-clamp-2 leading-relaxed">{week.description}</p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {week.learningGoals?.slice(0, 3).map((goal: string, idx: number) => (
+                              <span key={idx} className="px-3 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-[8px] font-bold uppercase tracking-wider text-white/20">{goal}</span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {isCurrent && (
+                          <div className="absolute -right-8 -bottom-8 p-12 opacity-[0.03] transform rotate-12 group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
+                            <Zap size={160} fill="currentColor" className="text-emerald-500" />
+                          </div>
+                        )}
+                      </Card>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="w-full h-4 bg-white/[0.03] rounded-full p-1 border border-white/[0.05]">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${xpProgress}%` }}
-                transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-                className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] relative"
-              >
-                <div className="absolute top-0 right-0 w-8 h-full bg-white/20 blur-md rounded-full animate-pulse" />
-              </motion.div>
-            </div>
-          </div>
+          )}
 
           {/* Recommended Next Card */}
           <div className="grid grid-cols-1 gap-10">
@@ -639,106 +784,293 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Grid Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {/* Progress Summary */}
-            <Card className="p-10 space-y-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 text-emerald-400">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <Clock size={22} />
+          {/* Dynamic Growth Engine Sections */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+            {/* Left: Progress & Mastery (4 cols) */}
+            <div className="xl:col-span-4 space-y-10">
+              {/* Specialized Curriculum Progress */}
+              <Card className="glass-premium p-10 space-y-10 border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 text-emerald-400">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-glow">
+                      <Clock size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-black uppercase text-xs tracking-[0.3em]">Curriculum</h3>
+                      <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-0.5">Real-time completion</p>
+                    </div>
                   </div>
-                  <h3 className="font-black uppercase text-sm tracking-[0.2em]">Curriculum Progress</h3>
+                  <Badge className="bg-white/[0.05] text-white/40 border-white/[0.08] backdrop-blur-md">Live Sync</Badge>
                 </div>
-                <Badge className="bg-white/[0.05] text-white/40 border-white/[0.08]">Updated Today</Badge>
-              </div>
-              
-              <div className="space-y-10">
-                {(Object.values((currentPathData as any)?.levels || {}) as any[]).flatMap(l => l.modules || []).slice(0, 5).map((module: any, i: number) => (
-                  <div key={module.id} className="space-y-4">
-                    <div className="flex justify-between items-end">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-white/60 tracking-tight">{module.title}</span>
+                
+                <div className="space-y-10 relative z-10">
+                  {(Object.values((currentPathData as any)?.levels || {}) as any[]).flatMap(l => l.modules || []).slice(0, 4).map((module: any, i: number) => (
+                    <div key={module.id} className="space-y-4 group/module">
+                      <div className="flex justify-between items-end">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-black text-white/40 tracking-widest uppercase group-hover/module:text-emerald-400/60 transition-colors">Module {i + 1}</span>
+                          <span className="text-sm font-black text-white/80 tracking-tight line-clamp-1">{module.title}</span>
+                        </div>
+                        <span className="text-lg font-black text-white tracking-tighter">{getModuleProgress(module.id)}%</span>
                       </div>
-                      <span className="text-xl font-black text-white tracking-tighter">{getModuleProgress(module.id)}%</span>
+                      <div className="w-full h-1.5 bg-white/[0.03] rounded-full overflow-hidden border border-white/5">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${getModuleProgress(module.id)}%` }}
+                          transition={{ duration: 1.5, delay: i * 0.1 }}
+                          className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
+                        />
+                      </div>
                     </div>
-                    <div className="w-full h-2.5 bg-white/[0.03] rounded-full overflow-hidden border border-white/[0.05] p-0.5">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${getModuleProgress(module.id)}%` }}
-                        transition={{ duration: 1, delay: i * 0.1 }}
-                        className="h-full bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <button 
-                onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
-                className="w-full h-20 rounded-[2rem] border border-white/[0.08] bg-white/[0.03] text-sm font-black uppercase tracking-[0.2em] text-emerald-400 flex items-center justify-center gap-4 hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all duration-500 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Zap size={20} fill="currentColor" />
+                  ))}
                 </div>
-                Consult AI Tutor
-              </button>
-            </Card>
+                
+                <button 
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
+                  className="w-full h-16 rounded-2xl border border-white/5 bg-white/[0.02] text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 flex items-center justify-center gap-4 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 transition-all duration-500 group"
+                >
+                   Ask AI to explain progress
+                </button>
+              </Card>
 
-            {/* Mastery & Skills */}
-            <Card className="p-10 space-y-10">
-              <div className="flex items-center gap-4 text-emerald-400">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <BrainCircuit size={22} />
-                </div>
-                <h3 className="font-black uppercase text-sm tracking-[0.2em]">Mastery & Skills</h3>
-              </div>
-              
-              <div className="space-y-12">
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3">
-                    <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.3em]">Top Strengths</p>
-                    <div className="flex-grow h-px bg-white/[0.05]" />
+              {/* Advanced Skill Analytics */}
+              <Card className="glass-premium p-10 space-y-8 border-white/5">
+                <div className="flex items-center gap-4 text-emerald-400">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                    <BrainCircuit size={24} />
                   </div>
-                  <div className="flex flex-wrap gap-3">
-                    {['Logic', 'Problem Solving', 'Consistency'].map(s => (
-                      <Badge key={s} className="bg-emerald-500/5 text-emerald-400/60 border-emerald-500/10 px-4 py-2 text-xs font-bold">{s}</Badge>
-                    ))}
-                    <p className="text-sm italic text-white/20 font-medium w-full mt-2">Complete more tests to unlock deeper insights.</p>
+                  <div>
+                    <h3 className="font-black uppercase text-xs tracking-[0.3em]">Mastery Analytics</h3>
+                    <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mt-0.5">Algorithm identified</p>
                   </div>
                 </div>
                 
-                <div className="space-y-5">
-                  <div className="flex items-center gap-3">
-                    <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.3em]">Growth Areas</p>
-                    <div className="flex-grow h-px bg-white/[0.05]" />
+                <div className="space-y-8">
+                  <div className="grid grid-cols-2 gap-3">
+                    {['Logic', 'Architecture', 'Problem Solving', 'Consistency'].map(s => (
+                      <div key={s} className="p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 transition-all group/chip">
+                        <p className="text-[10px] font-black uppercase text-white/20 tracking-wider mb-2 group-hover/chip:text-emerald-400/40 transition-colors">{s}</p>
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-glow" />
+                          <span className="text-xs font-black text-white/60 uppercase">Elite Level</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="p-6 rounded-2xl bg-white/[0.02] border border-dashed border-white/[0.1] text-center">
-                    <p className="text-sm text-white/20 font-medium italic">No weak topics identified yet. <br /> Your performance is exceptionally stable.</p>
+                  
+                  <div className="p-6 rounded-2xl bg-emerald-500/[0.03] border border-dashed border-emerald-500/20 text-center relative overflow-hidden group/growth">
+                    <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover/growth:scale-125 transition-transform duration-1000">
+                        <TrendingUp size={60} />
+                    </div>
+                    <p className="text-[10px] font-black uppercase text-white/20 tracking-[0.3em] mb-3">Next Milestone</p>
+                    <p className="text-sm text-white/60 font-medium leading-relaxed">Complete <span className="text-emerald-400">Module 4</span> to unlock <br /> Senior Architecture badge.</p>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Skill Tree Progress */}
-          <Card className="p-12 space-y-16 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/[0.02] blur-[100px] rounded-full pointer-events-none" />
-            
-            <div className="flex items-center justify-between relative z-10">
-              <div className="flex items-center gap-4 text-emerald-400">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                  <Network size={22} />
-                </div>
-                <h3 className="font-black uppercase text-sm tracking-[0.2em]">{activeSkill?.title || progress.selectedPath} Mastery Tree</h3>
-              </div>
-              <Badge className="bg-emerald-500 text-black border-none font-black">
-                {Math.floor(xp / 500) > 0 ? `Tier ${Math.floor(xp / 500) + 1} Active` : 'Novice Tier'}
-              </Badge>
+              </Card>
             </div>
 
-            <div className="relative flex flex-col items-center gap-20 py-16 z-10">
-              <div className="flex flex-wrap justify-center gap-12 md:gap-24 items-center relative">
+            {/* Right: Premium AI Tutor Hub (8 cols) */}
+            <div className="xl:col-span-8">
+              <Card className="glass-premium h-full p-12 space-y-12 relative overflow-hidden group border-white/10">
+                {/* Visual Flair */}
+                <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.1] transition-all duration-1000 transform group-hover:-rotate-6 pointer-events-none">
+                  <Bot size={450} fill="currentColor" />
+                </div>
+                <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-emerald-500/[0.02] to-transparent pointer-events-none" />
+                
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-500 to-emerald-800 flex items-center justify-center text-black shadow-2xl shadow-emerald-500/40 transform group-hover:scale-110 transition-all duration-700">
+                        <Bot size={40} />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-[#0A0A0B] animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-4xl tracking-tighter">Academy AI <span className="text-emerald-400 underline decoration-emerald-500/20 underline-offset-8">Mentor</span></h3>
+                      <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-glow" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Context Aware</span>
+                        </div>
+                        <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Always active • ready for deep dive</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge className="h-10 px-6 rounded-full bg-white/5 border-white/10 text-white/40 font-black text-[10px] uppercase tracking-widest backdrop-blur-xl">Version 4.2 Elite</Badge>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative z-10">
+                  <div className="space-y-10">
+                    <div className="space-y-4">
+                      <h4 className="text-3xl font-black tracking-tight leading-tight">
+                        Deep-dive into <br />
+                        <span className="text-white/40">{activeSkill?.title || 'your path'}</span> with your <br />
+                        <span className="text-emerald-500">Professional Mentor.</span>
+                      </h4>
+                      <p className="text-white/30 text-lg font-medium leading-relaxed max-w-sm">
+                        Integrated with the curriculum. Your mentor understands your progress, current lesson complexities, and upcoming challenges.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: 'Real-time help', icon: <Zap size={14} /> },
+                        { label: 'Code Review', icon: <Code size={14} /> },
+                        { label: 'Quizzes', icon: <Sparkles size={14} /> },
+                        { label: 'Exam Prep', icon: <Trophy size={14} /> }
+                      ].map(f => (
+                        <div key={f.label} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5">
+                           <div className="text-emerald-500/40">{f.icon}</div>
+                           <span className="text-[10px] font-black uppercase tracking-widest text-white/40">{f.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Recommended Interventions</p>
+                    {[
+                      { label: "Explain current concepts", prompt: `I'm currently on the lesson "${nextLesson?.title || 'my course'}". Can you explain the core concepts of this lesson in a simple way?`, color: 'hover:text-emerald-400 hover:border-emerald-500/40' },
+                      { label: "Launch mini-quiz on this", prompt: `I want to test my knowledge of the current topic. Can you give me a 3-question quiz?`, color: 'hover:text-blue-400 hover:border-blue-500/40' },
+                      { label: "Give me a coding exercise", prompt: `I want to practice what I've learned in "${nextLesson?.title || 'my course'}". Can you give me a coding exercise?`, color: 'hover:text-purple-400 hover:border-purple-500/40' },
+                      { label: "Career Prep Advice", prompt: `Based on my current progress in ${activeSkill?.title}, what should I focus on to become job-ready faster?`, color: 'hover:text-orange-400 hover:border-orange-500/40' }
+                    ].map((btn) => (
+                      <button 
+                        key={btn.label}
+                        onClick={() => window.dispatchEvent(new CustomEvent('mentor-chat-prompt', { detail: { prompt: btn.prompt } }))}
+                        className={`w-full p-5 rounded-[1.5rem] bg-white/[0.03] border border-white/5 ${btn.color} transition-all duration-300 text-left flex items-center justify-between group/qbtn`}
+                      >
+                        <span className="text-xs font-black uppercase tracking-widest">{btn.label}</span>
+                        <ChevronRight size={18} className="text-white/10 group-hover/qbtn:translate-x-1 transition-all" />
+                      </button>
+                    ))}
+                    <button 
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
+                      className="w-full h-20 mt-4 rounded-[1.5rem] bg-emerald-500 text-black font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-emerald-500/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
+                    >
+                      <MessageSquare size={18} />
+                      Open Full Session
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* Academy Projects Section */}
+          <div className="space-y-10 pt-12">
+            <div className="flex justify-between items-end">
+              <div className="space-y-2">
+                <h3 className="font-black text-4xl tracking-tighter">Academy <span className="text-gradient">Projects</span></h3>
+                <p className="text-white/30 font-medium">Build real-world applications to showcase your professional growth.</p>
+              </div>
+              <button 
+                onClick={() => navigate('/projects')}
+                className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
+              >
+                Project Hub <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Terminal size={18} /></div>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {dynamicProjects.length > 0 ? (
+                dynamicProjects.map((project) => (
+                  <div key={project.id} className="group/project relative">
+                    <Card 
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className="h-full glass-premium p-10 space-y-8 cursor-pointer hover:bg-white/[0.04] transition-all duration-700 border-white/5 hover:border-emerald-500/20 active:scale-[0.98] relative overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start relative z-10">
+                        <div className="w-16 h-16 rounded-[2rem] bg-emerald-500/5 group-hover/project:bg-emerald-500/10 flex items-center justify-center text-emerald-500/40 group-hover/project:text-emerald-500 transition-all duration-700 group-hover/project:scale-110 group-hover/project:rotate-3 shadow-inner">
+                          <Target size={28} />
+                        </div>
+                        <Badge className={`${project.difficulty === 'Advanced' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-white/5 text-white/40 border-white/10'} text-[9px] uppercase tracking-[0.2em] font-black px-4 py-1.5 rounded-full backdrop-blur-md`}>
+                          {project.difficulty}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-4 relative z-10">
+                        <h4 className="font-black text-2xl tracking-tighter group-hover/project:text-emerald-400 transition-colors uppercase leading-none">{project.title}</h4>
+                        <p className="text-sm text-white/30 font-medium line-clamp-2 leading-relaxed">{project.description}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2 relative z-10">
+                        {project.skillsUsed?.slice(0, 3).map((skill: string, idx: number) => (
+                          <span key={idx} className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-[9px] font-bold tracking-widest text-white/20 uppercase">{skill}</span>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between relative z-10 pt-8 border-t border-white/5">
+                        <div className="flex items-center gap-3 text-emerald-400/60 font-black text-[10px] uppercase tracking-[0.2em] group-hover/project:text-emerald-400 transition-colors">
+                          {progress.completedProjects?.includes(project.id) ? (
+                            <>
+                              <CheckCircle2 size={14} className="text-emerald-500 shadow-glow" />
+                              Project Certified
+                            </>
+                          ) : (
+                            <>
+                              <Play size={14} fill="currentColor" />
+                              Initiate Project
+                            </>
+                          )}
+                        </div>
+                        <div className="text-right">
+                           <p className="text-[8px] font-black text-white/10 uppercase tracking-widest">Reward</p>
+                           <span className="text-xs font-black text-white/40 group-hover/project:text-emerald-400 transition-colors">+{project.xpReward} XP</span>
+                        </div>
+                      </div>
+                      
+                      {/* Hover Decoration */}
+                      <div className="absolute -right-12 -bottom-12 p-16 opacity-[0.01] group-hover/project:opacity-[0.04] transition-all duration-1000 transform group-hover/project:scale-125 pointer-events-none">
+                         <Terminal size={200} />
+                      </div>
+                    </Card>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-24 text-center glass-premium border-dashed border-white/10 rounded-[3rem] flex flex-col items-center gap-6">
+                  <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-white/10">
+                    <LogOut className="rotate-90" size={32} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-white/40 text-xl font-black tracking-tight">Expansion in Progress</p>
+                    <p className="text-white/20 font-medium max-w-xs mx-auto">Our senior architects are currently drafting custom capstone challenges for this path.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Academy Mastery Tree */}
+          <Card className="glass-premium p-12 md:p-20 space-y-20 relative overflow-hidden border-white/5">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/[0.03] blur-[150px] rounded-full pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+              <div className="flex items-center gap-6 text-emerald-400">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-glow">
+                  <Network size={28} />
+                </div>
+                <div>
+                  <h3 className="font-black text-3xl tracking-tighter uppercase">{activeSkill?.title || progress.selectedPath} <span className="text-white/20">/</span> Mastery Tree</h3>
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mt-1">Hierarchical Skill Progression</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                 <div className="text-right hidden sm:block">
+                    <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Global Ranking</p>
+                    <p className="text-lg font-black text-emerald-400 tracking-tight">Top {Math.max(1, 100 - Math.floor(xp/100))}% Learner</p>
+                 </div>
+                 <Badge className="h-12 px-8 bg-emerald-500 text-black border-none font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20">
+                   {Math.floor(xp / 500) > 0 ? `Tier ${Math.floor(xp / 500) + 1}` : 'Novice Tier'}
+                 </Badge>
+              </div>
+            </div>
+
+            <div className="relative flex flex-col items-center py-20 z-10">
+              <div className="flex flex-wrap justify-center gap-12 md:gap-32 items-center relative">
                 {dynamicStages.length > 0 ? (
                   dynamicStages.map((stage, idx) => (
                     <React.Fragment key={stage.id}>
@@ -751,7 +1083,9 @@ export const DashboardPage: React.FC = () => {
                         progress={progress.currentStage === stage.levelName ? 50 : (idx < dynamicStages.findIndex(s => s.levelName === progress.currentStage) ? 100 : 0)}
                       />
                       {idx < dynamicStages.length - 1 && (
-                        <div className="hidden md:block w-12 h-1 bg-white/5" />
+                        <div className="hidden md:block w-20 h-px bg-white/10 relative overflow-hidden">
+                           <div className="absolute inset-0 bg-emerald-500/50 blur-sm" />
+                        </div>
                       )}
                     </React.Fragment>
                   ))
@@ -762,14 +1096,14 @@ export const DashboardPage: React.FC = () => {
                       completed={progress.currentStage === 'Intermediate' || progress.currentStage === 'Advanced'} 
                       progress={progress.currentStage === 'Beginner' ? 50 : 100}
                     />
-                    <div className="hidden md:block w-24 h-1 bg-gradient-to-r from-emerald-500 to-white/5" />
+                    <div className="hidden md:block w-32 h-px bg-white/10" />
                     <SkillNode 
                       label="Intermediate" 
                       locked={progress.currentStage === 'Beginner'}
                       completed={progress.currentStage === 'Advanced'}
                       progress={progress.currentStage === 'Intermediate' ? 50 : (progress.currentStage === 'Advanced' ? 100 : 0)}
                     />
-                    <div className="hidden md:block w-24 h-1 bg-white/5" />
+                    <div className="hidden md:block w-32 h-px bg-white/10" />
                     <SkillNode 
                       label="Advanced" 
                       locked={progress.currentStage !== 'Advanced'}
@@ -779,99 +1113,116 @@ export const DashboardPage: React.FC = () => {
                   </>
                 )}
               </div>
+              <div className="mt-24 p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl text-center max-w-xl">
+                 <p className="text-white/40 text-sm font-medium leading-relaxed italic">
+                   "Mastery is not a destination, but a continuous journey of Refinement. Every lesson completed strengthens the roots of your professional foundation."
+                 </p>
+              </div>
             </div>
           </Card>
 
           {/* Featured Lessons Section */}
-          <div className="space-y-10 pt-12">
+          <div className="space-y-12 pt-16">
             <div className="flex justify-between items-end">
-              <div className="space-y-2">
-                <h3 className="font-black text-4xl tracking-tighter">Featured Lessons</h3>
-                <p className="text-white/30 font-medium">Hand-picked curriculum for your current level.</p>
+              <div className="space-y-3">
+                <h3 className="font-black text-5xl tracking-tighter">Featured <span className="text-gradient">Lessons</span></h3>
+                <p className="text-white/30 text-lg font-medium">Precision curriculum curated for your current mastery level.</p>
               </div>
               <button 
                 onClick={() => navigate('/dashboard')}
-                className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group active:scale-95"
+                className="group flex items-center gap-4 bg-white/5 border border-white/10 px-8 py-4 rounded-3xl text-xs font-black uppercase tracking-[0.3em] text-white/40 hover:text-emerald-400 hover:border-emerald-500/30 transition-all active:scale-95"
               >
-                Explore All <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><ChevronRight size={18} /></div>
+                Explore Full Curriculum <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
             
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-8">
               {featuredLessons.map((lesson) => (
-                <Card 
-                  key={lesson.id}
-                  onClick={() => navigate(`/lesson/${lesson.id}`)}
-                  className="p-8 flex items-center justify-between group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20"
-                >
-                  <div className="flex gap-10 items-center">
-                    <div className="w-20 h-20 rounded-[1.5rem] bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
-                      <BookOpen size={32} />
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-4">
-                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-black tracking-[0.2em]">{lesson.tag}</Badge>
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                        <div className="flex items-center gap-2 text-white/20">
-                          <Clock size={14} />
-                          <span className="text-xs font-black tracking-tight">{lesson.duration}</span>
-                        </div>
+                <div key={lesson.id} className="group/lesson relative">
+                  <Card 
+                    onClick={() => navigate(`/lesson/${lesson.id}`)}
+                    className="p-10 glass-premium flex flex-col md:flex-row md:items-center justify-between gap-10 group cursor-pointer hover:bg-white/[0.04] transition-all duration-700 border-white/5 hover:border-emerald-500/20 active:scale-[0.99] relative overflow-hidden"
+                  >
+                    <div className="flex gap-10 items-center">
+                      <div className="w-24 h-24 rounded-[2rem] bg-white/[0.03] flex items-center justify-center text-white/10 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 shadow-inner ring-1 ring-white/5">
+                        <BookOpen size={40} />
                       </div>
-                      <h4 className="font-black text-2xl tracking-tight group-hover:text-emerald-400 transition-colors">{lesson.title}</h4>
-                      <p className="text-base text-white/30 font-medium max-w-md">{lesson.desc}</p>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-5">
+                          <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] font-black tracking-[0.2em] px-4 py-1.5 rounded-full">{lesson.tag}</Badge>
+                          <div className="flex items-center gap-2 text-white/20">
+                            <Clock size={16} />
+                            <span className="text-[11px] font-black uppercase tracking-tighter">{lesson.duration}</span>
+                          </div>
+                          <span className="hidden md:block w-1.5 h-1.5 rounded-full bg-white/10" />
+                          <div className="hidden md:flex items-center gap-2 text-white/20">
+                            <Sparkles size={16} />
+                            <span className="text-[11px] font-black uppercase tracking-tighter">High ROI</span>
+                          </div>
+                        </div>
+                        <h4 className="font-black text-3xl tracking-tighter group-hover:text-emerald-400 transition-colors">{lesson.title}</h4>
+                        <p className="text-lg text-white/30 font-medium max-w-xl leading-relaxed">{lesson.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/10 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 group-hover:translate-x-2 transition-all duration-500">
-                    <ChevronRight size={24} />
-                  </div>
-                </Card>
+                    <div className="flex items-center gap-8">
+                      <div className="text-right hidden sm:block">
+                         <p className="text-[9px] font-black text-white/10 uppercase tracking-widest">Level</p>
+                         <p className="text-sm font-black text-white/40">{progress.currentStage}</p>
+                      </div>
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-white/[0.03] flex items-center justify-center text-white/10 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 group-hover:translate-x-2 transition-all duration-700 border border-white/5">
+                        <ChevronRight size={28} />
+                      </div>
+                    </div>
+                  </Card>
+                </div>
               ))}
             </div>
           </div>
 
           {/* Certificates Section */}
           {certificates.length > 0 && (
-            <div className="space-y-10 pt-12">
+            <div className="space-y-12 pt-20">
               <div className="flex justify-between items-end">
-                <div className="space-y-2">
-                  <h3 className="font-black text-4xl tracking-tighter">Your Credentials</h3>
-                  <p className="text-white/30 font-medium">Verified proof of your professional skills.</p>
+                <div className="space-y-3">
+                  <h3 className="font-black text-5xl tracking-tighter">Your <span className="text-gradient">Credentials</span></h3>
+                  <p className="text-white/30 text-lg font-medium">Verified proof of your technical excellence and professional skills.</p>
                 </div>
                 <button 
                   onClick={() => navigate('/profile')}
-                  className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
+                  className="group flex items-center gap-4 bg-white/5 border border-white/10 px-8 py-4 rounded-3xl text-xs font-black uppercase tracking-[0.3em] text-white/40 hover:text-emerald-400 hover:border-emerald-500/30 transition-all"
                 >
-                  View All <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Award size={18} /></div>
+                  Manage Portfolio <Award size={18} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {certificates.slice(0, 2).map((cert) => (
-                  <Card 
-                    key={cert.id}
-                    onClick={() => navigate(`/certificate/${cert.id}`)}
-                    className="p-8 border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.03] to-transparent group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 relative overflow-hidden"
-                  >
-                    <div className="flex gap-8 items-center relative z-10">
-                      <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform duration-500">
-                        <ShieldCheck size={40} />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <Badge className="bg-emerald-500 text-black border-none text-[8px] font-black tracking-widest">{cert.tier}</Badge>
-                          <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">{new Date(cert.issueDate).toLocaleDateString()}</span>
+                  <div key={cert.id} className="group/cert relative">
+                    <Card 
+                      onClick={() => navigate(`/certificate/${cert.id}`)}
+                      className="p-10 glass-premium border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.03] to-transparent group cursor-pointer hover:bg-white/[0.05] transition-all duration-700 relative overflow-hidden active:scale-[0.98]"
+                    >
+                      <div className="flex gap-10 items-center relative z-10">
+                        <div className="w-24 h-24 rounded-[2rem] bg-emerald-500/5 ring-1 ring-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover/cert:scale-110 group-hover/cert:rotate-3 transition-transform duration-700 shadow-glow">
+                          <ShieldCheck size={48} />
                         </div>
-                        <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{cert.pathName}</h4>
-                        <div className="flex items-center gap-2 text-emerald-500/60 text-[10px] font-black uppercase tracking-widest">
-                          <CheckCircle2 size={12} />
-                          Verified Credential
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <Badge className="bg-emerald-500 text-black border-none text-[10px] font-black tracking-widest px-4 py-1 rounded-full">{cert.tier}</Badge>
+                            <span className="text-[11px] font-black text-white/30 uppercase tracking-widest">{new Date(cert.issueDate).toLocaleDateString()}</span>
+                          </div>
+                          <h4 className="font-black text-2xl tracking-tighter group-hover/cert:text-emerald-400 transition-colors uppercase leading-none">{cert.pathName}</h4>
+                          <div className="flex items-center gap-3 text-emerald-500/60 text-[11px] font-black uppercase tracking-widest">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-glow" />
+                            Verified Academic Credential
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.05] group-hover:scale-110 transition-all duration-700 pointer-events-none">
-                      <Award size={160} />
-                    </div>
-                  </Card>
+                      <div className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover/cert:opacity-[0.08] group-hover/cert:scale-125 transition-all duration-1000 transform rotate-12 pointer-events-none">
+                        <Award size={200} fill="currentColor" />
+                      </div>
+                    </Card>
+                  </div>
                 ))}
               </div>
             </div>
@@ -956,204 +1307,104 @@ export const DashboardPage: React.FC = () => {
           </AnimatePresence>
 
           {/* Explore Other Paths Section */}
-          <div className="space-y-20 pt-20">
-            <div className="flex justify-between items-end">
-              <div className="space-y-2">
-                <h3 className="font-black text-4xl tracking-tighter">Explore the <span className="text-gradient">Academy</span></h3>
-                <p className="text-white/30 font-medium">Browse all professional programs across all categories.</p>
+          <div className="space-y-20 pt-32 pb-20">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
+              <div className="space-y-3">
+                <h3 className="font-black text-6xl tracking-tighter">Expand Your <span className="text-gradient">Empire</span></h3>
+                <p className="text-white/30 text-xl font-medium max-w-2xl">Browse the full academy scope. Discover new technologies, master new paradigms, and build a multi-faceted career.</p>
               </div>
-              <button 
-                onClick={() => navigate('/coding-languages')}
-                className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
-              >
-                Programming Languages <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Code size={18} /></div>
-              </button>
-              <button 
-                onClick={() => setIsPathSwitcherOpen(true)}
-                className="text-emerald-400 text-sm font-black uppercase tracking-[0.2em] flex items-center gap-3 hover:translate-x-2 transition-all duration-300 group"
-              >
-                Quick Switch <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-black transition-all"><Compass size={18} /></div>
-              </button>
+              <div className="flex flex-wrap gap-4">
+                <button 
+                  onClick={() => setIsPathSwitcherOpen(true)}
+                  className="h-16 px-10 rounded-2xl bg-emerald-500 text-black font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-emerald-500/20 hover:scale-[1.05] transition-all flex items-center gap-3"
+                >
+                  <Compass size={18} /> Quick Selector
+                </button>
+                <button 
+                  onClick={() => navigate('/coding-languages')}
+                  className="h-16 px-8 rounded-2xl bg-white/5 border border-white/10 text-white/40 font-black uppercase tracking-[0.2em] text-xs hover:border-emerald-500/30 hover:text-emerald-400 transition-all flex items-center gap-3"
+                >
+                  Catalog <Code size={18} />
+                </button>
+              </div>
             </div>
             
-            <div className="space-y-24">
-              {/* Explicitly render Programming Languages section first for prominence if it exists */}
-              {(() => {
-                const category = 'coding-languages';
-                const categorySkills = groupedPaths[category] || [];
-                const activeSkills = categorySkills.filter(s => s.status === 'active' && s.id !== progress.activeProgramId);
-                
-                return (
-                  <div key={category} className="space-y-10">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-6">
-                        <h4 className="text-xs font-black uppercase tracking-[0.4em] text-emerald-500/60 whitespace-nowrap">
-                          {categoryLabels[category] || 'Programming Languages (0)'}
-                        </h4>
-                        <div className="h-px flex-grow bg-white/5" />
-                      </div>
-                      <p className="text-white/30 text-sm font-medium">
-                        {(categoryDescriptions as any)[category] || 'Master the world\'s most popular programming languages.'}
-                      </p>
-                    </div>
-
-                    {activeSkills.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {activeSkills.map((skill) => {
-                          const pathInfo = allPaths[skill.id] || {};
-                          return (
-                            <Card 
-                              key={skill.id}
-                              onClick={() => handlePathSwitch(skill)}
-                              className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98] relative overflow-hidden"
-                            >
-                              <div className="flex justify-between items-start relative z-10">
-                                <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
-                                  <Code size={24} />
-                                </div>
-                                <Badge className="bg-white/5 text-white/40 border-white/10 text-[8px] uppercase tracking-widest font-black">
-                                  {skill.difficultyRange}
-                                </Badge>
-                              </div>
-
-                              <div className="space-y-3 relative z-10">
-                                <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{skill.title}</h4>
-                                <p className="text-xs text-white/30 font-medium line-clamp-2 leading-relaxed">{skill.description}</p>
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
-                                <div className="space-y-1">
-                                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Duration</p>
-                                  <div className="flex items-center gap-1.5 text-emerald-500/60">
-                                    <Clock size={12} />
-                                    <span className="text-xs font-bold">{skill.estimatedWeeks} Weeks</span>
-                                  </div>
-                                </div>
-                                <div className="space-y-1">
-                                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Curriculum</p>
-                                  <div className="flex items-center gap-1.5 text-emerald-500/60">
-                                    <BookOpen size={12} />
-                                    <span className="text-xs font-bold">
-                                      {pathInfo.totalModules || 0} Modules • {pathInfo.totalLessons || 0} Lessons
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between relative z-10 pt-4">
-                                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
-                                  Start Learning <ChevronRight size={12} />
-                                </div>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="rounded-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePathSwitch(skill);
-                                  }}
-                                >
-                                  Switch to Path
-                                </Button>
-                              </div>
-
-                              {/* Background Decoration */}
-                              <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-all duration-700 pointer-events-none transform rotate-12">
-                                <Terminal size={120} />
-                              </div>
-                            </Card>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="py-12 text-center bg-white/[0.01] border border-dashed border-white/10 rounded-[2rem]">
-                        <p className="text-white/20 font-medium">No programming language programs available yet.</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Render other categories */}
+            <div className="space-y-32">
               {Object.entries(groupedPaths).map(([category, categorySkills]) => {
-                if (category === 'coding-languages') return null; // Already rendered above
-                
                 const activeSkills = categorySkills.filter(s => s.status === 'active' && s.id !== progress.activeProgramId);
                 if (activeSkills.length === 0) return null;
 
                 return (
-                  <div key={category} className="space-y-10">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-6">
-                        <h4 className="text-xs font-black uppercase tracking-[0.4em] text-emerald-500/60 whitespace-nowrap">
-                          {(categoryLabels as any)[category] || category}
-                        </h4>
-                        <div className="h-px flex-grow bg-white/5" />
+                  <div key={category} className="space-y-12">
+                    <div className="relative">
+                      <div className="flex items-center gap-10">
+                        <div className="w-1.5 h-12 bg-emerald-500/20 rounded-full" />
+                        <div>
+                          <h4 className="text-sm font-black uppercase tracking-[0.5em] text-emerald-500">
+                             {categoryLabels[category] || category}
+                          </h4>
+                          <p className="text-white/20 text-xs font-black uppercase tracking-widest mt-1">Available Programs • {activeSkills.length} Track(s)</p>
+                        </div>
+                        <div className="h-px flex-grow bg-gradient-to-r from-white/10 to-transparent" />
                       </div>
-                      <p className="text-white/30 text-sm font-medium">
-                        {(categoryDescriptions as any)[category]}
-                      </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                       {activeSkills.map((skill) => {
                         const pathInfo = allPaths[skill.id] || {};
                         return (
-                          <Card 
-                            key={skill.id}
-                            onClick={() => handlePathSwitch(skill)}
-                            className="p-8 space-y-6 group cursor-pointer hover:bg-white/[0.04] transition-all duration-500 border-white/[0.05] hover:border-emerald-500/20 active:scale-[0.98] relative overflow-hidden"
-                          >
-                            <div className="flex justify-between items-start relative z-10">
-                              <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center text-white/20 group-hover:text-emerald-500 group-hover:bg-emerald-500/10 transition-all duration-500">
-                                <Compass size={24} />
-                              </div>
-                              <Badge className="bg-white/5 text-white/40 border-white/10 text-[8px] uppercase tracking-widest font-black">
-                                {skill.difficultyRange}
-                              </Badge>
-                            </div>
-
-                            <div className="space-y-3 relative z-10">
-                              <h4 className="font-black text-xl tracking-tight group-hover:text-emerald-400 transition-colors">{skill.title}</h4>
-                              <p className="text-xs text-white/30 font-medium line-clamp-2 leading-relaxed">{skill.description}</p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
-                              <div className="space-y-1">
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Duration</p>
-                                <div className="flex items-center gap-1.5 text-emerald-500/60">
-                                  <Clock size={12} />
-                                  <span className="text-xs font-bold">{skill.estimatedWeeks} Weeks</span>
+                          <div key={skill.id} className="group/catalog relative">
+                            <Card 
+                              onClick={() => handlePathSwitch(skill)}
+                              className="h-full glass-premium p-10 space-y-10 cursor-pointer hover:bg-white/[0.04] transition-all duration-700 border-white/5 hover:border-emerald-500/20 active:scale-[0.98] relative overflow-hidden"
+                            >
+                              <div className="flex justify-between items-start relative z-10">
+                                <div className="w-16 h-16 rounded-[2rem] bg-white/[0.03] flex items-center justify-center text-white/20 group-hover/catalog:text-emerald-500 group-hover/catalog:bg-emerald-500/10 transition-all duration-700 shadow-inner">
+                                  {skill.id.includes('python') || skill.id.includes('java') || skill.id.includes('script') || skill.id.includes('c-') ? <Code size={32} /> : <Compass size={32} />}
+                                </div>
+                                <div className="text-right">
+                                  <Badge className="bg-white/5 text-white/40 border-white/10 text-[9px] uppercase tracking-widest font-black px-4 py-1 rounded-full mb-2">
+                                    {skill.difficultyRange}
+                                  </Badge>
+                                  <p className="text-[10px] items-center gap-1 justify-end flex font-black text-emerald-500/40 uppercase tracking-widest">
+                                    <Clock size={10} /> {skill.estimatedWeeks} Wks
+                                  </p>
                                 </div>
                               </div>
-                              <div className="space-y-1">
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Curriculum</p>
-                                <div className="flex items-center gap-1.5 text-emerald-500/60">
-                                  <BookOpen size={12} />
-                                  <span className="text-xs font-bold">
-                                    {pathInfo.totalModules || 0} Modules • {pathInfo.totalLessons || 0} Lessons
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
 
-                            <div className="flex items-center justify-between relative z-10 pt-4">
-                              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
-                                Explore Program <ChevronRight size={12} />
+                              <div className="space-y-4 relative z-10">
+                                <h4 className="font-black text-3xl tracking-tighter group-hover/catalog:text-emerald-400 transition-colors uppercase leading-none">{skill.title}</h4>
+                                <p className="text-sm text-white/30 font-medium line-clamp-3 leading-relaxed">{skill.description}</p>
                               </div>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="rounded-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePathSwitch(skill);
-                                }}
-                              >
-                                Switch to Path
-                              </Button>
-                            </div>
-                          </Card>
+
+                              <div className="space-y-4 pt-10 border-t border-white/5 relative z-10">
+                                <div className="flex items-center justify-between">
+                                   <div className="flex items-center gap-2 text-white/20">
+                                      <BookOpen size={14} />
+                                      <span className="text-[10px] font-black uppercase tracking-widest">{pathInfo.totalModules || 8} Modules</span>
+                                   </div>
+                                   <div className="flex items-center gap-2 text-white/20">
+                                      <Terminal size={14} />
+                                      <span className="text-[10px] font-black uppercase tracking-widest">12+ Projects</span>
+                                   </div>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePathSwitch(skill);
+                                  }}
+                                  className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover/catalog:bg-emerald-500 group-hover/catalog:text-black group-hover/catalog:border-emerald-500 transition-all duration-500"
+                                >
+                                  Switch to Path
+                                </button>
+                              </div>
+
+                              {/* Background Decoration */}
+                              <div className="absolute -right-8 -bottom-8 opacity-[0.01] group-hover/catalog:opacity-[0.04] transition-all duration-1000 transform group-hover/catalog:scale-125 pointer-events-none">
+                                <Code size={200} />
+                              </div>
+                            </Card>
+                          </div>
                         );
                       })}
                     </div>
