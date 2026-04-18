@@ -9,7 +9,7 @@ import {
   Twitter, Github, Award, ExternalLink, ShieldCheck,
   CheckCircle2, X, Star, Sparkles, Globe, Briefcase
 } from 'lucide-react';
-import { Card, Button, Badge } from '../components/ui';
+import { Card, Button, Badge, Input } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useUserData } from '../hooks/useUserData';
 import { useNavigate } from 'react-router-dom';
@@ -34,8 +34,27 @@ export const ProfilePage: React.FC = () => {
   }, [user]);
 
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState(user?.displayName || '');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { updateProfileName } = useUserData();
+
+  useEffect(() => {
+    if (user?.displayName) setProfileName(user.displayName);
+  }, [user]);
 
   if (loading || !progress) return <LoadingScreen />;
+
+  const handleUpdateProfile = async () => {
+    setIsUpdating(true);
+    try {
+      await updateProfileName(profileName);
+      setActiveModal(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleLogout = async () => {
     await auth.signOut();
@@ -359,6 +378,41 @@ export const ProfilePage: React.FC = () => {
               </div>
 
               <div className="space-y-6">
+                {activeModal === 'personal' && (
+                  <div className="space-y-6">
+                    <div className="flex flex-col items-center gap-6 mb-8">
+                       <div className="relative group">
+                        <div className="w-24 h-24 rounded-[2rem] bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden">
+                          {user?.photoURL ? (
+                            <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={40} className="text-white/20" />
+                          )}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 p-2 rounded-lg bg-emerald-500 text-black">
+                          <Camera size={14} />
+                        </div>
+                      </div>
+                    </div>
+                    <Input 
+                      label="Full Name"
+                      placeholder="e.g. Ajia Abdulrasak Olayinka"
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                    />
+                    <div className="pt-4">
+                      <Button 
+                        fullWidth 
+                        onClick={handleUpdateProfile}
+                        disabled={isUpdating}
+                        className="h-14 rounded-2xl"
+                      >
+                        {isUpdating ? 'Saving Changes...' : 'Save Profile Changes'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {activeModal === 'subscription' && !progress.isPremium ? (
                   <div className="space-y-8">
                     <PremiumUpsell />

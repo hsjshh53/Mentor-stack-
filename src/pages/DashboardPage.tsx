@@ -480,7 +480,7 @@ export const DashboardPage: React.FC = () => {
                       </button>
                     </div>
                     <div>
-                      <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-2 drop-shadow-2xl">
+                      <h1 className="text-[2.5rem] md:text-8xl font-black tracking-tighter leading-[0.85] mb-2 drop-shadow-2xl">
                         {activeSkill?.title || progress.selectedPath} <br />
                         <span className="text-gradient drop-shadow-none">Academy</span>
                       </h1>

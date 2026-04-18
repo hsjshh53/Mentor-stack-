@@ -70,6 +70,18 @@ export const useUserData = () => {
     await update(userRef, updates);
   };
 
+  const updateProfileName = async (newName: string) => {
+    if (!user) return;
+    const { updateProfile } = await import('firebase/auth');
+    await updateProfile(user, { displayName: newName });
+    // Also save to a central users profile for easier lookup/admin
+    const profileRef = ref(db, `users/${user.uid}/profile`);
+    await update(profileRef, { 
+      displayName: newName,
+      updatedAt: Date.now()
+    });
+  };
+
   const addXP = async (amount: number) => {
     if (!progress || !user) return;
     const newXP = progress.xp + amount;
@@ -117,5 +129,5 @@ export const useUserData = () => {
     });
   };
 
-  return { progress, loading, updateProgress, addXP, submitProject, saveProjectDraft };
+  return { progress, loading, updateProgress, updateProfileName, addXP, submitProject, saveProjectDraft };
 };

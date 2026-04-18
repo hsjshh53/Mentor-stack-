@@ -245,55 +245,55 @@ export const generateRoadmap = async (
   `;
   } else {
     prompt = `
-    You are a senior curriculum architect for MentorStack Academy, a world-class technology school.
-    Design a comprehensive, professional "Zero-to-Pro" academy program for the ${skill.category}: "${skill.title}".
-    This is for a high-end career platform. The program must be deep, practical, and job-ready.
+    You are a world-class senior curriculum architect for MentorStack Academy.
+    Design a comprehensive, professional "Zero-to-Senior-Engineer" career roadmap for: "${skill.title}".
+    This program is for high-end international talent. It must be deep, practical, and rigorous.
     
-    The program must cover 5 distinct stages:
-    1. Beginner: Digital foundations, core concepts, mental models, and environment setup.
-    2. Intermediate: Practical application, common patterns, building functional features, and best practices.
-    3. Advanced: Complex systems, optimization, architecture, performance, and scalability.
-    4. Expert: Industry standards, security, testing, advanced integration, and leadership.
-    5. Career Prep: Interview mastery, portfolio building, job-readiness, and professional networking.
+    The program must cover 5 distinct mastery stages:
+    1. Foundations & Mental Models: Core building blocks, syntax, environment setup, and computer science foundations relevant to ${skill.title}.
+    2. Deep Dive & Patterns: Practical application, structural patterns, building real features, and idiomatic best practices.
+    3. Advanced Systems & Internals: Complex architecture, optimization, underlying mechanics, and scalability.
+    4. Enterprise & Professional Excellence: Industry standards (Clean Code, TDD), security, Cloud/CI-CD, and advanced integration.
+    5. Career Mastery & Leadership: Strategic interview mastery, professional networking, technical leadership, and building a high-impact capstone portfolio project.
 
-    The total duration is ${skill.estimatedWeeks} weeks.
-    Distribute these weeks across the stages logically.
-    Each week must have 2-3 deep modules.
+    The curriculum must be extremely thorough.
     
     IMPORTANT: 
-    - Do not mix content from other programs. If this is ${skill.title}, focus ONLY on ${skill.title}.
-    - Ensure "Digital Foundations" are included in the Beginner stage if appropriate for the skill.
-    - Every module title must be unique and descriptive.
+    - Every module title must be unique, professional, and descriptive.
+    - The total duration is ${skill.estimatedWeeks} weeks.
+    - Each week MUST have 2-4 deep modules.
+    - Do NOT generate shallow modules. Every module must representative a significant learning milestone.
+    - Ensure a logical flow from absolute basics to advanced job-ready skills.
 
     Return a JSON object with this structure:
     {
       "path": {
-        "title": "Professional ${skill.title} Academy Program",
-        "description": "A comprehensive journey from absolute beginner to job-ready ${skill.title} professional.",
-        "summary": "Master ${skill.title} through a structured ${skill.estimatedWeeks}-week program.",
+        "title": "Professional ${skill.title} Mastery Program",
+        "description": "A world-class journey from digital literacy to a career as a senior ${skill.title} professional.",
+        "summary": "Master ${skill.title} through a rigorous ${skill.estimatedWeeks}-week career transformation program.",
         "durationWeeks": ${skill.estimatedWeeks},
         "targetOutcome": "${skill.careerOutcome}",
         "estimatedDuration": "${skill.estimatedCompletionTime}",
-        "projectsCount": number,
+        "projectsCount": 12,
         "jobOutcome": "${skill.careerOutcome}"
       },
       "stages": [
         {
-          "title": "Stage Title",
+          "title": "Stage Title (e.g., Foundations of ${skill.title})",
           "levelName": "Beginner" | "Intermediate" | "Advanced" | "Expert" | "Career Prep",
           "order": number,
           "weeks": [
             {
               "weekNumber": number,
-              "title": "Week Title",
-              "description": "What this week covers in depth",
-              "learningGoals": ["Goal 1", "Goal 2", "Goal 3"],
+              "title": "Week Title (e.g., Reactive Programming & State)",
+              "description": "Deep dive into ...",
+              "learningGoals": ["Master X", "Understand Z"],
               "modules": [
                 {
                   "title": "Module Title",
-                  "description": "What this module covers",
+                  "description": "Deep technical coverage of ...",
                   "order": number,
-                  "estimatedDuration": "4-6 hours"
+                  "estimatedDuration": "6-8 hours"
                 }
               ]
             }
@@ -632,59 +632,57 @@ export const generateLessonsForModule = async (
   });
 
   const prompt = `
-    You are a senior technical instructor and subject matter expert for MentorStack Academy.
-    Generate ${lessonCount} deep, high-quality, professional lessons for the module "${moduleTitle}" within the "${skillTitle}" academy program.
+    You are a world-class senior technical instructor at a Silicon Valley coding academy.
+    Generate ${lessonCount} deep, executive-level, elite educational lessons for the module "${moduleTitle}" within the "${skillTitle}" program.
     
-    MentorStack is a world-class coding school. These lessons must be effective, practical, and comprehensive.
+    MENTORSTACK PHILOSOPHY:
+    We don't teach just how; we teach why. Lessons must cover the mental models, the trade-offs, the "gotchas", and the professional standards.
     
-    If this is a programming language program, focus on language-specific details, syntax, memory models, and idiomatic patterns.
-    If this is a career path program, focus on the tools, frameworks, and workflows relevant to that career.
-    If this is a development skill program, focus on the core principles, patterns, and architectural decisions of that domain.
-    If this is a tool or foundation program, focus on the internal mechanics, configuration, and professional usage of that tool.
-    If this is a career prep program, focus on the psychological, strategic, and communication aspects of the job search.
+    Each lesson must be an architectural masterpiece of technical education.
     
-    Each lesson must be a JSON object with the following structure:
+    CONTENT REQUIREMENTS:
+    - If it's a technical skill (e.g., React, Python), include low-level internals (e.g., "The Event Loop", "Garbage Collection", "Memory Allocation").
+    - If it's a project, provide a "Production Grade" specification.
+    - If it's career prep, provide "Hiring Manager" level insights.
+    
+    Lesson structure (JSON):
     {
-      "title": "Lesson Title",
-      "slug": "unique-slug",
-      "summary": "Deep overview of what this lesson covers and why it is essential for a professional.",
-      "objectives": "3-5 clear, measurable learning objectives",
-      "todayYouAreLearning": "One powerful sentence describing the core takeaway",
-      "whyItMatters": "Real-world context, industry relevance, and how this skill is used in top tech companies",
-      "explanation": "Extremely detailed teaching content (20-30 lines). Break down complex concepts into digestible but deep professional explanations. Use clear headings and bullet points where appropriate.",
-      "analogy": "A brilliant, helpful analogy that makes complex concepts click for real learners",
-      "codeExample": "Practical, production-grade, well-commented code snippet that demonstrates the concept in a real-world scenario",
-      "lineByLine": "A meticulous, line-by-line breakdown of the code example, explaining the 'why' behind every choice",
-      "commonMistakes": ["Mistake 1 with explanation", "Mistake 2 with explanation", "Mistake 3 with explanation"],
-      "practice": "A hands-on exercise that mimics a real-world task a developer would do at work",
-      "challenge": "A mini-challenge to test deeper understanding and push the learner's boundaries",
-      "proTip": "An expert industry secret, performance optimization, or workflow hack related to this topic",
-      "recap": "A concise summary of the most critical points to remember",
+      "title": "Professional Lesson Title",
+      "slug": "professional-lesson-slug",
+      "summary": "Strategic overview of why this matters for a senior engineer.",
+      "objectives": "3-5 high-level learning objectives.",
+      "todayYouAreLearning": "The one critical technical paradigm you will master.",
+      "whyItMatters": "The business impact and technical necessity of this skill.",
+      "explanation": "Extremely thorough technical documentation (1000+ words equivalent logic). Use clear sections, deep explanations of internals, and professional terminology.",
+      "analogy": "A world-class analogy comparing this to a real-world complex system.",
+      "codeExample": "A production-grade, optimized, and perfectly commented code example. Use best practices (SOLID, DRY, Clean Code).",
+      "lineByLine": "Meticulous internal audit of the code. Why was this pattern chosen over others?",
+      "commonMistakes": ["Senior-level pitfalls and how to avoid them with technical reasons."],
+      "practice": "A significant engineering task to perform.",
+      "challenge": "An 'Extreme' version of the practice task to push mastery.",
+      "proTip": "An industry insider secret related to performance or workflow.",
+      "recap": "A synthesis of the core engineering wisdom.",
       "difficulty": "Beginner" | "Intermediate" | "Advanced" | "Expert",
-      "estimatedDuration": "30-60 mins",
+      "estimatedDuration": "1-2 hours",
       "quiz": [
         {
-          "question": "A challenging, conceptual question (not just syntax)",
-          "options": ["Option A", "Option B", "Option C", "Option D"],
+          "question": "A conceptual, multi-layered question assessing deep understanding.",
+          "options": ["A", "B", "C", "D"],
           "correctIndex": number,
-          "explanation": "Detailed explanation of why the correct answer is right and others are wrong"
+          "explanation": "Why the correct answer is logically superior."
         }
       ],
       "project": {
-        "title": "Module Project Task: ...",
-        "description": "A real-world project task that builds job-ready skills and contributes to a professional portfolio",
-        "steps": ["Step 1: ...", "Step 2: ...", "Step 3: ...", "Step 4: ..."]
+        "title": "Production Task: [Specific Task]",
+        "description": "Building a component of a real-world system.",
+        "steps": ["Step 1: Architecting...", "Step 2: Implementing...", "Step 3: Critical testing..."]
       },
-      "interviewTips": "Specific interview questions and how to answer them professionally for this topic",
-      "careerTips": "How to leverage this specific knowledge to advance your career or perform better in a team"
+      "interviewTips": "Common high-level interview questions for this specific topic.",
+      "careerTips": "How to demonstrate this competency to move toward a Senior/Staff role."
     }
 
     Return ONLY a JSON array of these objects.
-    CRITICAL RULES:
-    - Content must be 100% specific to ${skillTitle}. Do NOT include generic coding advice.
-    - Focus on job-readiness, industry standards, and professional best practices.
-    - The explanation must be deep and high-quality. No shallow content.
-    - Ensure no duplicate titles or slugs within this module.
+    STRICT: No shallow content. No generic intros. Start deep. Stay deep.
   `;
 
   try {
@@ -758,11 +756,19 @@ export const generateLessonsForModule = async (
     let lessonsSkipped = 0;
     let lessonsUpdated = 0;
 
+    const addedInBatch = new Set<string>();
+
     for (let i = 0; i < lessonsData.length; i++) {
       const lesson = lessonsData[i];
       const normalizedLessonTitle = normalizeTitle(lesson.title);
       const lessonSlug = lesson.slug || generateSlug(lesson.title);
       
+      // Batch duplicate protection
+      if (addedInBatch.has(normalizedLessonTitle) || addedInBatch.has(lessonSlug)) {
+        lessonsSkipped++;
+        continue;
+      }
+
       const lessonWithMeta: GeneratedLesson = {
         ...lesson,
         id: lessonSlug,
@@ -800,6 +806,8 @@ export const generateLessonsForModule = async (
       } else {
         await set(push(poolRef), lessonWithMeta);
         lessonsCreated++;
+        addedInBatch.add(normalizedLessonTitle);
+        addedInBatch.add(lessonSlug);
       }
     }
 

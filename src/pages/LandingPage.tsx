@@ -1,7 +1,19 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Button } from '../components/ui';
-import { Rocket, GraduationCap, Code2, Trophy, ArrowRight, Sparkles } from 'lucide-react';
+import { 
+  Rocket, 
+  GraduationCap, 
+  Code2, 
+  Trophy, 
+  ArrowRight, 
+  Sparkles,
+  Star,
+  Database,
+  Palette,
+  Target,
+  Bot
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '../components/ui';
 
@@ -200,6 +212,127 @@ export const LandingPage: React.FC = () => {
               <p className="text-white/40 leading-relaxed text-lg font-medium">{feature.desc}</p>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="px-6 py-32 max-w-7xl mx-auto">
+        <div className="text-center space-y-4 mb-20">
+          <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5">Success Stories</Badge>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9]">From Student to <span className="text-emerald-500">Professional.</span></h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { name: "John Doe", role: "Software Engineer @ Google", text: "MentorStack changed my career. The AI mentor is like having a private tutor from Silicon Valley on call 24/7." },
+            { name: "Sarah Smith", role: "Frontend Lead @ Vercel", text: "The curriculum is so deep. I learned more in 3 months here than I did in 4 years of college." },
+            { name: "David Chen", role: "Full Stack Dev @ Stripe", text: "The projects are world-class. My portfolio stood out immediately when applying for top-tier roles." }
+          ].map((t, i) => (
+            <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 space-y-6 relative group overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 text-emerald-500/10 group-hover:text-emerald-500/20 transition-colors">
+                <Sparkles size={100} />
+              </div>
+              <div className="flex gap-1 text-emerald-500">
+                {[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} fill="currentColor" />)}
+              </div>
+              <p className="text-lg font-medium text-white/70 leading-relaxed italic shrink-0 relative z-10">"{t.text}"</p>
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-black font-black uppercase tracking-tighter shadow-lg shadow-emerald-500/20">
+                  {t.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <div>
+                  <h4 className="font-black uppercase tracking-widest text-[11px]">{t.name}</h4>
+                  <p className="text-[10px] uppercase tracking-widest text-emerald-500 font-black">{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Meet the AI Mentors Section */}
+      <section className="px-6 py-32 max-w-7xl mx-auto bg-white/[0.01] border-y border-white/5 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5">Mentor Collective</Badge>
+              <h2 className="text-5xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">Meet Your <br/><span className="text-emerald-500">Elite</span> Collective.</h2>
+              <p className="text-white/40 text-xl font-medium leading-relaxed max-w-lg">
+                Your AI mentor is not just one bot—it's a collective intelligence trained on the world's most successful engineering workflows, architectural patterns, and career strategies.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              {[
+                { title: "Architect Master", icon: <Database />, desc: "Focuses on system design, microservices, and database optimization." },
+                { title: "UI Alchemist", icon: <Palette />, desc: "Expert in animation, accessibility, and high-fidelity frontend engineering." },
+                { title: "Career Strategist", icon: <Target />, desc: "Hiring manager insights for resumes, interviews, and salary negotiation." }
+              ].map((m, i) => (
+                <div key={i} className="flex gap-6 p-6 rounded-3xl bg-white/[0.02] border border-white/5 active:scale-[0.98] transition-all">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                    {m.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-black uppercase tracking-widest text-[11px] mb-2">{m.title}</h4>
+                    <p className="text-[9px] uppercase tracking-widest text-white/30 font-black">{m.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative group">
+            <div className="absolute -inset-20 bg-emerald-500/10 blur-[150px] group-hover:bg-emerald-500/20 transition-all duration-1000" />
+            <div className="relative w-full aspect-square rounded-[4rem] bg-gradient-to-br from-[#0D0D0E] to-[#161618] border border-white/5 p-12 flex items-center justify-center overflow-hidden">
+              <div className="flex flex-col items-center gap-8 text-center">
+                <div className="w-40 h-40 rounded-[3rem] bg-emerald-500 flex items-center justify-center text-black shadow-2xl shadow-emerald-500/40 relative z-10">
+                   <Bot size={80} strokeWidth={2.5} />
+                   <div className="absolute -bottom-4 right-0 px-4 py-2 rounded-2xl bg-black border border-white/10 text-emerald-400 text-[10px] font-black uppercase tracking-widest shadow-xl">LIVE STATUS: ACTIVE</div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-3xl font-black tracking-tighter uppercase whitespace-nowrap">MentorStack AI V2.0</h3>
+                  <p className="text-white/20 font-black uppercase tracking-[0.3em] text-[10px]">Silicon Valley Collective Intel</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                    <div key={i} className="w-1 h-8 rounded-full bg-emerald-500/40 animate-pulse" style={{ animationDelay: `${i * 0.1}s` }} />
+                  ))}
+                </div>
+              </div>
+              {/* Pattern Background */}
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="px-6 py-32 max-w-7xl mx-auto">
+        <div className="p-16 md:p-24 rounded-[4rem] bg-white/[0.02] border border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 blur-[100px] -z-10" />
+          <div className="max-w-2xl space-y-10 relative z-10">
+            <div className="space-y-4">
+              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5 font-black uppercase text-[10px] tracking-[0.3em] rounded-full">Academy Insights</Badge>
+              <h2 className="text-4xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9]">Stay Ahead in <br/><span className="text-emerald-500">Tech.</span></h2>
+              <p className="text-white/40 text-lg font-medium max-w-lg">Get weekly professional insights, new curriculum updates, and early access to academy programs.</p>
+            </div>
+            
+            <form className="flex flex-col sm:flex-row gap-4" onSubmit={(e) => e.preventDefault()}>
+              <input 
+                type="email" 
+                placeholder="Enter your professional email"
+                className="flex-grow h-20 px-10 rounded-3xl bg-white/5 border border-white/5 focus:border-emerald-500/30 transition-all text-lg font-medium placeholder:text-white/10"
+              />
+              <Button className="h-20 px-12 text-[10px] font-black uppercase tracking-[0.2em] rounded-3xl shrink-0 shadow-2xl shadow-emerald-500/40">
+                Join Waitlist
+              </Button>
+            </form>
+            <p className="text-[11px] font-medium text-white/20 uppercase tracking-widest">No spam. Only high-caliber technical wisdom.</p>
+          </div>
+          
+          <div className="absolute -bottom-20 -right-20 opacity-10 rotate-12 pointer-events-none">
+             <Rocket size={400} />
+          </div>
         </div>
       </section>
 

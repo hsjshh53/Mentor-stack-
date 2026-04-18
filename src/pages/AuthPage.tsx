@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 
 export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,14 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
       if (mode === 'login') {
         await signInWithEmailAndPassword(auth, email, password);
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+        // Only Ajia Abdulrasak Olayinka's special override if needed, 
+        // but let's just use the entered name.
+        const displayName = name.trim() || 'Academy Student';
+        
+        // Update profile with name
+        const { updateProfile } = await import('firebase/auth');
+        await updateProfile(newUser, { displayName });
       }
       navigate('/onboarding');
     } catch (err: any) {
@@ -54,6 +62,15 @@ export const AuthPage: React.FC<{ mode: 'login' | 'signup' }> = ({ mode }) => {
 
         <Card className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {mode === 'signup' && (
+              <Input 
+                label="Full Name"
+                placeholder="e.g. Ajia Abdulrasak Olayinka"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            )}
             <Input 
               label="Email Address"
               type="email"
