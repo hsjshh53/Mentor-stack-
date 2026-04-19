@@ -185,6 +185,8 @@ export interface GithubRepoMetadata {
   publishStatus: 'published' | 'syncing' | 'failed';
 }
 
+export type SubscriptionStatus = 'inactive' | 'pending' | 'active';
+
 export interface UserProgress {
   selectedPath: CareerPath | null;
   activeProgramId?: string; // ID of the Skill/Program the user is currently focused on
@@ -203,6 +205,11 @@ export interface UserProgress {
   skills: Record<string, number>; // skillName: level
   unlockedPaths: CareerPath[];
   isPremium: boolean;
+  subscription_status?: SubscriptionStatus;
+  subscription_start_date?: number;
+  subscription_expiry_date?: number;
+  subscription_reference?: string;
+  is_whitelisted?: boolean;
   role?: 'admin' | 'user';
   goal?: string;
   experienceLevel?: string;
@@ -464,4 +471,16 @@ export interface Project {
   steps: string[];
   output: string;
   xpReward: number;
+}
+
+export interface PaymentRecord {
+  id: string;
+  user_id: string;
+  email: string;
+  amount: number;
+  status: 'initiated' | 'paid_pending_verification' | 'approved' | 'rejected';
+  payment_source: string;
+  timestamp: number;
+  reference_id: string; // Selar External Ref
+  payment_reference: string; // MentorStack Internal Ref
 }

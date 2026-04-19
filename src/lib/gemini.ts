@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { ref, get } from "firebase/database";
 import { db } from "./firebase";
+import { callGeminiWithRetry } from "./gemini-utils";
 import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
 
@@ -340,13 +341,13 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
   `;
 
   try {
-    const apiCallPromise = ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+    const apiCallPromise = callGeminiWithRetry(() => ai.models.generateContent({
+      model: "gemini-2.0-flash",
       contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
       config: {
         responseMimeType: "application/json"
       }
-    });
+    }));
 
     const response = await apiCallPromise;
     console.log("Gemini Service: Response status - Success");
@@ -415,14 +416,14 @@ export async function getMentorAdvice(message: string, history: any[], context: 
       Stay supportive and focus on job-readiness.
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+    const response = await callGeminiWithRetry(() => ai.models.generateContent({
+      model: "gemini-2.0-flash",
       contents: [
         {
           parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
         }
       ]
-    });
+    }));
 
     console.log("Gemini Service: Response status - Success");
     const text = response.text;

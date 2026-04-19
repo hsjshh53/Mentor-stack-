@@ -8,7 +8,8 @@ import {
   TrendingUp, 
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { db } from '../../lib/firebase';
@@ -19,7 +20,8 @@ export const AdminDashboard: React.FC = () => {
     totalUsers: 0,
     totalLessons: 0,
     generatedLessons: 0,
-    pendingApproval: 0
+    pendingApproval: 0,
+    pendingPayments: 0
   });
 
   useEffect(() => {
@@ -27,10 +29,21 @@ export const AdminDashboard: React.FC = () => {
     const usersRef = ref(db, 'users');
     const lessonsRef = ref(db, 'lessons');
     const aiLessonsRef = ref(db, 'ai_generated_lessons');
+    const paymentsRef = ref(db, 'payments');
 
     onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
         setStats(prev => ({ ...prev, totalUsers: Object.keys(snapshot.val()).length }));
+      }
+    });
+
+    onValue(paymentsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const pending = Object.values(data).filter((p: any) => 
+          ['initiated', 'paid_pending_verification'].includes(p.status)
+        ).length;
+        setStats(prev => ({ ...prev, pendingPayments: pending }));
       }
     });
 
@@ -60,7 +73,7 @@ export const AdminDashboard: React.FC = () => {
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { label: 'Live Lessons', value: stats.totalLessons, icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
     { label: 'AI Generated', value: stats.generatedLessons, icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-    { label: 'Pending Approval', value: stats.pendingApproval, icon: AlertCircle, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+    { label: 'Pending Payments', value: stats.pendingPayments, icon: CreditCard, color: 'text-amber-400', bg: 'bg-amber-400/10' },
   ];
 
   return (

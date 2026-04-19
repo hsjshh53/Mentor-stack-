@@ -21,7 +21,9 @@ const defaultProgress: UserProgress = {
   weakAreas: [],
   skills: {},
   unlockedPaths: ['Frontend Developer', 'Full-Stack Developer'],
-  isPremium: false
+  isPremium: false,
+  subscription_status: 'inactive',
+  is_whitelisted: false
 };
 
 export const useUserData = () => {

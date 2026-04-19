@@ -16,20 +16,53 @@ import {
   PlusCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { generateRoadmap, generateFullCurriculum, GenerationMode } from '../../services/aiGeneratorService';
+import { 
+  generateRoadmap, 
+  generateFullCurriculum, 
+  generateMissingLessons,
+  GenerationMode,
+  cancelGeneration 
+} from '../../services/aiGeneratorService';
 import { ref, onValue } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { Skill } from '../../types';
+
+interface GenerationStats {
+  modulesTotal: number;
+  modulesDone: number;
+  lessonsCreated: number;
+  lessonsUpdated: number;
+  lessonsSkipped: number;
+  startTime: number;
+}
 
 export const AIGenerator: React.FC = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [genType, setGenType] = useState<'roadmap' | 'full'>('roadmap');
+  const [genType, setGenType] = useState<'roadmap' | 'full' | 'lessons'>('roadmap');
   const [mode, setMode] = useState<GenerationMode>('missing');
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
+  const [stats, setStats] = useState<GenerationStats | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState<string>('');
+
+  useEffect(() => {
+    if (isGenerating && stats && stats.modulesDone > 0) {
+      const elapsed = Date.now() - stats.startTime;
+      const avgPerModule = elapsed / stats.modulesDone;
+      const remaining = (stats.modulesTotal - stats.modulesDone) * avgPerModule;
+      
+      if (remaining > 0) {
+        const mins = Math.floor(remaining / 60000);
+        const secs = Math.floor((remaining % 60000) / 1000);
+        setEstimatedTime(`${mins}m ${secs}s`);
+      }
+    } else {
+      setEstimatedTime('');
+    }
+  }, [stats, stats?.modulesDone, isGenerating]);
 
   useEffect(() => {
     const skillsRef = ref(db, 'skills');
@@ -60,6 +93,13 @@ export const AIGenerator: React.FC = () => {
     setLogs(prev => [msg, ...prev].slice(0, 100));
   };
 
+  const handleCancel = () => {
+    cancelGeneration();
+    setIsGenerating(false);
+    setStatus('Generation cancelled.');
+    addLog('User requested termination. Cleaning up workers...');
+  };
+
   const handleGenerate = async () => {
     const skill = skills.find(s => s.id === selectedSkillId);
     if (!skill) return;
@@ -67,31 +107,45 @@ export const AIGenerator: React.FC = () => {
     setIsGenerating(true);
     setProgress(0);
     setLogs([]);
-    setStatus(`Initializing ${genType} generation in ${mode} mode...`);
-    addLog(`Starting ${genType} design for ${skill.title} (Mode: ${mode})...`);
+    setStats(null);
+    setStatus(`Initializing ${genType} generation...`);
+    addLog(`Starting ${genType} automation for ${skill.title}...`);
 
     try {
       if (genType === 'roadmap') {
-        await generateRoadmap(skill, (p, s) => {
+        const result = await generateRoadmap(skill, (p, s) => {
           setProgress(p);
           setStatus(s);
           addLog(s);
         }, mode);
-        setStatus('Roadmap complete!');
-        addLog('Career roadmap, stages, and modules processed.');
-      } else {
-        await generateFullCurriculum(skill, (p, s) => {
+        if (result) {
+          setStatus('Roadmap complete!');
+          addLog('Architecture and modules finalized.');
+        }
+      } else if (genType === 'full') {
+        const result = await generateFullCurriculum(skill, (p, s, st) => {
           setProgress(Math.round(p));
           setStatus(s);
           addLog(s);
+          if (st) setStats({ ...st });
         }, mode);
-        setStatus('Full curriculum complete!');
-        addLog('Roadmap and lessons processed and saved.');
+        if (result) {
+          setStatus('Full academy ready!');
+          addLog('Massive generation success.');
+        }
+      } else if (genType === 'lessons') {
+        await generateMissingLessons(skill.id, (p, s, st) => {
+          setProgress(Math.round(p));
+          setStatus(s);
+          addLog(s);
+          if (st) setStats({ ...st });
+        });
+        setStatus('Missing lessons generated!');
       }
     } catch (error: any) {
       console.error(error);
       setStatus('Generation failed.');
-      addLog(`Error: ${error.message}`);
+      addLog(`CRITICAL ERROR: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -102,231 +156,215 @@ export const AIGenerator: React.FC = () => {
       <div className="space-y-12">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tight">Academy AI Engine</h1>
-            <p className="text-white/40 font-medium">Bulk generate high-quality academy programs and structured lessons using Gemini AI.</p>
+            <h1 className="text-4xl font-black tracking-tight">AI Academy Engine</h1>
+            <p className="text-white/40 font-medium italic">High-performance parallel curriculum generation with status tracking.</p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/admin/curriculum'}
-            className="h-12 px-6 rounded-xl text-xs font-black uppercase tracking-widest"
-          >
-            <Map size={16} className="mr-2" />
-            Manage Curriculum
-          </Button>
+            <div className="flex gap-4">
+              {isGenerating ? (
+                <Button 
+                  variant="outline" 
+                  onClick={handleCancel}
+                  className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-red-500/50 text-red-500 hover:bg-red-500/10"
+                >
+                  Cancel Task
+                </Button>
+              ) : status === 'Generation failed.' ? (
+                <Button 
+                  onClick={handleGenerate}
+                  className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600"
+                >
+                  <RefreshCw size={14} className="mr-2" />
+                  Retry Task
+                </Button>
+              ) : null}
+              <Button 
+                variant="outline" 
+              onClick={() => window.location.href = '/admin/curriculum'}
+              className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest"
+            >
+              <Map size={16} className="mr-2" />
+              Manifest View
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Configuration */}
-          <Card className="p-8 border-white/5 bg-white/[0.02] space-y-8 h-fit">
+          <Card className="p-8 border-white/5 bg-white/[0.01] backdrop-blur-3xl space-y-8 h-fit ring-1 ring-white/5">
             <div className="flex items-center gap-3 text-emerald-400">
               <Settings2 size={20} />
-              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Configuration</h3>
+              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Engine Control</h3>
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-3">
-                <Select 
-                  label="Select Program"
-                  placeholder="Choose a program..."
-                  value={selectedSkillId}
-                  displayValue={skills.length > 0 ? (skills.find(s => s.id === selectedSkillId)?.title) : (selectedSkillId ? 'Loading...' : undefined)}
-                  onChange={(e) => setSelectedSkillId(e.target.value)}
-                  disabled={isGenerating}
-                >
-                  <option value="">Choose a program...</option>
-                  {skills.map(skill => (
-                    <option key={skill.id} value={skill.id}>{skill.title}</option>
-                  ))}
-                </Select>
-              </div>
+              <Select 
+                label="Target Program"
+                placeholder="Choose program..."
+                value={selectedSkillId}
+                displayValue={skills.find(s => s.id === selectedSkillId)?.title}
+                onChange={(e) => setSelectedSkillId(e.target.value)}
+                disabled={isGenerating}
+              >
+                <option value="">Choose program...</option>
+                {skills.map(skill => (
+                  <option key={skill.id} value={skill.id}>{skill.title}</option>
+                ))}
+              </Select>
 
-              <div className="space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-white/40">Generation Mode</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Generation Type</label>
                 <div className="grid grid-cols-1 gap-2">
-                  <button
-                    onClick={() => setMode('missing')}
-                    disabled={isGenerating}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                      mode === 'missing' 
-                        ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' 
-                        : 'border-white/5 bg-white/[0.02] text-white/40 hover:border-white/20'
-                    }`}
-                  >
-                    <PlusCircle size={16} />
-                    <div>
-                      <p className="text-[10px] font-black uppercase">Generate Missing Only</p>
-                      <p className="text-[9px] opacity-60">Skip existing items, only add new ones.</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setMode('update')}
-                    disabled={isGenerating}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                      mode === 'update' 
-                        ? 'border-blue-500 bg-blue-500/10 text-blue-400' 
-                        : 'border-white/5 bg-white/[0.02] text-white/40 hover:border-white/20'
-                    }`}
-                  >
-                    <RefreshCw size={16} />
-                    <div>
-                      <p className="text-[10px] font-black uppercase">Update Existing</p>
-                      <p className="text-[9px] opacity-60">Refresh metadata for existing items.</p>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setMode('regenerate')}
-                    disabled={isGenerating}
-                    className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                      mode === 'regenerate' 
-                        ? 'border-red-500 bg-red-500/10 text-red-400' 
-                        : 'border-white/5 bg-white/[0.02] text-white/40 hover:border-white/20'
-                    }`}
-                  >
-                    <AlertCircle size={16} />
-                    <div>
-                      <p className="text-[10px] font-black uppercase text-red-400">Regenerate Program</p>
-                      <p className="text-[9px] opacity-60">Wipe and rebuild everything from scratch.</p>
-                    </div>
-                  </button>
+                  {[
+                    { id: 'roadmap', label: 'Curriculum Only', sub: 'Stages, weeks, and modules', color: 'emerald' },
+                    { id: 'full', label: 'Full Academy', sub: 'Roadmap + Batch lessons', color: 'purple' },
+                    { id: 'lessons', label: 'Missing Lessons', sub: 'Fill gaps in roadmap', color: 'blue' }
+                  ].map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setGenType(t.id as any)}
+                      disabled={isGenerating}
+                      className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                        genType === t.id 
+                          ? `border-${t.color}-500 bg-${t.color}-500/10` 
+                          : 'border-white/5 bg-white/5 hover:border-white/20'
+                      }`}
+                    >
+                      <p className="text-xs font-black uppercase">{t.label}</p>
+                      <p className="text-[10px] text-white/40">{t.sub}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-xs font-black uppercase tracking-widest text-white/40">Generation Type</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => setGenType('roadmap')}
-                    disabled={isGenerating}
-                    className={`p-4 rounded-2xl border-2 transition-all text-left space-y-1 ${
-                      genType === 'roadmap' 
-                        ? 'border-emerald-500 bg-emerald-500/10' 
-                        : 'border-white/5 bg-white/[0.02] hover:border-white/20'
-                    }`}
-                  >
-                    <p className="text-xs font-black uppercase">Curriculum</p>
-                    <p className="text-[10px] text-white/40">Stages, Weeks & Modules</p>
-                  </button>
-                  <button
-                    onClick={() => setGenType('full')}
-                    disabled={isGenerating}
-                    className={`p-4 rounded-2xl border-2 transition-all text-left space-y-1 ${
-                      genType === 'full' 
-                        ? 'border-purple-500 bg-purple-500/10' 
-                        : 'border-white/5 bg-white/[0.02] hover:border-white/20'
-                    }`}
-                  >
-                    <p className="text-xs font-black uppercase">Full Academy</p>
-                    <p className="text-[10px] text-white/40">Curriculum + ~150 Lessons</p>
-                  </button>
+              {genType !== 'lessons' && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Delta Mode</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      { id: 'missing', label: 'Missing Only', icon: PlusCircle },
+                      { id: 'update', label: 'Overwrite Metadata', icon: RefreshCw },
+                      { id: 'regenerate', label: 'Deep Rebuild (Wipe)', icon: AlertCircle, destructive: true }
+                    ].map(m => (
+                      <button
+                        key={m.id}
+                        onClick={() => setMode(m.id as any)}
+                        disabled={isGenerating}
+                        className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
+                          mode === m.id 
+                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' 
+                            : 'border-white/5 bg-white/5 text-white/40 hover:border-white/20'
+                        }`}
+                      >
+                        <m.icon size={16} className={m.destructive ? 'text-red-500' : ''} />
+                        <span className={`text-[10px] font-black uppercase ${m.destructive && mode === m.id ? 'text-red-400' : ''}`}>{m.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <ShieldCheck size={14} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Duplicate Protection</span>
-                </div>
-                <p className="text-[10px] text-white/40 leading-relaxed font-medium">
-                  {mode === 'missing' 
-                    ? 'Smart check enabled. Existing stages, weeks, modules, and lessons will be preserved.'
-                    : mode === 'update'
-                    ? 'Existing items will be updated with fresh AI content without creating duplicates.'
-                    : 'WARNING: This will delete all existing curriculum data for this program before generating.'}
-                </p>
-              </div>
+              )}
 
               <Button 
                 fullWidth 
                 size="lg" 
                 onClick={handleGenerate}
                 disabled={!selectedSkillId || isGenerating}
-                className={`h-16 rounded-2xl shadow-xl transition-all ${
-                  genType === 'full' 
-                    ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/20' 
-                    : 'shadow-emerald-500/20'
-                }`}
+                className="h-16 rounded-2xl shadow-xl shadow-emerald-500/10"
               >
                 {isGenerating ? (
                   <>
                     <Loader2 size={20} className="mr-2 animate-spin" />
-                    Generating Academy...
+                    Crunching Data...
                   </>
                 ) : (
                   <>
                     <Sparkles size={20} className="mr-2" />
-                    {genType === 'roadmap' ? 'Generate Curriculum' : 'Generate Full Academy'}
+                    Initialize Engine
                   </>
                 )}
               </Button>
             </div>
           </Card>
 
-          {/* Progress & Status */}
+          {/* Dashboard */}
           <div className="lg:col-span-2 space-y-8">
-            <Card className="p-8 border-white/5 bg-white/[0.02] space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-purple-400">
-                  <Sparkles size={20} />
-                  <h3 className="font-black uppercase text-xs tracking-[0.2em]">Generation Status</h3>
+            <Card className="p-8 border-white/5 bg-white/[0.01] backdrop-blur-3xl ring-1 ring-white/5">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3 text-emerald-400">
+                  <RefreshCw size={20} className={isGenerating ? 'animate-spin' : ''} />
+                  <h3 className="font-black uppercase text-xs tracking-[0.2em]">Live Telemetry</h3>
                 </div>
-                <Badge className={`${isGenerating ? 'bg-purple-500/10 text-purple-400' : 'bg-white/5 text-white/20'} px-4 py-1 rounded-lg font-black uppercase tracking-widest text-[10px]`}>
-                  {isGenerating ? 'Processing' : 'Idle'}
-                </Badge>
+                {estimatedTime && (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-none font-black text-[10px]">
+                    EST: {estimatedTime}
+                  </Badge>
+                )}
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs font-black uppercase tracking-widest mb-2">
-                    <span className="text-white/40">{status}</span>
-                    <span className="text-emerald-400">{progress}%</span>
+              <div className="space-y-12">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-end">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Active Process</p>
+                      <p className="text-xl font-black tracking-tight">{status || 'Engines Standby'}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-4xl font-black text-emerald-500">{progress}%</p>
+                    </div>
                   </div>
-                  <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                  
+                  <div className="relative h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${progress}%` }}
-                      className="h-full bg-gradient-to-r from-emerald-500 to-purple-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                      className="h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-purple-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                      <CheckCircle2 size={16} />
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Modules Processed', value: stats ? `${stats.modulesDone}/${stats.modulesTotal}` : '0/0', color: 'blue' },
+                    { label: 'Lessons Born', value: stats?.lessonsCreated || 0, color: 'emerald' },
+                    { label: 'Lessons Refined', value: stats?.lessonsUpdated || 0, color: 'purple' },
+                    { label: 'Conflicts Saved', value: stats?.lessonsSkipped || 0, color: 'amber' }
+                  ].map((s, i) => (
+                    <div key={i} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                      <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{s.label}</p>
+                      <p className={`text-xl font-black text-${s.color}-400`}>{s.value}</p>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Success</p>
-                      <p className="text-sm font-bold">{Math.floor((progress / 100) * 100)}% Complete</p>
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center">
-                      <AlertCircle size={16} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Errors</p>
-                      <p className="text-sm font-bold">0 Issues</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </Card>
 
-            {/* Logs */}
-            <Card className="p-8 border-white/5 bg-white/[0.02] space-y-6">
-              <div className="flex items-center gap-3 text-white/40">
-                <Database size={20} />
-                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Generation Logs</h3>
+            <Card className="p-8 border-white/5 bg-black/20 backdrop-blur-3xl ring-1 ring-white/5">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3 text-white/40">
+                  <Database size={20} />
+                  <h3 className="font-black uppercase text-xs tracking-[0.2em]">Engine Logs</h3>
+                </div>
+                <button 
+                  onClick={() => setLogs([])}
+                  className="text-[10px] font-black uppercase text-white/20 hover:text-white transition-colors"
+                >
+                  Flush Logs
+                </button>
               </div>
-              <div className="h-64 overflow-y-auto space-y-2 font-mono text-[10px] text-white/30 custom-scrollbar">
+              
+              <div className="h-48 overflow-y-auto space-y-1 font-mono text-[9px] text-white/40 custom-scrollbar pr-4">
                 {logs.length === 0 ? (
-                  <p className="italic">Waiting for generation to start...</p>
+                  <p className="italic text-white/10">No logs streaming yet...</p>
                 ) : (
                   logs.map((log, i) => (
-                    <div key={i} className="flex gap-3">
-                      <span className="text-emerald-500/30">[{new Date().toLocaleTimeString()}]</span>
-                      <span>{log}</span>
-                    </div>
+                    <motion.div 
+                      key={i} 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      className="flex gap-3 py-1 border-b border-white/[0.02]"
+                    >
+                      <span className="text-emerald-500/20 tabular-nums">[{new Date().toLocaleTimeString()}]</span>
+                      <span className="text-white/60">{log}</span>
+                    </motion.div>
                   ))
                 )}
               </div>

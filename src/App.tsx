@@ -17,19 +17,30 @@ import { VerificationPage } from './pages/VerificationPage';
 import { CertificatePage } from './pages/CertificatePage';
 import { AcademyPathPage } from './pages/AcademyPathPage';
 import { CodingLanguagesPage } from './pages/CodingLanguagesPage';
+import { SubscriptionPage } from './pages/SubscriptionPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AIGenerator } from './pages/admin/AIGenerator';
 import { ManageLessons } from './pages/admin/ManageLessons';
 import { ManageSkills } from './pages/admin/ManageSkills';
 import { ManageUsers } from './pages/admin/ManageUsers';
 import { ManageCurriculum } from './pages/admin/ManageCurriculum';
+import { ManagePayments } from './pages/admin/ManagePayments';
 import { ReviewLessonsPage } from './pages/admin/ReviewLessonsPage';
 import { useAdmin } from './hooks/useAdmin';
+import { SubscriptionGuard } from './components/SubscriptionGuard';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   return user ? <>{children}</> : <Navigate to="/login" />;
+};
+
+const SubscribedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <SubscriptionGuard>
+      {children}
+    </SubscriptionGuard>
+  );
 };
 
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,6 +60,11 @@ export default function App() {
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/signup" element={<AuthPage mode="signup" />} />
           <Route path="/verify/:certificateId" element={<VerificationPage />} />
+          <Route path="/subscription" element={
+            <PrivateRoute>
+              <SubscriptionPage />
+            </PrivateRoute>
+          } />
           
           <Route path="/onboarding" element={
             <PrivateRoute>
@@ -57,81 +73,81 @@ export default function App() {
           } />
           
           <Route path="/dashboard" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <DashboardPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
           
           <Route path="/lesson/:topic" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <LessonPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/profile" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <ProfilePage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/playground" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <PlaygroundPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/playground/:projectId" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <PlaygroundPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/projects" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <ProjectsPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/project/:projectId" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <ProjectDetailsPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/tutor" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <AITutorPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/test/:testId" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <TestPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/exam/:examId" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <ExamPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/certificate/:certificateId" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <CertificatePage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/academy/:pathName" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <AcademyPathPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           <Route path="/coding-languages" element={
-            <PrivateRoute>
+            <SubscribedRoute>
               <CodingLanguagesPage />
-            </PrivateRoute>
+            </SubscribedRoute>
           } />
 
           {/* Admin Routes */}
@@ -163,6 +179,11 @@ export default function App() {
           <Route path="/admin/curriculum" element={
             <AdminRoute>
               <ManageCurriculum />
+            </AdminRoute>
+          } />
+          <Route path="/admin/payments" element={
+            <AdminRoute>
+              <ManagePayments />
             </AdminRoute>
           } />
           <Route path="/admin/review-lessons/:skillId/:moduleId" element={

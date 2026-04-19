@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ref, set, push, get, update, remove } from "firebase/database";
 import { db } from "../lib/firebase";
+import { sleep, callGeminiWithRetry } from "../lib/gemini-utils";
 import { 
   Skill, 
   CurriculumPath, 
@@ -15,6 +16,12 @@ const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export type GenerationMode = 'missing' | 'update' | 'regenerate';
+
+// Global abort controller for generation tasks
+let currentGenerationId: string | null = null;
+export const cancelGeneration = () => {
+  currentGenerationId = null;
+};
 
 /**
  * Normalizes a title for consistent comparison.
@@ -76,6 +83,9 @@ export const generateRoadmap = async (
   mode: GenerationMode = 'missing'
 ) => {
   if (!ai) throw new Error("Gemini API Key not found");
+  const generationId = Math.random().toString(36).substring(7);
+  currentGenerationId = generationId;
+  let currentProgress = 0;
 
   const skillId = skill.id;
 
@@ -305,8 +315,11 @@ export const generateRoadmap = async (
   }
 
   try {
-    const result = await (ai as any).models.generateContent({
-      model: "gemini-3-flash-preview",
+    // Add a small jittered startup delay (0-5s) to avoid immediate quota burst
+    await sleep(Math.random() * 5000);
+
+    const result = await callGeminiWithRetry(() => (ai as any).models.generateContent({
+      model: "gemini-2.0-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: { 
         responseMimeType: "application/json",
@@ -369,7 +382,7 @@ export const generateRoadmap = async (
           required: ["path", "stages"]
         }
       }
-    });
+    }));
 
     const data = safeJsonParse(result.text);
 
@@ -532,30 +545,60 @@ export const generateRoadmap = async (
     const summary = `Roadmap complete! Created: ${stagesCreated} stages, ${weeksCreated} weeks, ${modulesCreated} modules. Skipped: ${stagesSkipped} stages, ${weeksSkipped} weeks, ${modulesSkipped} modules.`;
     onProgress(100, summary);
     return skillId;
-  } catch (error) {
+  } catch (error: any) {
+    if (currentGenerationId !== generationId) {
+      onProgress(0, "Generation cancelled by user.");
+      return null;
+    }
     console.error("Error generating roadmap:", error);
+    const errorStr = (error.message || JSON.stringify(error) || "").toLowerCase();
+    const isRateLimit = errorStr.includes("429") || errorStr.includes("resource_exhausted") || errorStr.includes("quota");
+    const isTransient = errorStr.includes("500") || errorStr.includes("xhr error") || errorStr.includes("rpc failed") || errorStr.includes("overloaded");
+
+    if (isRateLimit) {
+      throw new Error("Academy AI is currently busy with high demand. Please try again in 5 minutes.");
+    }
+    if (isTransient) {
+      throw new Error("Academy Logic Engine is experiencing common network issues. Please try again in a few moments.");
+    }
     throw error;
   }
 };
 
 export const generateFullCurriculum = async (
   skill: Skill,
-  onProgress: (progress: number, status: string) => void,
+  onProgress: (progress: number, status: string, stats?: any) => void,
   mode: GenerationMode = 'missing'
 ) => {
   if (!ai) throw new Error("Gemini API Key not found");
+  const generationId = Math.random().toString(36).substring(7);
+  currentGenerationId = generationId;
+
+  const stats = {
+    modulesTotal: 0,
+    modulesDone: 0,
+    lessonsCreated: 0,
+    lessonsUpdated: 0,
+    lessonsSkipped: 0,
+    startTime: Date.now()
+  };
 
   try {
     // 1. Generate Roadmap
-    onProgress(5, "Designing full career roadmap...");
-    const skillId = await generateRoadmap(skill, (p, s) => onProgress(5 + (p * 0.1), s), mode);
+    onProgress(5, "Designing full career roadmap...", stats);
+    const skillId = await generateRoadmap(skill, (p, s) => onProgress(5 + (p * 0.1), s, stats), mode);
+    if (!skillId || currentGenerationId !== generationId) return null;
 
     // 2. Fetch all modules
-    onProgress(15, "Fetching generated modules...");
+    onProgress(15, "Fetching generated modules...", stats);
     const stagesRef = ref(db, `curriculum_stages/${skillId}`);
-    const stagesSnap = await get(stagesRef);
+    const [pathSnap, stagesSnap] = await Promise.all([
+      get(ref(db, `curriculum_paths/${skillId}`)),
+      get(stagesRef)
+    ]);
     
     if (!stagesSnap.exists()) throw new Error("Failed to fetch stages");
+    const existingPath = pathSnap.val() as CurriculumPath | null;
     const stages = Object.values(stagesSnap.val()) as CurriculumStage[];
     
     const allModules: { module: CurriculumModule, weekId: string }[] = [];
@@ -575,34 +618,225 @@ export const generateFullCurriculum = async (
       }
     }
 
-    // 3. Generate lessons for each module
-    const totalModules = allModules.length;
-    onProgress(20, `Starting lesson generation for ${totalModules} modules...`);
+    stats.modulesTotal = allModules.length;
+    onProgress(20, `Starting architecture-aware lesson generation for ${stats.modulesTotal} modules...`, stats);
 
-    for (let i = 0; i < allModules.length; i++) {
-      const { module, weekId } = allModules[i];
-      const moduleProgress = 20 + ((i / totalModules) * 75);
+    // Group modules by week for batch processing
+    const modulesByWeek: Record<string, typeof allModules> = {};
+    allModules.forEach(m => {
+      if (!modulesByWeek[m.weekId]) modulesByWeek[m.weekId] = [];
+      modulesByWeek[m.weekId].push(m);
+    });
+
+    const weekIds = Object.keys(modulesByWeek);
+    
+    for (const weekId of weekIds) {
+      if (currentGenerationId !== generationId) break;
       
-      onProgress(moduleProgress, `Generating lessons for: ${module.title}...`);
-      
-      // Generate 4-5 lessons per module to reach ~100-150 lessons total
-      await generateLessonsForModule(
-        skillId,
-        module.id,
-        module.title,
-        skill.title,
-        4, // 4 lessons per module
-        module.stageId,
-        weekId,
-        (p, s) => {}, // Internal progress
-        mode
+      const weekModules = modulesByWeek[weekId];
+      const weekNumber = weekModules[0].module.weekId; // This is actually the weekId, we need label
+
+      onProgress(
+        20 + (stats.modulesDone / stats.modulesTotal) * 75, 
+        `Processing Week Batch (${stats.modulesDone}/${stats.modulesTotal} modules complete)...`, 
+        stats
       );
+
+      // Implement SMART CACHING / RESUME
+      // Check if lessons already exist for these modules if mode is 'missing'
+      let modulesToGenerate = weekModules;
+      if (mode === 'missing') {
+        const existingLessonsSnap = await get(ref(db, `ai_generated_lessons/${skillId}`));
+        const existingLessons = existingLessonsSnap.exists() ? Object.values(existingLessonsSnap.val()) as GeneratedLesson[] : [];
+        
+        modulesToGenerate = weekModules.filter(wm => {
+          const hasLessons = existingLessons.some(l => l.moduleId === wm.module.id);
+          if (hasLessons) {
+            stats.modulesDone++;
+            stats.lessonsSkipped += existingLessons.filter(l => l.moduleId === wm.module.id).length;
+          }
+          return !hasLessons;
+        });
+      }
+
+      if (modulesToGenerate.length === 0) continue;
+
+      // Use the new Week Batch Generator for high efficiency
+      try {
+        const result = await generateWeekLessons(
+          skillId,
+          modulesToGenerate.map(wm => ({ id: wm.module.id, title: wm.module.title, stageId: wm.module.stageId })),
+          skill.title,
+          weekId,
+          () => {},
+          mode
+        );
+        
+        if (result) {
+          stats.lessonsCreated += result.created;
+          stats.lessonsUpdated += result.updated;
+          stats.lessonsSkipped += result.skipped;
+        }
+        stats.modulesDone += modulesToGenerate.length;
+
+        // Incremental save of path progress
+        const pathRef = ref(db, `curriculum_paths/${skillId}`);
+        await update(pathRef, { 
+          totalLessons: (existingPath?.totalLessons || 0) + stats.lessonsCreated,
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        console.error(`Failed to process week batch ${weekId}:`, err);
+        // Fallback to individual module generation if week-batch fails (e.g. context too long)
+        onProgress(stats.modulesDone / stats.modulesTotal * 100, `Retrying week ${weekId} with individual module processing...`, stats);
+        
+        for (const { module } of modulesToGenerate) {
+          const result = await generateLessonsForModule(
+            skillId,
+            module.id,
+            module.title,
+            skill.title,
+            4,
+            module.stageId,
+            weekId,
+            () => {},
+            mode
+          );
+          if (result) stats.lessonsCreated += result.created;
+          stats.modulesDone++;
+        }
+      }
     }
 
-    onProgress(100, "Full curriculum and lessons generated successfully!");
+    if (currentGenerationId !== generationId) {
+      onProgress(0, "Generation cancelled.", stats);
+      return null;
+    }
+
+    onProgress(100, "Full curriculum and lessons generated successfully!", stats);
     return skillId;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating full curriculum:", error);
+    const errorStr = (error.message || JSON.stringify(error) || "").toLowerCase();
+    const isRateLimit = errorStr.includes("429") || errorStr.includes("resource_exhausted") || errorStr.includes("quota");
+    const isTransient = errorStr.includes("500") || errorStr.includes("xhr error") || errorStr.includes("rpc failed") || errorStr.includes("overloaded");
+
+    if (isRateLimit) {
+      throw new Error("Academy AI has reached its maximum generation quota for now. Please wait a few minutes before regenerating.");
+    }
+    if (isTransient) {
+      throw new Error("Academy AI is currently unstable. We've attempted retries but the connection is failing. Please try again soon.");
+    }
+    throw error;
+  }
+};
+
+/**
+ * Bachelor generation for an entire week of modules in one request.
+ */
+export const generateWeekLessons = async (
+  skillId: string,
+  modules: { id: string, title: string, stageId: string }[],
+  skillTitle: string,
+  weekId: string,
+  onProgress: (progress: number, status: string) => void,
+  mode: GenerationMode = 'missing'
+) => {
+  if (!ai) throw new Error("Gemini API Key not found");
+
+  const moduleTitles = modules.map(m => `"${m.title}"`).join(", ");
+  const lessonsPerModule = 3; // Reduced slightly for week-batching safety (8k output tokens limit)
+
+  const prompt = `
+    You are an elite Senior Curriculum Architect at MentorStack Academy.
+    Your task: Generate the complete weekly curriculum for the "${skillTitle}" program.
+    
+    TARGET MODULES FOR THIS WEEK:
+    ${modules.map((m, i) => `${i+1}. ${m.title} (ID: ${m.id})`).join("\n")}
+
+    PHILOSOPHY:
+    Focus on deep architectural mental models. No shallow tutorials.
+    
+    TASK:
+    Generate ${lessonsPerModule} elite lessons for EACH module listed above.
+    Total lessons to generate: ${modules.length * lessonsPerModule}.
+
+    Return a JSON object with this structure:
+    {
+      "modules": {
+        "${modules[0].id}": [
+          {
+            "title": "Professional Lesson Title",
+            "slug": "unique-slug",
+            "summary": "...",
+            "objectives": "...",
+            "explanation": "Deep dive technical content...",
+            "analogy": "...",
+            "codeExample": "Production-grade code...",
+            "lineByLine": "...",
+            "commonMistakes": ["..."],
+            "practice": "...",
+            "challenge": "...",
+            "proTip": "...",
+            "difficulty": "Advanced",
+            "estimatedDuration": "2 hours",
+            "quiz": [{"question": "...", "options": ["..."], "correctIndex": 0, "explanation": "..."}],
+            "project": {"title": "...", "description": "...", "steps": ["..."]},
+            "interviewTips": "...",
+            "careerTips": "..."
+          }
+        ]
+      }
+    }
+  `;
+
+  try {
+    const result = await callGeminiWithRetry(() => (ai as any).models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { 
+        responseMimeType: "application/json",
+      }
+    }));
+
+    const data = safeJsonParse(result.text);
+    if (!data || !data.modules) throw new Error("Invalid batch response from AI Engine");
+
+    const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
+    const bulkUpdates: any = {};
+    let createdTotal = 0;
+
+    for (const mod of modules) {
+      const lessons = data.modules[mod.id] || [];
+      lessons.forEach((lesson: any, i: number) => {
+        const lessonSlug = lesson.slug || generateSlug(lesson.title);
+        bulkUpdates[lessonSlug] = {
+          ...lesson,
+          id: lessonSlug,
+          slug: lessonSlug,
+          moduleId: mod.id,
+          weekId,
+          skillId,
+          curriculumPathId: skillId,
+          stageId: mod.stageId,
+          order: i + 1,
+          status: 'pending',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          body: lesson.explanation,
+          tags: [skillTitle.toLowerCase()]
+        };
+        createdTotal++;
+      });
+    }
+
+    if (Object.keys(bulkUpdates).length > 0) {
+      await update(poolRef, bulkUpdates);
+    }
+
+    return { created: createdTotal, updated: 0, skipped: 0 };
+  } catch (error) {
+    console.error("Error in week batch generation:", error);
     throw error;
   }
 };
@@ -653,8 +887,8 @@ export const generateLessonsForModule = async (
       "objectives": "3-5 high-level learning objectives.",
       "todayYouAreLearning": "The one critical technical paradigm you will master.",
       "whyItMatters": "The business impact and technical necessity of this skill.",
-      "explanation": "Extremely thorough technical documentation (1000+ words equivalent logic). Use clear sections, deep explanations of internals, and professional terminology.",
-      "analogy": "A world-class analogy comparing this to a real-world complex system.",
+      "explanation": "Thorough technical documentation. Use clear sections, deep explanations of internals, and professional terminology.",
+      "analogy": "A clear analogy comparing this to a real-world complex system.",
       "codeExample": "A production-grade, optimized, and perfectly commented code example. Use best practices (SOLID, DRY, Clean Code).",
       "lineByLine": "Meticulous internal audit of the code. Why was this pattern chosen over others?",
       "commonMistakes": ["Senior-level pitfalls and how to avoid them with technical reasons."],
@@ -686,8 +920,8 @@ export const generateLessonsForModule = async (
   `;
 
   try {
-    const result = await (ai as any).models.generateContent({
-      model: "gemini-3-flash-preview",
+    const result = await callGeminiWithRetry(() => (ai as any).models.generateContent({
+      model: "gemini-2.0-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: { 
         responseMimeType: "application/json",
@@ -747,16 +981,17 @@ export const generateLessonsForModule = async (
           }
         }
       }
-    });
+    }));
 
-    const lessonsData = safeJsonParse(result.text);
+    const lessonsData = safeJsonParse(result.text) as any[];
     const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
 
-    let lessonsCreated = 0;
-    let lessonsSkipped = 0;
-    let lessonsUpdated = 0;
+    let created = 0;
+    let skipped = 0;
+    let updatedCount = 0;
 
     const addedInBatch = new Set<string>();
+    const bulkUpdates: any = {};
 
     for (let i = 0; i < lessonsData.length; i++) {
       const lesson = lessonsData[i];
@@ -765,7 +1000,7 @@ export const generateLessonsForModule = async (
       
       // Batch duplicate protection
       if (addedInBatch.has(normalizedLessonTitle) || addedInBatch.has(lessonSlug)) {
-        lessonsSkipped++;
+        skipped++;
         continue;
       }
 
@@ -781,6 +1016,7 @@ export const generateLessonsForModule = async (
         order: i + 1,
         status: 'pending',
         createdAt: Date.now(),
+        updatedAt: Date.now(),
         body: lesson.explanation,
         prerequisites: [],
         tags: [skillTitle.toLowerCase()]
@@ -788,51 +1024,183 @@ export const generateLessonsForModule = async (
 
       if (mode !== 'regenerate' && (existingLessonsMap.has(normalizedLessonTitle) || existingLessonsMap.has(lessonSlug))) {
         if (mode === 'missing') {
-          lessonsSkipped++;
+          skipped++;
           continue;
         } else if (mode === 'update') {
           const existingLesson = existingLessonsMap.get(normalizedLessonTitle) || existingLessonsMap.get(lessonSlug)!;
-          // Find the key in the pool
-          const poolSnap = await get(poolRef);
-          if (poolSnap.exists()) {
-            const poolData = poolSnap.val();
-            const key = Object.keys(poolData).find(k => poolData[k].id === existingLesson.id);
-            if (key) {
-              await update(ref(db, `ai_generated_lessons/${skillId}/${key}`), lessonWithMeta);
-              lessonsUpdated++;
-            }
-          }
+          bulkUpdates[existingLesson.slug || existingLesson.id] = lessonWithMeta;
+          updatedCount++;
         }
       } else {
-        await set(push(poolRef), lessonWithMeta);
-        lessonsCreated++;
-        addedInBatch.add(normalizedLessonTitle);
-        addedInBatch.add(lessonSlug);
+        bulkUpdates[lessonSlug] = lessonWithMeta;
+        created++;
       }
+      
+      addedInBatch.add(normalizedLessonTitle);
+      addedInBatch.add(lessonSlug);
     }
 
-    // Update total lesson count in path
-    const pathRef = ref(db, `curriculum_paths/${skillId}`);
-    const snapshot = await get(pathRef);
-    if (snapshot.exists()) {
-      const currentCount = snapshot.val().totalLessons || 0;
-      await update(pathRef, { totalLessons: currentCount + lessonsCreated });
+    if (Object.keys(bulkUpdates).length > 0) {
+      await update(poolRef, bulkUpdates);
     }
 
-    // Update skill lesson count
-    const skillRef = ref(db, `skills/${skillId}`);
-    const skillSnap = await get(skillRef);
-    if (skillSnap.exists()) {
-      const currentCount = skillSnap.val().totalLessons || 0;
-      await update(skillRef, { totalLessons: currentCount + lessonsCreated });
+    // Update counts
+    if (created > 0) {
+      const pathRef = ref(db, `curriculum_paths/${skillId}`);
+      const skillRef = ref(db, `skills/${skillId}`);
+      const [pathSnap, skillSnap] = await Promise.all([get(pathRef), get(skillRef)]);
+      
+      const pathUpdates: any = {};
+      const skillUpdates: any = {};
+      
+      if (pathSnap.exists()) pathUpdates.totalLessons = (pathSnap.val().totalLessons || 0) + created;
+      if (skillSnap.exists()) skillUpdates.totalLessons = (skillSnap.val().totalLessons || 0) + created;
+      
+      await Promise.all([
+        Object.keys(pathUpdates).length > 0 ? update(pathRef, pathUpdates) : Promise.resolve(),
+        Object.keys(skillUpdates).length > 0 ? update(skillRef, skillUpdates) : Promise.resolve()
+      ]);
     }
 
-    onProgress(100, `Lessons for ${moduleTitle}: Created ${lessonsCreated}, Updated ${lessonsUpdated}, Skipped ${lessonsSkipped}.`);
-    return true;
-  } catch (error) {
+    return { created, updated: updatedCount, skipped };
+  } catch (error: any) {
     console.error("Error generating lessons:", error);
+    
+    // Check various error formats
+    const errorStr = (error.message || JSON.stringify(error) || "").toLowerCase();
+    const isRateLimit = errorStr.includes("429") || errorStr.includes("resource_exhausted") || errorStr.includes("quota");
+    const isTransient = errorStr.includes("500") || errorStr.includes("xhr error") || errorStr.includes("rpc failed") || errorStr.includes("overloaded");
+    
+    if (isRateLimit) {
+      throw new Error("Academy Lesson Architect is reaching capacity. Please wait 2-5 minutes and try again.");
+    }
+    if (isTransient) {
+      throw new Error("Academy Lesson Architect is experiencing transient errors. Please try again in a minute.");
+    }
     throw error;
   }
+};
+
+/**
+ * Generates only missing lessons for existing path.
+ */
+export const generateMissingLessons = async (
+  skillId: string,
+  onProgress: (p: number, s: string, stats?: any) => void
+) => {
+  const [skillSnap, stagesSnap] = await Promise.all([
+    get(ref(db, `skills/${skillId}`)),
+    get(ref(db, `curriculum_stages/${skillId}`))
+  ]);
+
+  if (!skillSnap.exists()) throw new Error("Program (Skill) not found in database.");
+  if (!stagesSnap.exists()) throw new Error("No curriculum roadmap found for this program. Please generate the Roadmap first.");
+  const skill = skillSnap.val() as Skill;
+  const stages = Object.values(stagesSnap.val()) as CurriculumStage[];
+
+  const allModules: { module: CurriculumModule, weekId: string }[] = [];
+  for (const stage of stages) {
+    const weeksRef = ref(db, `curriculum_weeks/${stage.id}`);
+    const weeksSnap = await get(weeksRef);
+    if (weeksSnap.exists()) {
+      const weeks = Object.values(weeksSnap.val()) as CurriculumWeek[];
+      for (const week of weeks) {
+        const modsRef = ref(db, `curriculum_modules/${week.id}`);
+        const modsSnap = await get(modsRef);
+        if (modsSnap.exists()) {
+          const modules = Object.values(modsSnap.val()) as CurriculumModule[];
+          modules.forEach(m => allModules.push({ module: m, weekId: week.id }));
+        }
+      }
+    }
+  }
+
+  const generationId = Math.random().toString(36).substring(7);
+  currentGenerationId = generationId;
+
+  const stats = {
+    modulesTotal: allModules.length,
+    modulesDone: 0,
+    lessonsCreated: 0,
+    lessonsUpdated: 0,
+    lessonsSkipped: 0,
+    startTime: Date.now()
+  };
+
+  if (allModules.length === 0) {
+    onProgress(100, "Curriculum roadmap is empty. Please add modules or regenerate the roadmap first.", stats);
+    return;
+  }
+
+  // Group modules by week for batching
+  const modulesByWeek: Record<string, typeof allModules> = {};
+  allModules.forEach(m => {
+    if (!modulesByWeek[m.weekId]) modulesByWeek[m.weekId] = [];
+    modulesByWeek[m.weekId].push(m);
+  });
+
+  const weekIds = Object.keys(modulesByWeek);
+  
+  for (const weekId of weekIds) {
+    if (currentGenerationId !== generationId) break;
+    const weekModules = modulesByWeek[weekId];
+    
+    onProgress(
+      (stats.modulesDone / stats.modulesTotal) * 100, 
+      `Auditing lessons for Week ${weekId}...`,
+      stats
+    );
+
+    // Filter for truly missing modules
+    const existingLessonsSnap = await get(ref(db, `ai_generated_lessons/${skillId}`));
+    const existingLessons = existingLessonsSnap.exists() ? Object.values(existingLessonsSnap.val()) as GeneratedLesson[] : [];
+    
+    const modulesToGen = weekModules.filter(wm => {
+      const hasLessons = existingLessons.some(l => l.moduleId === wm.module.id);
+      if (hasLessons) {
+        stats.modulesDone++;
+        stats.lessonsSkipped += existingLessons.filter(l => l.moduleId === wm.module.id).length;
+      }
+      return !hasLessons;
+    });
+
+    if (modulesToGen.length === 0) continue;
+
+    // Use Week Batcher
+    try {
+      const result = await generateWeekLessons(
+        skillId,
+        modulesToGen.map(wm => ({ id: wm.module.id, title: wm.module.title, stageId: wm.module.stageId })),
+        skill.title,
+        weekId,
+        () => {}
+      );
+
+      if (result) {
+        stats.lessonsCreated += result.created;
+      }
+      stats.modulesDone += modulesToGen.length;
+    } catch (err) {
+      console.warn(`Parallel week batch failed, falling back to module level:`, err);
+      for (const { module } of modulesToGen) {
+        const result = await generateLessonsForModule(
+          skillId,
+          module.id,
+          module.title,
+          skill.title,
+          3,
+          module.stageId,
+          weekId,
+          () => {},
+          'missing'
+        );
+        if (result) stats.lessonsCreated += result.created;
+        stats.modulesDone++;
+      }
+    }
+  }
+
+  onProgress(100, "Missing lessons generation complete.", stats);
 };
 
 export const generateAILessons = async (
