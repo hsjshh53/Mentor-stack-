@@ -9,7 +9,9 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  Landmark,
+  MessageSquare
 } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { db } from '../../lib/firebase';
@@ -21,7 +23,9 @@ export const AdminDashboard: React.FC = () => {
     totalLessons: 0,
     generatedLessons: 0,
     pendingApproval: 0,
-    pendingPayments: 0
+    pendingPayments: 0,
+    pendingReceipts: 0,
+    openTickets: 0
   });
 
   useEffect(() => {
@@ -30,6 +34,8 @@ export const AdminDashboard: React.FC = () => {
     const lessonsRef = ref(db, 'lessons');
     const aiLessonsRef = ref(db, 'ai_generated_lessons');
     const paymentsRef = ref(db, 'payments');
+    const receiptsRef = ref(db, 'receipts');
+    const ticketsRef = ref(db, 'support_tickets');
 
     onValue(usersRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -44,6 +50,22 @@ export const AdminDashboard: React.FC = () => {
           ['initiated', 'paid_pending_verification'].includes(p.status)
         ).length;
         setStats(prev => ({ ...prev, pendingPayments: pending }));
+      }
+    });
+
+    onValue(receiptsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const pending = Object.values(data).filter((r: any) => r.status === 'pending').length;
+        setStats(prev => ({ ...prev, pendingReceipts: pending }));
+      }
+    });
+
+    onValue(ticketsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const pending = Object.values(data).filter((t: any) => t.status === 'open').length;
+        setStats(prev => ({ ...prev, openTickets: pending }));
       }
     });
 
@@ -73,7 +95,9 @@ export const AdminDashboard: React.FC = () => {
     { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { label: 'Live Lessons', value: stats.totalLessons, icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
     { label: 'AI Generated', value: stats.generatedLessons, icon: Sparkles, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-    { label: 'Pending Payments', value: stats.pendingPayments, icon: CreditCard, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    { label: 'Selar Payments', value: stats.pendingPayments, icon: CreditCard, color: 'text-sky-400', bg: 'bg-sky-400/10' },
+    { label: 'Bank Receipts', value: stats.pendingReceipts, icon: Landmark, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    { label: 'Support Tickets', value: stats.openTickets, icon: MessageSquare, color: 'text-rose-400', bg: 'bg-rose-400/10' },
   ];
 
   return (

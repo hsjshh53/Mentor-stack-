@@ -18,6 +18,7 @@ import { CertificatePage } from './pages/CertificatePage';
 import { AcademyPathPage } from './pages/AcademyPathPage';
 import { CodingLanguagesPage } from './pages/CodingLanguagesPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
+import { SupportPage } from './pages/SupportPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AIGenerator } from './pages/admin/AIGenerator';
 import { ManageLessons } from './pages/admin/ManageLessons';
@@ -25,6 +26,8 @@ import { ManageSkills } from './pages/admin/ManageSkills';
 import { ManageUsers } from './pages/admin/ManageUsers';
 import { ManageCurriculum } from './pages/admin/ManageCurriculum';
 import { ManagePayments } from './pages/admin/ManagePayments';
+import { ManageReceipts } from './pages/admin/ManageReceipts';
+import { ManageTickets } from './pages/admin/ManageTickets';
 import { ReviewLessonsPage } from './pages/admin/ReviewLessonsPage';
 import { useAdmin } from './hooks/useAdmin';
 import { SubscriptionGuard } from './components/SubscriptionGuard';
@@ -63,6 +66,11 @@ export default function App() {
           <Route path="/subscription" element={
             <PrivateRoute>
               <SubscriptionPage />
+            </PrivateRoute>
+          } />
+          <Route path="/support" element={
+            <PrivateRoute>
+              <SupportPage />
             </PrivateRoute>
           } />
           
@@ -184,6 +192,16 @@ export default function App() {
           <Route path="/admin/payments" element={
             <AdminRoute>
               <ManagePayments />
+            </AdminRoute>
+          } />
+          <Route path="/admin/receipts" element={
+            <AdminRoute>
+              <ManageReceipts />
+            </AdminRoute>
+          } />
+          <Route path="/admin/support" element={
+            <AdminRoute>
+              <ManageTickets />
             </AdminRoute>
           } />
           <Route path="/admin/review-lessons/:skillId/:moduleId" element={

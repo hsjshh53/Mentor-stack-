@@ -173,13 +173,47 @@ export const AITutorPage: React.FC = () => {
     }
   }, [messages]);
 
+  // Initial Contextual Greeting
+  useEffect(() => {
+    if (contextData?.lesson && messages.length === 0 && !loading) {
+      const lessonTitle = contextData.lesson.title;
+      const greeting = `I can see you're currently learning **${lessonTitle}**. How can I help you with this lesson?`;
+      
+      setMessages([{
+        role: 'model',
+        content: greeting,
+        mode: mode,
+        id: 'initial_greeting'
+      }]);
+    } else if (!lessonId && messages.length === 0 && !loading && !userLoading) {
+      // Fallback
+      setMessages([{
+        role: 'model',
+        content: "I’m here to help. I couldn't load full lesson context, but tell me what part you're on.",
+        mode: 'general',
+        id: 'initial_fallback'
+      }]);
+    }
+  }, [contextData, lessonId, messages.length, loading, userLoading, mode]);
+
   const tutorContext = useMemo(() => ({
     activeProgramId: skillId || undefined,
     activeProgramTitle: contextData?.skill?.title,
     currentPath: progress?.selectedPath || undefined,
     currentStage: progress?.currentStage,
     currentLesson: contextData?.lesson?.title || lessonId || undefined,
+    lessonId: lessonId || undefined,
+    lessonTitle: contextData?.lesson?.title,
+    courseName: contextData?.skill?.title,
+    moduleName: contextData?.lesson?.moduleName || progress?.currentWeek,
+    lessonTopic: contextData?.lesson?.title,
     lessonContent: contextData?.lesson,
+    codeExamples: contextData?.lesson?.codeExample,
+    exercises: contextData?.lesson?.quiz,
+    difficultyLevel: contextData?.lesson?.level || progress?.currentStage,
+    userProgressStep: progress?.currentPhaseId,
+    previousLessonsCompleted: progress?.completedLessons,
+    currentLanguage: contextData?.lesson?.language || 'JavaScript', // Default to JS if not specified
     learnerLevel: progress?.currentStage || 'Beginner',
     progressXP: progress?.xp,
     weakAreas: progress?.weakAreas,
@@ -258,13 +292,13 @@ export const AITutorPage: React.FC = () => {
             </div>
             <div>
               <h1 className="font-black text-lg tracking-tighter uppercase flex items-center gap-2">
-                Academy Tutor
+                AI Tutor {contextData?.lesson?.title ? `- ${contextData.lesson.title}` : 'Mentor'}
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[8px] tracking-widest">PREMIUM</span>
               </h1>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
-                  Live in Master Mode
+                  {contextData?.lesson ? 'Powered by Lesson Context' : 'Live in Master Mode'}
                 </p>
               </div>
             </div>
@@ -348,7 +382,7 @@ export const AITutorPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {contextData?.lesson?.objectives && (
+                    {Array.isArray(contextData?.lesson?.objectives) && (
                       <div className="space-y-3">
                         <p className="text-[10px] font-black uppercase text-white/20 tracking-widest px-1">Objectives</p>
                         <div className="space-y-2">

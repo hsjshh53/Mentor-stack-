@@ -31,6 +31,16 @@ export const LessonPage: React.FC = () => {
   const [quizScore, setQuizScore] = useState<{ correct: number, total: number } | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [skillTitle, setSkillTitle] = useState<string>('');
+  const [moduleTitle, setModuleTitle] = useState<string>('');
+
+  useEffect(() => {
+    if (progress?.activeProgramId) {
+      get(ref(db, `skills/${progress.activeProgramId}`)).then(snap => {
+        if (snap.exists()) setSkillTitle(snap.val().title);
+      });
+    }
+  }, [progress]);
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -71,7 +81,16 @@ export const LessonPage: React.FC = () => {
         
         if (lessonSnap.exists()) {
           console.log("LessonPage: Approved lesson found in DB");
-          setLesson(lessonSnap.val());
+          const data = lessonSnap.val();
+          setLesson(data);
+          
+          // Fetch module title if moduleId is present
+          if (data.moduleId && data.weekId) {
+            get(ref(db, `curriculum_modules/${data.weekId}/${data.moduleId}`)).then(mSnap => {
+              if (mSnap.exists()) setModuleTitle(mSnap.val().title);
+            });
+          }
+          
           setLoading(false);
           return;
         }
@@ -82,7 +101,16 @@ export const LessonPage: React.FC = () => {
           const pendingSnap = await get(pendingRef);
           if (pendingSnap.exists()) {
             console.log("LessonPage: Pending AI lesson found in DB");
-            setLesson(pendingSnap.val());
+            const data = pendingSnap.val();
+            setLesson(data);
+            
+            // Fetch module title if moduleId is present
+            if (data.moduleId && data.weekId) {
+              get(ref(db, `curriculum_modules/${data.weekId}/${data.moduleId}`)).then(mSnap => {
+                if (mSnap.exists()) setModuleTitle(mSnap.val().title);
+              });
+            }
+            
             setLoading(false);
             return;
           }
@@ -558,7 +586,33 @@ export const LessonPage: React.FC = () => {
           </button>
           
           <button 
-            onClick={() => navigate(`/tutor?skillId=${progress?.activeProgramId}&lessonId=${topic}`)}
+            onClick={() => {
+              if (!lesson) {
+                alert("Lesson context unavailable. Reloading...");
+                window.location.reload();
+                return;
+              }
+              window.dispatchEvent(new CustomEvent('set-mentor-lesson-context', { 
+                detail: { 
+                  lesson: {
+                    ...lesson,
+                    courseTitle: skillTitle,
+                    moduleTitle: moduleTitle,
+                    lessonTopic: topic?.toUpperCase().replace(/-/g, ' '),
+                    lesson_id: lesson.id,
+                    lesson_title: lesson.title,
+                    course_title: skillTitle,
+                    module_title: moduleTitle,
+                    lesson_topic: topic?.toUpperCase().replace(/-/g, ' '),
+                    lesson_description: lesson.todayYouAreLearning,
+                    lesson_content: lesson.explanation,
+                    lesson_examples: lesson.codeExample,
+                    exercise_questions: lesson.quiz,
+                    difficulty_level: lesson.difficulty || 'Beginner'
+                  } 
+                } 
+              }));
+            }}
             className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-emerald-400 hover:bg-white/[0.06] transition-all active:scale-95"
           >
             <Zap size={20} />

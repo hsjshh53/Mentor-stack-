@@ -10,6 +10,7 @@ export const MentorChat: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'model'; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lessonContext, setLessonContext] = useState<any>(null);
   const { progress } = useUserData();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -21,11 +22,25 @@ export const MentorChat: React.FC = () => {
         processMessage(e.detail.prompt);
       }
     };
+    const handleLessonContext = (e: any) => {
+      setLessonContext(e.detail.lesson);
+      setIsOpen(true);
+      // If messages are empty, add a contextual greeting
+      if (messages.length === 0 && (e.detail.lesson?.lesson_title || e.detail.lesson?.title)) {
+        const title = e.detail.lesson?.lesson_title || e.detail.lesson?.title;
+        setMessages([{
+          role: 'model',
+          content: `You are currently on **${title}**. What would you like help with?`
+        }]);
+      }
+    };
     window.addEventListener('open-mentor-chat', handleOpen);
     window.addEventListener('mentor-chat-prompt', handleCustomPrompt);
+    window.addEventListener('set-mentor-lesson-context', handleLessonContext);
     return () => {
       window.removeEventListener('open-mentor-chat', handleOpen);
       window.removeEventListener('mentor-chat-prompt', handleCustomPrompt);
+      window.removeEventListener('set-mentor-lesson-context', handleLessonContext);
     };
   }, [messages, progress]);
 
@@ -46,6 +61,19 @@ export const MentorChat: React.FC = () => {
         activeProgramId: progress?.activeProgramId || undefined,
         currentPath: progress?.selectedPath || undefined,
         currentStage: progress?.currentStage,
+        currentLesson: lessonContext?.lesson_title || lessonContext?.title || undefined,
+        lessonId: lessonContext?.lesson_id || lessonContext?.id || undefined,
+        lessonTitle: lessonContext?.lesson_title || lessonContext?.title,
+        courseName: lessonContext?.course_title || lessonContext?.courseName,
+        moduleName: lessonContext?.module_title || lessonContext?.moduleTitle,
+        lessonTopic: lessonContext?.lesson_topic || lessonContext?.topic,
+        lessonContent: lessonContext?.lesson_content || lessonContext,
+        codeExamples: lessonContext?.lesson_examples || lessonContext?.codeExample,
+        exercises: lessonContext?.exercise_questions || lessonContext?.quiz,
+        difficultyLevel: lessonContext?.difficulty_level || lessonContext?.difficulty || progress?.currentStage,
+        userProgressStep: progress?.currentPhaseId,
+        previousLessonsCompleted: progress?.completedLessons,
+        currentLanguage: lessonContext?.language || 'JavaScript',
         learnerLevel: progress?.currentStage || 'Beginner',
         progressXP: progress?.xp,
         weakAreas: progress?.weakAreas,
@@ -97,8 +125,12 @@ export const MentorChat: React.FC = () => {
                     <Bot size={24} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-black">MentorStack AI</h3>
-                    <p className="text-[10px] font-bold uppercase text-black/60 tracking-widest">Your Personal Mentor</p>
+                    <h3 className="font-bold text-black">
+                      AI Tutor {lessonContext?.title && `- ${lessonContext.title}`}
+                    </h3>
+                    <p className="text-[10px] font-bold uppercase text-black/60 tracking-widest">
+                      {lessonContext ? 'Powered by Lesson Context' : 'Your Personal Mentor'}
+                    </p>
                   </div>
                 </div>
                 <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-black/10 text-black transition-all">

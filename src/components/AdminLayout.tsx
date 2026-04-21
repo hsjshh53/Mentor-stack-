@@ -13,7 +13,9 @@ import {
   X,
   Database,
   Layers,
-  CreditCard
+  CreditCard,
+  Landmark,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAdmin } from '../hooks/useAdmin';
@@ -63,6 +65,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: BookOpen, label: 'Manage Lessons', path: '/admin/lessons' },
     { icon: Database, label: 'Curriculum', path: '/admin/curriculum' },
     { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
+    { icon: Landmark, label: 'Bank Receipts', path: '/admin/receipts' },
+    { icon: MessageSquare, label: 'Support Tickets', path: '/admin/support' },
     { icon: Users, label: 'Manage Users', path: '/admin/users' },
     { icon: Sparkles, label: 'AI Generator', path: '/admin/generator' },
   ];

@@ -172,7 +172,7 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <p className="text-sm font-bold text-white/40 italic">"Join 5,000+ students learning for free"</p>
+                <p className="text-sm font-bold text-white/40 italic">"Join 10,000+ students learning for free"</p>
                 <Button 
                   onClick={() => navigate('/signup')}
                   fullWidth

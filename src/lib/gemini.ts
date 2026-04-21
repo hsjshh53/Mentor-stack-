@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { ref, get } from "firebase/database";
 import { db } from "./firebase";
-import { callGeminiWithRetry } from "./gemini-utils";
+import { callGeminiWithRetry, safeJsonParse } from "./gemini-utils";
 import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
 
@@ -25,7 +25,18 @@ interface TutorContext {
   currentWeek?: string;
   currentModule?: string;
   currentLesson?: string;
+  lessonId?: string;
+  lessonTitle?: string;
+  courseName?: string;
+  moduleName?: string;
+  lessonTopic?: string;
   lessonContent?: any;
+  codeExamples?: string;
+  exercises?: any;
+  difficultyLevel?: string;
+  userProgressStep?: string;
+  previousLessonsCompleted?: string[];
+  currentLanguage?: string;
   learnerLevel?: string;
   progressXP?: number;
   weakAreas?: string[];
@@ -52,6 +63,13 @@ TUTORING PHILOSOPHY:
 - Adapt exactly to the learner's context (lesson, stage, level).
 - For beginners: Use simple analogies, avoid jargon, break into steps.
 - For advanced: Focus on architecture, performance, and real-world trade-offs.
+
+LESSON CONTEXT FOCUS:
+- You ALWAYS have access to the current lesson context.
+- If the user asks a question, assume it relates to the current lesson unless it's obviously not.
+- If the user asks something UNRELATED: Answer briefly, then guide back: "That’s a good question. Also, in your current lesson on {{lesson_title}}, this concept connects because..."
+- If the lesson has code: Read samples, debug, explain each line, generate similar examples, create practice tasks.
+- If the lesson has exercises: Give hints, explain mistakes, check answers, generate extra practice.
 
 TUTOR MODES & BEHAVIOR:
 
@@ -274,8 +292,10 @@ const getFallbackLesson = (topic: string): LessonContent => {
         explanation: 'Consistency is the most important part of learning to code.'
       }
     ],
+    status: 'draft_generated',
+    createdAt: Date.now(),
     recap: 'You are doing great! Even in offline mode, your progress counts.'
-  };
+  } as any;
 };
 
 export async function generateLesson(path: CareerPath, stage: Stage, topic: string, skillId?: string): Promise<LessonContent | null> {
@@ -342,12 +362,12 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
 
   try {
     const apiCallPromise = callGeminiWithRetry(() => ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3.1-pro-preview",
       contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
       config: {
         responseMimeType: "application/json"
       }
-    }));
+    }), { id: topic, name: `Lesson: ${topic}`, priority: 2 });
 
     const response = await apiCallPromise;
     console.log("Gemini Service: Response status - Success");
@@ -355,7 +375,7 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
     const text = response.text;
     if (!text) throw new Error("Empty response");
 
-    const lesson = JSON.parse(text);
+    const lesson = safeJsonParse(text);
     return {
       ...lesson,
       commonMistakes: lesson.commonMistakes || [],
@@ -389,41 +409,45 @@ export async function getMentorAdvice(message: string, history: any[], context: 
 
   try {
     const prompt = `
-      CURRENT TUTOR MODE: [${context.mode.toUpperCase()}]
+      Answer as MentorStack AI Tutor using the lesson context below.
       
-      ACADEMY CONTEXT:
-      - Active Program: ${context.activeProgramTitle || 'Unknown'} (ID: ${context.activeProgramId || 'N/A'})
-      - Current Path: ${context.currentPath || 'N/A'}
-      - Stage/Week/Module: ${context.currentStage || 'N/A'} / ${context.currentWeek || 'N/A'} / ${context.currentModule || 'N/A'}
-      - Current Lesson: ${context.currentLesson || 'N/A'}
-      ${context.lessonContent ? `- Lesson Content Snippet: ${JSON.stringify(context.lessonContent).substring(0, 1000)}` : ''}
-      
-      LEARNER PROFILE:
-      - Level: ${context.learnerLevel || 'Beginner'}
-      - XP: ${context.progressXP || 0}
-      - Weak Areas: ${context.weakAreas?.join(', ') || 'None identified yet'}
-      - Recent Mistakes: ${context.recentMistakes?.join(', ') || 'None'}
+      Current lesson:
+      Title: ${context.lessonTitle || context.currentLesson || 'N/A'}
+      Course: ${context.courseName || context.activeProgramTitle || 'N/A'}
+      Topic: ${context.lessonTopic || 'N/A'}
 
-      CONVERSATION HISTORY:
-      ${history.map(m => `${m.role === 'user' ? 'User' : 'Mentor'}: ${m.content}`).join('\n')}
+      Lesson Content:
+      ${context.lessonContent ? (typeof context.lessonContent === 'string' ? context.lessonContent : JSON.stringify(context.lessonContent)) : 'No specific content loaded.'}
 
-      USER MESSAGE: ${message}
+      Code Samples/Examples:
+      ${context.codeExamples || 'None'}
 
-      INSTRUCTION FOR THIS MODE ([${context.mode.toUpperCase()}]):
-      Directly address the user's message using the specific rules for the selected Tutor Mode.
-      If a lesson is active, ensure your answer aligns with its objectives.
-      If the user shares code, focus on identifying logic before syntax.
-      Stay supportive and focus on job-readiness.
+      Exercise Questions:
+      ${context.exercises ? JSON.stringify(context.exercises) : 'None'}
+
+      User Progress:
+      - Current Stage: ${context.currentStage || 'N/A'}
+      - Stage/Week/Module: ${context.currentStage || 'N/A'} / ${context.currentWeek || 'N/A'} / ${context.moduleName || 'N/A'}
+      - Difficulty: ${context.difficultyLevel || 'N/A'}
+
+      User Question:
+      ${message}
+
+      FINAL INSTRUCTIONS for AI Tutor:
+      1. Explanation: If user doesn't understand, explain the CURRENT lesson only using simpler terms.
+      2. Examples: Use examples strictly related to the CURRENT lesson topic.
+      3. Coding: If asking for help with code, prioritize using the lesson's code samples.
+      4. Focus: No generic random answers. STAY on the current lesson context.
     `;
 
     const response = await callGeminiWithRetry(() => ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3-flash-preview",
       contents: [
         {
           parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
         }
       ]
-    }));
+    }), { id: context.activeProgramId || 'chat', name: 'Tutor Advice', priority: 1 });
 
     console.log("Gemini Service: Response status - Success");
     const text = response.text;
@@ -438,8 +462,8 @@ export async function getMentorAdvice(message: string, history: any[], context: 
     let errorMessage = "I'm having a moment to think. Let's try that again.";
     if (error.message?.includes("API_KEY_INVALID")) {
       errorMessage = "I'm currently updating my systems. I'll be back to full strength soon!";
-    } else if (error.message?.includes("quota")) {
-      errorMessage = "I've shared so much advice today! Let's take a quick breather and continue in a bit.";
+    } else if (error.message?.includes("quota") || error.message?.includes("RESOURCE_EXHAUSTED") || error.message?.includes("429")) {
+      errorMessage = "We're preparing your lessons. AI capacity is temporarily busy.";
     }
 
     console.log("Gemini Service: Triggering fallback tutor");

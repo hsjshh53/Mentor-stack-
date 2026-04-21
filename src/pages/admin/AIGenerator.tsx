@@ -23,6 +23,7 @@ import {
   GenerationMode,
   cancelGeneration 
 } from '../../services/aiGeneratorService';
+import { getQueueStatus, AIStatus } from '../../lib/gemini-utils';
 import { ref, onValue } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { Skill } from '../../types';
@@ -47,6 +48,15 @@ export const AIGenerator: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [stats, setStats] = useState<GenerationStats | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<string>('');
+  const [aiStatus, setAiStatus] = useState<{ status: AIStatus, pending: number }>({ status: 'Healthy', pending: 0 });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const q = getQueueStatus();
+      setAiStatus({ status: q.status, pending: q.pending });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (isGenerating && stats && stats.modulesDone > 0) {
@@ -321,16 +331,17 @@ export const AIGenerator: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   {[
-                    { label: 'Modules Processed', value: stats ? `${stats.modulesDone}/${stats.modulesTotal}` : '0/0', color: 'blue' },
+                    { label: 'AI Status', value: aiStatus.status, color: aiStatus.status === 'Healthy' ? 'emerald' : aiStatus.status === 'Limited Quota' ? 'amber' : 'red' },
+                    { label: 'AI Queue', value: aiStatus.pending, color: 'blue' },
+                    { label: 'Modules', value: stats ? `${stats.modulesDone}/${stats.modulesTotal}` : '0/0', color: 'blue' },
                     { label: 'Lessons Born', value: stats?.lessonsCreated || 0, color: 'emerald' },
-                    { label: 'Lessons Refined', value: stats?.lessonsUpdated || 0, color: 'purple' },
-                    { label: 'Conflicts Saved', value: stats?.lessonsSkipped || 0, color: 'amber' }
+                    { label: 'Saved', value: stats?.lessonsSkipped || 0, color: 'amber' }
                   ].map((s, i) => (
                     <div key={i} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                       <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{s.label}</p>
-                      <p className={`text-xl font-black text-${s.color}-400`}>{s.value}</p>
+                      <p className={`text-sm font-black text-${s.color}-400`}>{s.value}</p>
                     </div>
                   ))}
                 </div>

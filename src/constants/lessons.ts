@@ -2077,7 +2077,7 @@ SELECT * FROM users WHERE name = 'Alex';`,
   "courses": ["Frontend", "Backend"],
   "active": true,
   "metadata": {
-    "students": 5000
+    "students": 10000
   }
 }`,
     lineByLine: 'This is a BSON (Binary JSON) document. It has a unique ID, strings, an array, a boolean, and even a nested object.',

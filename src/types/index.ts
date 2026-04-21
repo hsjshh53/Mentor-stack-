@@ -191,6 +191,8 @@ export interface UserProgress {
   selectedPath: CareerPath | null;
   activeProgramId?: string; // ID of the Skill/Program the user is currently focused on
   currentStage: Stage;
+  currentWeek?: string;
+  currentPhaseId?: string;
   xp: number;
   level: number;
   streak: number;
@@ -243,6 +245,7 @@ export interface LessonContent {
     explanation: string;
   }[];
   recap: string;
+  difficulty?: string;
 }
 
 export interface Skill {
@@ -350,7 +353,7 @@ export interface CurriculumLesson extends LessonContent {
   };
   interviewTips?: string;
   careerTips?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'draft_generated';
 }
 
 export interface GeneratedLesson extends CurriculumLesson {
@@ -478,9 +481,37 @@ export interface PaymentRecord {
   user_id: string;
   email: string;
   amount: number;
-  status: 'initiated' | 'paid_pending_verification' | 'approved' | 'rejected';
+  status: 'initiated' | 'paid_pending_verification' | 'approved' | 'rejected' | 'cancelled';
   payment_source: string;
   timestamp: number;
   reference_id: string; // Selar External Ref
   payment_reference: string; // MentorStack Internal Ref
+  cancelled_at?: number;
+}
+
+export interface ReceiptRecord {
+  id: string;
+  user_id: string;
+  email: string;
+  image_url: string;
+  amount_entered?: number;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  timestamp: number;
+  cancelled_at?: number;
+}
+
+export type TicketCategory = 'payment' | 'access' | 'technical' | 'other';
+export type TicketStatus = 'open' | 'in_progress' | 'resolved';
+
+export interface SupportTicket {
+  id: string;
+  user_id: string;
+  email: string;
+  category: TicketCategory;
+  message: string;
+  image_attachment?: string | null;
+  status: TicketStatus;
+  admin_response?: string;
+  timestamp: number;
+  resolved_at?: number;
 }
