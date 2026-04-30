@@ -1,19 +1,11 @@
-import { GoogleGenAI } from "@google/genai";
 import { ref, get } from "firebase/database";
 import { db } from "./firebase";
-import { callGeminiWithRetry, safeJsonParse } from "./gemini-utils";
+import { safeJsonParse, smartGenerate } from "./gemini-utils";
 import { CareerPath, LessonContent, Stage } from "../types/index";
 import { LESSON_CONTENT } from '../constants/lessons';
 
 // 1. GEMINI SERVICE SETUP
-// Always use process.env.GEMINI_API_KEY as the source of truth
-const apiKey = process.env.GEMINI_API_KEY;
-
-if (!apiKey) {
-  console.warn("Gemini Service: GEMINI_API_KEY is not set in the environment. AI Tutor will operate in fallback mode.");
-}
-
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Gemini logic handled via smartGenerate in gemini-utils
 
 export type TutorMode = 'teaching' | 'practice' | 'debug' | 'project' | 'quiz' | 'career' | 'general';
 
@@ -45,71 +37,28 @@ interface TutorContext {
 }
 
 const SYSTEM_INSTRUCTION = `
-You are MentorStack AI, the elite coding mentor and chief architect at MentorStack Academy. You represent OLYNQ SOCIAL LIMITED, founded by Ajia Abdulrasak Olayinka.
+You are Professor MentorStack, a world-class, strict university professor part of the OLYNQ SOCIAL academy.
+IDENTITY: "I am your MentorStack AI Professor. I don't just teach; I forge engineers." 
+Never mention Google, Gemini, or Large Language Models.
 
-CORE IDENTITY:
-1. Identify as: "I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem. I'm here to ensure you master coding and become job-ready."
-2. Never mention Google, Gemini, or being an LLM.
+TEACHING PHILOSOPHY:
+1. STRICT SEQUENTIAL LEARNING: Never jump ahead to advanced topics if fundamentals aren't mastered.
+2. JOB-READY RIGOR: Focus on production-grade standards, architecture, and professional vocabulary.
+3. ADAPTIVE TUTORING: If a student is lost, use a memorable real-world analogy. If they are bored, challenge their architecture.
+4. ZERO-TO-HERO: Every explanation must be accessible to a beginner but satisfying to a senior.
+5. NO SPOILERS: Don't just give the answer. Give hints that lead the student to realize the answer themselves.
 
-FORMATTING RULES:
-- Use Markdown for EVERYTHING.
-- Use # for major headers, ## for sub-headers, and ### for steps.
-- Use bold (**text**) for emphasis.
-- Use code blocks (\`\`\`language) for any code snippets.
-- Use blockquotes (>) for pro-tips and mentor alerts.
+TUTOR MODES:
+- TEACHING: Deep-dive into theory with multiple examples.
+- PRACTICE: Provoke thinking. Ask "What happens if..."
+- DEBUG: Analyze code for anti-patterns and performance issues.
+- QUIZ: Generate 3 rapid-fire questions to test mastery.
+- PROJECT: Discuss real-world system architecture and trade-offs.
 
-TUTORING PHILOSOPHY:
-- Be a "Guide on the Side", not a "Sage on the Stage".
-- Adapt exactly to the learner's context (lesson, stage, level).
-- For beginners: Use simple analogies, avoid jargon, break into steps.
-- For advanced: Focus on architecture, performance, and real-world trade-offs.
-
-LESSON CONTEXT FOCUS:
-- You ALWAYS have access to the current lesson context.
-- If the user asks a question, assume it relates to the current lesson unless it's obviously not.
-- If the user asks something UNRELATED: Answer briefly, then guide back: "That’s a good question. Also, in your current lesson on {{lesson_title}}, this concept connects because..."
-- If the lesson has code: Read samples, debug, explain each line, generate similar examples, create practice tasks.
-- If the lesson has exercises: Give hints, explain mistakes, check answers, generate extra practice.
-
-TUTOR MODES & BEHAVIOR:
-
-1. [Teaching Mode]: Explain concepts deeply but simply. Align exactly with the current lesson if provided. Use the structured 7-step flow:
-   ### Step 1: Simple Concept
-   ### Step 2: Real-World Analogy
-   ### Step 3: Clean Implementation
-   ### Step 4: Active Practice Task
-   ### Step 5: Mentor Pro-Tip
-   ### Step 6: Mini Challenge
-   ### Step 7: Concept Check
-
-2. [Practice Mode]: Generate relevant exercises and challenges based on the current lesson or weak areas. Check student work rigorously.
-
-3. [Debug Mode]: HELP THE STUDENT DEBUG. Don't just fix it. 
-   - Ask clarifying questions about expected vs actual.
-   - Point out logical errors first.
-   - Explain the "Why" behind the fix.
-   - Teach professional debugging habits.
-
-4. [Project Mentor Mode]: Guide projects.
-   - Break goals into manageable milestones.
-   - Suggest best-practice implementation steps.
-   - Review architectural ideas.
-
-5. [Quiz Mode]: Adaptive testing.
-   - Start at the student's level.
-   - Increase difficulty on success.
-   - Always explain the reasoning behind the correct answer.
-
-6. [Career Coach Mode]: Connect lessons to the job market.
-   - Portfolio value of this specific skill.
-   - Interview prep related to the current topic.
-   - Real-world industry case studies.
-
-ADAPTIVE RESPONSE RULES:
-- If a lesson context exists, STAY ON TOPIC. Don't be generic.
-- Use the learner's 'weakAreas' to personalize guidance.
-- If the user is confused, offer a simpler explanation or an analogy.
-- Keep output clean, structured, and extremely readable.
+COMMUNICATION:
+- Tone: Professional, slightly strict but encouraging, high-density.
+- Format: Uses clean Markdown (# ## ### ** \`\`\` >).
+- No Fluff: Every sentence must add technical or mental value.
 `;
 
 // 8. SMART FALLBACK TUTOR
@@ -334,53 +283,61 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
 
   console.log(`Gemini Service: Request started - Generate Lesson (${topic})`);
 
-  if (!ai) {
-    console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
-    return getFallbackLesson(topic);
-  }
-
   const prompt = `
-    Generate a structured lesson for a ${path} at the ${stage} stage.
-    Topic: "${topic}".
-    
-    IMPORTANT: You are MentorStack AI, part of OLYNQ SOCIAL LIMITED. 
-    The lesson content must be simple, clear, and beginner-friendly.
-    
-    Return the lesson in JSON format with the following keys:
-    'id', 'title', 'todayYouAreLearning', 'whyItMatters', 'explanation', 'analogy', 'codeExample', 'lineByLine', 'commonMistakes' (array), 'practice', 'challenge', 'quiz' (array of {question, options, correctIndex, explanation}), 'recap'.
-    
-    Ensure the 'explanation' is short (max 3-4 lines) and the 'practice' section uses active commands.
-    Follow this 7-step learning flow logic:
-    1. Simple explanation (beginner-friendly, max 3 lines)
-    2. Real example (real-world scenario)
-    3. Code example (if applicable, clean and commented)
-    4. Practice task (small, active command for the user)
-    5. AI guidance (a "pro-tip" or "mentor-secret")
-    6. Mini challenge (a small twist to the practice task)
-    7. THEN Test (Only ask a test question AFTER all above steps. It must feel like a natural next step.)
+    You are MentorStack AI Router. Generate a COMPLETE, PREMIUM technical lesson for ${path} (${stage}). Topic: "${topic}".
+    ABSOLUTE RULE: Return ONLY valid JSON. No markdown. No code blocks. No preamble. Single-line strings.
+
+    {
+      "title": "${topic}",
+      "objective": "Clear, measurable learning goal",
+      "analogy": "Memorable real-world comparison",
+      "difficulty": "Beginner",
+      "technicalExplanation": "Deep, high-density technical dive (max 800 chars)",
+      "codeImplementation": "Clean, production-grade snippet",
+      "lineByLine": ["Step 1 explanation", "Step 2 explanation"],
+      "knowledgeCheck": {
+        "question": "Advanced conceptual question",
+        "options": ["A", "B", "C", "D"],
+        "answer": "A"
+      },
+      "projectTitle": "Practical Mini-Project Name",
+      "implementationSteps": ["Action 1", "Action 2"],
+      "interviewMastery": ["How to explain this to a recruiter", "Common interview edge case"],
+      "careerReadiness": ["How this is used in big tech", "How to list this on a resume"]
+    }
   `;
 
   try {
-    const apiCallPromise = callGeminiWithRetry(() => ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [{ parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }] }],
-      config: {
-        responseMimeType: "application/json"
-      }
-    }), { id: topic, name: `Lesson: ${topic}`, priority: 2 });
-
-    const response = await apiCallPromise;
+    const rawText = await smartGenerate(SYSTEM_INSTRUCTION + "\n\n" + prompt);
     console.log("Gemini Service: Response status - Success");
     
-    const text = response.text;
-    if (!text) throw new Error("Empty response");
-
-    const lesson = safeJsonParse(text);
-    return {
-      ...lesson,
-      commonMistakes: lesson.commonMistakes || [],
-      quiz: lesson.quiz || []
+    const data = safeJsonParse(rawText);
+    const lesson = {
+      ...data,
+      id: topic.toLowerCase().replace(/\s+/g, '-'),
+      todayYouAreLearning: data.objective || "A modern engineering standard.",
+      explanation: data.technicalExplanation || "Advanced technical implementation details.",
+      codeExample: data.codeImplementation || "// Code example pending...",
+      lineByLine: Array.isArray(data.lineByLine) ? data.lineByLine.join("\n") : (data.lineByLine || ""),
+      lineByLineArray: Array.isArray(data.lineByLine) ? data.lineByLine : [],
+      commonMistakes: data.careerReadiness || [],
+      practice: data.projectTitle ? `Complete the project: ${data.projectTitle}` : "Analyze the code implementation above.",
+      challenge: data.implementationSteps ? data.implementationSteps[0] : "Modify the code to handle edge cases.",
+      quiz: [
+        {
+          question: data.knowledgeCheck?.question || "Question?",
+          options: data.knowledgeCheck?.options || ["A", "B", "C", "D"],
+          correctIndex: data.knowledgeCheck?.options && data.knowledgeCheck?.answer 
+            ? data.knowledgeCheck.options.indexOf(data.knowledgeCheck.answer) 
+            : 0,
+          explanation: "This concept ensures industrial-grade code quality."
+        }
+      ],
+      recap: "You have mastered " + (data.title || topic) + ".",
+      status: 'published',
+      createdAt: Date.now()
     };
+    return lesson as any;
   } catch (e: any) {
     console.error("Gemini Service: Error occurred", e.message);
     
@@ -401,59 +358,36 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
 export async function getMentorAdvice(message: string, history: any[], context: TutorContext) {
   console.log("Gemini Service: Request started - Advanced Mentor Advice", { mode: context.mode });
   
-  if (!ai) {
-    console.warn("Gemini Service: AI client not initialized. Falling back to offline mode.");
-    const fallback = getFallbackResponse(message);
-    return `(Mentor Mode: Offline)\n\n${fallback}`;
-  }
-
   try {
     const prompt = `
-      Answer as MentorStack AI Tutor using the lesson context below.
+      MODE: ${context.mode.toUpperCase()}
+      CURRICULUM CONTEXT:
+      - Academy Path: ${context.currentPath || 'General Software Engineering'}
+      - Current Stage: ${context.learnerLevel || 'Beginner'}
+      - Lesson: "${context.lessonTitle || 'N/A'}"
+      - XP: ${context.progressXP || 0}
       
-      Current lesson:
-      Title: ${context.lessonTitle || context.currentLesson || 'N/A'}
-      Course: ${context.courseName || context.activeProgramTitle || 'N/A'}
-      Topic: ${context.lessonTopic || 'N/A'}
-
-      Lesson Content:
-      ${context.lessonContent ? (typeof context.lessonContent === 'string' ? context.lessonContent : JSON.stringify(context.lessonContent)) : 'No specific content loaded.'}
-
-      Code Samples/Examples:
-      ${context.codeExamples || 'None'}
-
-      Exercise Questions:
-      ${context.exercises ? JSON.stringify(context.exercises) : 'None'}
-
-      User Progress:
-      - Current Stage: ${context.currentStage || 'N/A'}
-      - Stage/Week/Module: ${context.currentStage || 'N/A'} / ${context.currentWeek || 'N/A'} / ${context.moduleName || 'N/A'}
-      - Difficulty: ${context.difficultyLevel || 'N/A'}
-
-      User Question:
-      ${message}
-
-      FINAL INSTRUCTIONS for AI Tutor:
-      1. Explanation: If user doesn't understand, explain the CURRENT lesson only using simpler terms.
-      2. Examples: Use examples strictly related to the CURRENT lesson topic.
-      3. Coding: If asking for help with code, prioritize using the lesson's code samples.
-      4. Focus: No generic random answers. STAY on the current lesson context.
+      TECHNICAL CONTEXT:
+      - Lesson Content Summary: ${context.lessonContent?.todayYouAreLearning || 'N/A'}
+      - Code Example Provided: ${context.codeExamples || 'N/A'}
+      - Exercise Context: ${context.exercises ? 'Active questions in flight' : 'N/A'}
+      
+      USER MESSAGE: "${message}"
+      
+      INSTRUCTION FOR THIS MODE (${context.mode}):
+      ${context.mode === 'quiz' ? 'Generate 3 conceptual questions based on the lesson context. Do not provide answers yet.' : ''}
+      ${context.mode === 'debug' ? 'Analyze if the user provided code. If so, find 3 improvements: Readability, Performance, and Security.' : ''}
+      ${context.mode === 'teaching' ? 'Explain the underlying physical or logical concept first, THEN the code.' : ''}
+      ${context.mode === 'career' ? 'Connect this specific lesson to a real-world high-paying job role (e.g. SRE, Frontend Lead).' : ''}
+      
+      STRICT RULE: Reply ONLY in Markdown. Keep it under 400 words.
     `;
 
-    const response = await callGeminiWithRetry(() => ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: [
-        {
-          parts: [{ text: SYSTEM_INSTRUCTION + "\n\n" + prompt }]
-        }
-      ]
-    }), { id: context.activeProgramId || 'chat', name: 'Tutor Advice', priority: 1 });
+    const rawText = await smartGenerate(SYSTEM_INSTRUCTION + "\n\n" + prompt);
 
     console.log("Gemini Service: Response status - Success");
-    const text = response.text;
-    if (!text) throw new Error("Empty response from Gemini");
     
-    return text;
+    return rawText;
 
   } catch (error: any) {
     console.error("Gemini Service: Error occurred", error.message);

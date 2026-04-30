@@ -19,17 +19,20 @@ import {
   Star,
   Play
 } from 'lucide-react';
-import { ref, onValue, get } from 'firebase/database';
-import { db } from '../lib/firebase';
+import { firebaseSafeGet } from '../lib/FirebaseService';
+import { ref } from 'firebase/database';
+import { auth, db } from '../lib/firebase';
 import { useUserData } from '../hooks/useUserData';
-import { LoadingScreen } from '../components/LoadingScreen';
 import { Card, Badge, Button } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
+import { LoadingScreen } from '../components/LoadingScreen';
 import { CurriculumPath, CurriculumStage, CurriculumWeek, CurriculumModule, Skill } from '../types';
 
 export const AcademyPathPage: React.FC = () => {
   const { pathName } = useParams<{ pathName: string }>();
   const navigate = useNavigate();
   const { progress, loading: userLoading } = useUserData();
+  const { user, profileReady } = useAuth();
   
   const [skill, setSkill] = useState<Skill | null>(null);
   const [path, setPath] = useState<CurriculumPath | null>(null);
@@ -43,80 +46,103 @@ export const AcademyPathPage: React.FC = () => {
   const [expandedWeeks, setExpandedWeeks] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!pathName) return;
+    if (!pathName || userLoading || !user || !profileReady) {
+      if (!userLoading && !user) setLoading(false);
+      return;
+    }
 
     const fetchAcademyData = async () => {
       setLoading(true);
+      console.log("[Academy] Fetching data for pathName:", pathName);
       try {
         const skillsRef = ref(db, 'skills');
-        const skillsSnap = await get(skillsRef);
+        console.log("[Academy] Fetching skills...");
+        const skillsData = await firebaseSafeGet(skillsRef, "AllSkills");
         
-        if (skillsSnap.exists()) {
-          const skillsData = Object.values(skillsSnap.val()) as Skill[];
-          const foundSkill = skillsData.find(s => s.title === pathName || s.id === pathName);
+        if (skillsData) {
+          const skillsList = Object.values(skillsData) as Skill[];
+          const foundSkill = skillsList.find(s => s.title === pathName || s.id === pathName);
           
           if (foundSkill) {
+            console.log("[Academy] Found skill:", foundSkill.id);
             setSkill(foundSkill);
             
             const pathRef = ref(db, `curriculum_paths/${foundSkill.id}`);
             const stagesRef = ref(db, `curriculum_stages/${foundSkill.id}`);
-            const allLessonsRef = ref(db, `ai_generated_lessons/${foundSkill.id}`);
+            // ONLY LOAD PUBLISHED LESSONS FOR STUDENTS
+            const allLessonsRef = ref(db, `lessons/${foundSkill.id}`);
 
-            const [pathSnap, stagesSnap, lessonsSnap] = await Promise.all([
-              get(pathRef),
-              get(stagesRef),
-              get(allLessonsRef)
+            console.log("[Academy] Fetching path, stages, and published lessons in parallel...");
+            const [pathData, stagesDataRaw, lessonsDataRaw] = await Promise.all([
+              firebaseSafeGet(pathRef, "CurriculumPath"),
+              firebaseSafeGet(stagesRef, "CurriculumStages"),
+              firebaseSafeGet(allLessonsRef, "CurriculumLessons")
             ]);
 
-            if (pathSnap.exists()) setPath(pathSnap.val());
+            if (pathData) setPath(pathData as CurriculumPath);
             
-            if (stagesSnap.exists()) {
-              const stagesData = Object.values(stagesSnap.val()) as CurriculumStage[];
+            if (stagesDataRaw) {
+              const stagesData = Object.values(stagesDataRaw) as CurriculumStage[];
               const sortedStages = stagesData.sort((a, b) => a.order - b.order);
               setStages(sortedStages);
               
-              // Auto-expand first stage
               if (sortedStages.length > 0) setExpandedStages([sortedStages[0].id]);
 
-              // Fetch weeks and modules
               const weeksMap: Record<string, CurriculumWeek[]> = {};
               const modulesMap: Record<string, CurriculumModule[]> = {};
 
-              for (const stage of sortedStages) {
-                const weeksRef = ref(db, `curriculum_weeks/${stage.id}`);
-                const weeksSnap = await get(weeksRef);
-                if (weeksSnap.exists()) {
-                  const weeksData = Object.values(weeksSnap.val()) as CurriculumWeek[];
-                  const sortedWeeks = weeksData.sort((a, b) => a.weekNumber - b.weekNumber);
-                  weeksMap[stage.id] = sortedWeeks;
+              console.log("[Academy] Fetching weeks and modules for stages...");
+              // We'll use Promise.all to fetch weeks for all stages in parallel
+              const weekPromises = sortedStages.map(stage => 
+                firebaseSafeGet(ref(db, `curriculum_weeks/${stage.id}`), `Weeks_${stage.id}`)
+              );
+              const weeksDataArray = await Promise.all(weekPromises);
 
-                  for (const week of sortedWeeks) {
-                    const modsRef = ref(db, `curriculum_modules/${week.id}`);
-                    const modsSnap = await get(modsRef);
-                    if (modsSnap.exists()) {
-                      modulesMap[week.id] = (Object.values(modsSnap.val()) as CurriculumModule[]).sort((a, b) => a.order - b.order);
-                    }
-                  }
+              const modulePromises: Promise<any>[] = [];
+              const weekIdsForModules: string[] = [];
+
+              weeksDataArray.forEach((weeksData, idx) => {
+                if (weeksData) {
+                  const stage = sortedStages[idx];
+                  const sortedWeeks = (Object.values(weeksData) as CurriculumWeek[]).sort((a, b) => a.weekNumber - b.weekNumber);
+                  weeksMap[stage.id] = sortedWeeks;
+                  
+                  sortedWeeks.forEach(week => {
+                    modulePromises.push(firebaseSafeGet(ref(db, `curriculum_modules/${week.id}`), `Modules_${week.id}`));
+                    weekIdsForModules.push(week.id);
+                  });
                 }
-              }
+              });
+
+              const modulesDataArray = await Promise.all(modulePromises);
+              modulesDataArray.forEach((modsData, idx) => {
+                if (modsData) {
+                  const weekId = weekIdsForModules[idx];
+                  modulesMap[weekId] = (Object.values(modsData) as CurriculumModule[]).sort((a, b) => a.order - b.order);
+                }
+              });
+              
               setWeeks(weeksMap);
               setModules(modulesMap);
             }
 
-            if (lessonsSnap.exists()) {
-              const lessonsData = Object.values(lessonsSnap.val()) as any[];
+            if (lessonsDataRaw) {
+              const lessonsData = Object.values(lessonsDataRaw) as any[];
               const lessonsMap: Record<string, any[]> = {};
               lessonsData.forEach(lesson => {
                 if (!lessonsMap[lesson.moduleId]) lessonsMap[lesson.moduleId] = [];
                 lessonsMap[lesson.moduleId].push(lesson);
               });
-              // Sort lessons in each module
               Object.keys(lessonsMap).forEach(modId => {
                 lessonsMap[modId].sort((a, b) => a.order - b.order);
               });
               setLessons(lessonsMap);
             }
+          } else {
+            console.warn("[Academy] Skill not found in skillsData for pathName:", pathName);
           }
+        } else {
+          console.error("[Academy] No skills defined in database.");
         }
       } catch (error) {
         console.error("Error fetching academy data:", error);
@@ -125,8 +151,10 @@ export const AcademyPathPage: React.FC = () => {
       }
     };
 
-    fetchAcademyData();
-  }, [pathName]);
+    if (!userLoading && user && profileReady) {
+      fetchAcademyData();
+    }
+  }, [pathName, userLoading, user, profileReady]);
 
   if (userLoading || loading) return <LoadingScreen message="LOADING ACADEMY PATH..." />;
 

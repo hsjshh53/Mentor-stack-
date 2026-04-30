@@ -57,14 +57,24 @@ export const ManageCurriculum: React.FC = () => {
     const savedSkillId = localStorage.getItem('lastSelectedSkillId');
     const skillsRef = ref(db, 'skills');
     const unsubscribe = onValue(skillsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const skillsData = Object.values(snapshot.val()) as Skill[];
-        setSkills(skillsData);
-        if (savedSkillId) {
-          const skill = skillsData.find(s => s.id === savedSkillId);
-          if (skill) setSelectedSkill(skill);
+      console.log("[ManageCurriculum] SKILLS SNAPSHOT:", snapshot.val());
+      try {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const skillsData = Object.values(data) as Skill[];
+          setSkills(skillsData);
+          if (savedSkillId) {
+            const skill = skillsData.find(s => s.id === savedSkillId);
+            if (skill) setSelectedSkill(skill);
+          }
         }
+      } catch (err) {
+        console.error("[ManageCurriculum] Skills processing error:", err);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      console.error("[ManageCurriculum] Skills fetch error:", error);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -86,12 +96,17 @@ export const ManageCurriculum: React.FC = () => {
     const lessonsRef = ref(db, `ai_generated_lessons/${selectedSkill.id}`);
 
     onValue(pathRef, (snapshot) => {
-      setPath(snapshot.val());
+      console.log("[ManageCurriculum] PATH SNAPSHOT:", snapshot.val());
+      setPath(snapshot.val() || null);
+    }, (error) => {
+      console.error("[ManageCurriculum] Path fetch error:", error);
     });
 
     onValue(lessonsRef, (snapshot) => {
+      console.log("[ManageCurriculum] LESSONS SNAPSHOT:", snapshot.val());
       if (snapshot.exists()) {
-        const lessons = Object.values(snapshot.val()) as any[];
+        const data = snapshot.val() || {};
+        const lessons = Object.values(data) as any[];
         setAllLessons(lessons);
         const counts: Record<string, number> = {};
         lessons.forEach(l => {
@@ -102,11 +117,15 @@ export const ManageCurriculum: React.FC = () => {
         setAllLessons([]);
         setLessonCounts({});
       }
+    }, (error) => {
+      console.error("[ManageCurriculum] Lessons fetch error:", error);
     });
 
     onValue(stagesRef, (snapshot) => {
+      console.log("[ManageCurriculum] STAGES SNAPSHOT:", snapshot.val());
       if (snapshot.exists()) {
-        const stagesData: CurriculumStage[] = Object.values(snapshot.val());
+        const data = snapshot.val() || {};
+        const stagesData: CurriculumStage[] = Object.values(data);
         setStages(stagesData.sort((a, b) => a.order - b.order));
         
         // Fetch weeks for each stage
@@ -114,7 +133,8 @@ export const ManageCurriculum: React.FC = () => {
           const weeksRef = ref(db, `curriculum_weeks/${stage.id}`);
           onValue(weeksRef, (weekSnapshot) => {
             if (weekSnapshot.exists()) {
-              const weeksData = Object.values(weekSnapshot.val()) as CurriculumWeek[];
+              const weekDataRaw = weekSnapshot.val() || {};
+              const weeksData = Object.values(weekDataRaw) as CurriculumWeek[];
               setWeeks(prev => ({
                 ...prev,
                 [stage.id]: weeksData.sort((a, b) => a.weekNumber - b.weekNumber)
@@ -125,15 +145,24 @@ export const ManageCurriculum: React.FC = () => {
                 const modulesRef = ref(db, `curriculum_modules/${week.id}`);
                 onValue(modulesRef, (modSnapshot) => {
                   if (modSnapshot.exists()) {
-                    const mods = Object.values(modSnapshot.val()) as CurriculumModule[];
+                    const modDataRaw = modSnapshot.val() || {};
+                    const mods = Object.values(modDataRaw) as CurriculumModule[];
                     setModules(prev => ({
                       ...prev,
                       [week.id]: mods.sort((a, b) => a.order - b.order)
                     }));
+                  } else {
+                    setModules(prev => ({ ...prev, [week.id]: [] }));
                   }
+                }, (modError) => {
+                  console.error(`[ManageCurriculum] Modules fetch error for week ${week.id}:`, modError);
                 });
               });
+            } else {
+              setWeeks(prev => ({ ...prev, [stage.id]: [] }));
             }
+          }, (weekError) => {
+            console.error(`[ManageCurriculum] Weeks fetch error for stage ${stage.id}:`, weekError);
           });
         });
       } else {
@@ -141,6 +170,8 @@ export const ManageCurriculum: React.FC = () => {
         setWeeks({});
         setModules({});
       }
+    }, (error) => {
+      console.error("[ManageCurriculum] Stages fetch error:", error);
     });
   }, [selectedSkill]);
 
@@ -384,33 +415,33 @@ export const ManageCurriculum: React.FC = () => {
             >
               <option value="">Choose a program...</option>
               <optgroup label="Career Paths">
-                {skills.filter(s => s.category === 'career-path').map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
+                {(skills || []).filter(s => s.category === 'career-path').map(s => (
+                  <option key={`path-${s.id}`} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
               <optgroup label="Programming Languages">
-                {skills.filter(s => s.category === 'coding-languages').map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
+                {(skills || []).filter(s => s.category === 'coding-languages').map(s => (
+                  <option key={`lang-${s.id}`} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
               <optgroup label="Development Skills">
-                {skills.filter(s => s.category === 'development-skill').map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
+                {(skills || []).filter(s => s.category === 'development-skill').map(s => (
+                  <option key={`dev-${s.id}`} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
               <optgroup label="Tools & Foundations">
-                {skills.filter(s => s.category === 'tool-foundation').map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
+                {(skills || []).filter(s => s.category === 'tool-foundation').map(s => (
+                  <option key={`tool-${s.id}`} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
               <optgroup label="Career Prep">
-                {skills.filter(s => s.category === 'career-prep').map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
+                {(skills || []).filter(s => s.category === 'career-prep').map(s => (
+                  <option key={`prep-${s.id}`} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
               <optgroup label="Other">
-                {skills.filter(s => !['career-path', 'coding-languages', 'tool-foundation', 'development-skill', 'career-prep'].includes(s.category as string)).map(s => (
-                  <option key={s.id} value={s.id}>{s.title}</option>
+                {(skills || []).filter(s => !['career-path', 'coding-languages', 'tool-foundation', 'development-skill', 'career-prep'].includes(s.category as string)).map(s => (
+                  <option key={`other-${s.id}`} value={s.id}>{s.title}</option>
                 ))}
               </optgroup>
             </Select>
@@ -552,7 +583,7 @@ export const ManageCurriculum: React.FC = () => {
                 </Button>
               </div>
 
-              {stages.map((stage) => (
+              {(stages || []).map((stage) => (
                 <div key={stage.id} className="space-y-4">
                   <div 
                     onClick={() => toggleStage(stage.id)}
@@ -564,7 +595,7 @@ export const ManageCurriculum: React.FC = () => {
                       </div>
                       <div className="text-left">
                         <h4 className="font-black text-lg">{stage.title}</h4>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20">{stage.levelName} Stage • {weeks[stage.id]?.length || 0} Weeks</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20">{stage.levelName} Stage • {(weeks[stage.id] || []).length || 0} Weeks</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -614,7 +645,7 @@ export const ManageCurriculum: React.FC = () => {
                             onClick={() => {
                               setParentId(stage.id);
                               setEditingItem(null);
-                              setFormData({ title: '', description: '', weekNumber: (weeks[stage.id]?.length || 0) + 1 });
+                              setFormData({ title: '', description: '', weekNumber: ((weeks[stage.id] || []).length || 0) + 1 });
                               setIsWeekModalOpen(true);
                             }}
                             className="h-8 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:bg-emerald-500/10"
@@ -623,7 +654,7 @@ export const ManageCurriculum: React.FC = () => {
                             Add Week
                           </Button>
                         </div>
-                        {weeks[stage.id]?.map((week) => (
+                        {(weeks[stage.id] || []).map((week) => (
                           <div key={week.id} className="space-y-2">
                             <div 
                               onClick={() => toggleWeek(week.id)}
@@ -686,7 +717,7 @@ export const ManageCurriculum: React.FC = () => {
                                       onClick={() => {
                                         setParentId(week.id);
                                         setEditingItem(null);
-                                        setFormData({ title: '', estimatedDuration: '45 mins', order: (modules[week.id]?.length || 0) + 1 });
+                                        setFormData({ title: '', estimatedDuration: '45 mins', order: ((modules[week.id] || []).length || 0) + 1 });
                                         setIsModuleModalOpen(true);
                                       }}
                                       className="h-8 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:bg-emerald-500/10"
@@ -695,7 +726,7 @@ export const ManageCurriculum: React.FC = () => {
                                       Add Module
                                     </Button>
                                   </div>
-                                  {modules[week.id]?.map((module) => (
+                                  {(modules[week.id] || []).map((module) => (
                                     <div key={module.id} className="space-y-2">
                                       <div 
                                         onClick={() => toggleModule(module.id)}
@@ -788,19 +819,42 @@ export const ManageCurriculum: React.FC = () => {
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden ml-8 border-l border-white/5 pl-4 space-y-2"
                                           >
-                                            {allLessons.filter(l => l.moduleId === module.id).length === 0 ? (
+                                            {(allLessons || []).filter(l => l.moduleId === module.id).length === 0 ? (
                                               <p className="text-[10px] text-white/20 italic py-2">No lessons generated yet.</p>
                                             ) : (
-                                              allLessons.filter(l => l.moduleId === module.id).sort((a, b) => a.order - b.order).map((lesson) => (
-                                                <div key={lesson.id} className="flex items-center justify-between p-3 bg-white/[0.01] rounded-lg border border-transparent hover:border-white/5 transition-all">
-                                                  <div className="flex items-center gap-3">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40" />
-                                                    <span className="text-[10px] font-medium text-white/60">{lesson.title}</span>
-                                                  </div>
-                                                  <Badge className="bg-white/5 text-[7px] text-white/20 uppercase tracking-widest">
-                                                    {lesson.difficulty}
-                                                  </Badge>
-                                                </div>
+                                              (allLessons || []).filter(l => l.moduleId === module.id).sort((a, b) => a.order - b.order).map((lesson) => (
+                                                 <div key={lesson.id} className="flex items-center justify-between p-3 bg-white/[0.01] rounded-lg border border-transparent hover:border-white/5 transition-all">
+                                                   <div className="flex items-center gap-3">
+                                                     <div className={`w-1.5 h-1.5 rounded-full ${
+                                                       lesson.status === 'approved' ? 'bg-emerald-500' : 
+                                                       lesson.status === 'needs_repair' ? 'bg-orange-500' : 'bg-purple-500'
+                                                     }`} />
+                                                     <div className="flex flex-col">
+                                                       <span className="text-[10px] font-medium text-white/60">{lesson.title}</span>
+                                                       <span className="text-[8px] text-white/20 font-black uppercase tracking-widest">Score: {lesson.score || 'N/A'}/100</span>
+                                                     </div>
+                                                   </div>
+                                                   <div className="flex items-center gap-2">
+                                                     <Badge className={`text-[7px] uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                                                       lesson.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                       lesson.status === 'needs_repair' ? 'bg-orange-500/10 text-orange-500' :
+                                                       'bg-purple-500/10 text-purple-500'
+                                                     }`}>
+                                                       {lesson.status?.replace('_', ' ') || 'pending'}
+                                                     </Badge>
+                                                     <Button
+                                                       size="sm"
+                                                       variant="ghost"
+                                                       onClick={(e) => {
+                                                         e.stopPropagation();
+                                                         navigate(`/admin/review-lessons/${selectedSkill.id}/${module.id}`);
+                                                       }}
+                                                       className="h-6 w-6 p-0 rounded-md text-white/20 hover:text-white"
+                                                     >
+                                                       <ChevronRight size={12} />
+                                                     </Button>
+                                                   </div>
+                                                 </div>
                                               ))
                                             )}
                                           </motion.div>

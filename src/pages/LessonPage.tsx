@@ -8,7 +8,8 @@ import {
   AlertCircle, Lightbulb, Target, RefreshCcw,
   Bell, User, Menu, X, Sparkles, Star, Layers
 } from 'lucide-react';
-import { ref, get } from 'firebase/database';
+import { firebaseSafeGet, firebaseSafeUpdate } from '../lib/FirebaseService';
+import { ref } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
@@ -22,7 +23,7 @@ import { AnimatePresence } from 'motion/react';
 export const LessonPage: React.FC = () => {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profileReady } = useAuth();
   const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
   const [lesson, setLesson] = useState<LessonContent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,14 +34,15 @@ export const LessonPage: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [skillTitle, setSkillTitle] = useState<string>('');
   const [moduleTitle, setModuleTitle] = useState<string>('');
+  const [isDiagnosticRunning, setIsDiagnosticRunning] = useState(false);
 
   useEffect(() => {
-    if (progress?.activeProgramId) {
-      get(ref(db, `skills/${progress.activeProgramId}`)).then(snap => {
-        if (snap.exists()) setSkillTitle(snap.val().title);
+    if (progress?.activeProgramId && profileReady) {
+      firebaseSafeGet(ref(db, `skills/${progress.activeProgramId}`), "SkillTitle").then((data: any) => {
+        if (data) setSkillTitle(data.title);
       });
     }
-  }, [progress]);
+  }, [progress, profileReady]);
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -48,7 +50,7 @@ export const LessonPage: React.FC = () => {
       console.log("LessonPage: userLoading =", userLoading);
       console.log("LessonPage: progress =", progress);
 
-      if (userLoading) return;
+      if (userLoading || !profileReady || !user) return;
 
       if (!topic) {
         console.warn("LessonPage: Missing topic parameter");
@@ -63,7 +65,6 @@ export const LessonPage: React.FC = () => {
           setLoading(false);
           navigate('/onboarding');
         } else if (!progress) {
-          // This case shouldn't happen if userLoading is false, but just in case
           setError("User progress not found.");
           setLoading(false);
         }
@@ -75,19 +76,24 @@ export const LessonPage: React.FC = () => {
       try {
         console.log("LessonPage: Fetching lesson content for", topic);
         
-        // 1. Try to fetch from approved lessons first
-        const lessonRef = ref(db, `lessons/${topic}`);
-        const lessonSnap = await get(lessonRef);
+        // 1. Try to fetch from approved lessons path
+        let lessonData: any = null;
+        if (progress.activeProgramId) {
+          const categorizedRef = ref(db, `lessons/${progress.activeProgramId}/${topic}`);
+          lessonData = await firebaseSafeGet(categorizedRef, "CategorizedLesson");
+        }
+
+        if (!lessonData) {
+          const lessonRef = ref(db, `lessons/${topic}`);
+          lessonData = await firebaseSafeGet(lessonRef, "ApprovedLesson");
+        }
         
-        if (lessonSnap.exists()) {
-          console.log("LessonPage: Approved lesson found in DB");
-          const data = lessonSnap.val();
-          setLesson(data);
+        if (lessonData && lessonData.status === 'published') {
+          setLesson(lessonData as LessonContent);
           
-          // Fetch module title if moduleId is present
-          if (data.moduleId && data.weekId) {
-            get(ref(db, `curriculum_modules/${data.weekId}/${data.moduleId}`)).then(mSnap => {
-              if (mSnap.exists()) setModuleTitle(mSnap.val().title);
+          if ((lessonData as any).moduleId && (lessonData as any).weekId) {
+            firebaseSafeGet(ref(db, `curriculum_modules/${(lessonData as any).weekId}/${(lessonData as any).moduleId}`), "ModuleTitle").then((mData: any) => {
+              if (mData) setModuleTitle(mData.title);
             });
           }
           
@@ -95,37 +101,9 @@ export const LessonPage: React.FC = () => {
           return;
         }
 
-        // 2. Try to fetch from pending AI lessons (for preview/review if needed, or fallback)
-        if (progress.activeProgramId) {
-          const pendingRef = ref(db, `ai_generated_lessons/${progress.activeProgramId}/${topic}`);
-          const pendingSnap = await get(pendingRef);
-          if (pendingSnap.exists()) {
-            console.log("LessonPage: Pending AI lesson found in DB");
-            const data = pendingSnap.val();
-            setLesson(data);
-            
-            // Fetch module title if moduleId is present
-            if (data.moduleId && data.weekId) {
-              get(ref(db, `curriculum_modules/${data.weekId}/${data.moduleId}`)).then(mSnap => {
-                if (mSnap.exists()) setModuleTitle(mSnap.val().title);
-              });
-            }
-            
-            setLoading(false);
-            return;
-          }
-        }
-
-        // 3. Fallback to on-the-fly generation if enabled (or if it's a legacy topic)
-        console.log("LessonPage: No DB lesson found, falling back to on-the-fly generation");
-        const content = await generateLesson(progress.selectedPath, progress.currentStage, topic, progress.activeProgramId);
-        
-        if (content) {
-          setLesson(content);
-        } else {
-          console.error("LessonPage: No content returned for", topic);
-          setError("Could not load lesson content.");
-        }
+        // 2. DISALLOW PENDING OR ON-THE-FLY FOR STUDENTS
+        console.warn("LessonPage: No published lesson approved for", topic);
+        setError("This lesson is pending moderation. Students cannot access it until approved.");
       } catch (error: any) {
         console.error("LessonPage: Error fetching lesson:", error);
         setError(error.message || "An unexpected error occurred.");
@@ -133,10 +111,43 @@ export const LessonPage: React.FC = () => {
         setLoading(false);
       }
     };
-    fetchLesson();
-  }, [progress, topic, userLoading, navigate]);
+
+    if (!userLoading && user && profileReady) {
+      fetchLesson();
+    }
+  }, [progress, topic, userLoading, user, profileReady, navigate]);
 
   if (userLoading || loading) return <LoadingScreen message="PREPARING LESSON..." />;
+
+  const isPlaceholder = lesson?.explanation?.includes("Draft lesson placeholder") || lesson?.status === 'generating';
+
+  if (isPlaceholder) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <div className="relative">
+          <div className="w-20 h-20 rounded-full border-2 border-emerald-500/20" />
+          <div className="absolute inset-0 w-20 h-20 rounded-full border-t-2 border-emerald-500 animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center text-emerald-500">
+            <Sparkles size={24} className="animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black tracking-tight">Lesson is being generated</h1>
+          <p className="text-white/40 max-w-md mx-auto">
+            Please wait while our AI Academy builds your premium content. This usually takes 30-60 seconds.
+          </p>
+        </div>
+        <Button 
+          variant="outline"
+          onClick={() => navigate('/dashboard')}
+          className="h-14 px-8 rounded-2xl border-white/10"
+        >
+          <ArrowLeft size={20} className="mr-2" />
+          Back to Dashboard
+        </Button>
+      </div>
+    );
+  }
 
   if (error || !lesson) {
     return (
@@ -161,22 +172,73 @@ export const LessonPage: React.FC = () => {
     );
   }
 
-  const handleComplete = async () => {
-    if (!lesson || !progress) return;
+  const logDiagnostic = async (buttonName: string, status: 'started' | 'success' | 'failed', error?: string) => {
+    console.log(`[Lesson Diagnostics] Button: ${buttonName} | Topic: ${topic} | State: ${status}${error ? ` | Error: ${error}` : ''}`);
     
+    // Audit logging for critical lesson progress
+    const auditRef = ref(db, `lesson_audit_logs/${Date.now()}`);
+    try {
+      await firebaseSafeUpdate(auditRef, {
+        button_name: buttonName,
+        topic: topic || 'unknown',
+        user_uid: user?.uid,
+        timestamp: Date.now(),
+        status,
+        error: error || null
+      }, "LessonDiagnostic");
+    } catch (err) {
+      console.error("Audit log failed:", err);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!lesson || !progress) {
+      alert("Lesson data not loaded properly. Please refresh.");
+      return;
+    }
+    
+    await logDiagnostic('Complete Lesson', 'started', '');
+
     // Check if all quiz questions are answered correctly
     const allCorrect = lesson.quiz.every((q, idx) => selectedAnswers[idx] === q.correctIndex);
     if (!allCorrect) {
+      await logDiagnostic('Complete Lesson', 'failed', 'Quiz incomplete or incorrect');
       alert("Please complete the quiz correctly before finishing the lesson!");
       return;
     }
 
-    await addXP(50);
-    await updateProgress({
-      completedLessons: [...progress.completedLessons, lesson.id]
-    });
+    try {
+      if (typeof addXP !== 'function' || typeof updateProgress !== 'function') {
+         throw new Error("Progress tracking service unavailable.");
+      }
 
-    navigate('/dashboard');
+      await addXP(50);
+      
+      const completedLessons = progress.completedLessons || [];
+      if (!completedLessons.includes(lesson.id)) {
+        await updateProgress({
+          completedLessons: [...completedLessons, lesson.id]
+        });
+      }
+
+      // 🔁 AUTONOMOUS ENGINE: Ensure next content is ready
+      if (progress.activeProgramId && skillTitle) {
+        console.log("Autonomous Engine: Checking for next content...");
+        // Non-blocking trigger of the loop to ensure student is never blocked
+        import('../services/CurriculumEngineService').then(m => {
+          m.CurriculumEngineService.runAutonomousLoop(progress.activeProgramId!, skillTitle, (msg) => {
+            console.log(`[Auto-Engine] ${msg}`);
+          });
+        });
+      }
+
+      await logDiagnostic('Complete Lesson', 'success', '');
+      navigate('/dashboard');
+    } catch (err: any) {
+      await logDiagnostic('Complete Lesson', 'failed', err.message);
+      console.error("Error completing lesson:", err);
+      alert(`Could not save progress. ${err.message}`);
+    }
   };
 
   return (
@@ -235,9 +297,14 @@ export const LessonPage: React.FC = () => {
                 <Clock size={12} />
                 5 mins
               </div>
-              <div className="flex items-center gap-2 text-white/20 text-[10px] font-bold uppercase tracking-widest">
+              <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-lg border ${
+                lesson?.difficulty?.toLowerCase() === 'intermediate' ? 'text-amber-400 bg-amber-400/10 border-amber-400/20' :
+                lesson?.difficulty?.toLowerCase() === 'advanced' ? 'text-rose-400 bg-rose-400/10 border-rose-400/20' :
+                lesson?.difficulty?.toLowerCase() === 'expert' ? 'text-purple-400 bg-purple-400/10 border-purple-400/20' :
+                'text-emerald-400 bg-emerald-400/10 border-emerald-400/20'
+              }`}>
                 <Trophy size={12} />
-                Beginner
+                {lesson?.difficulty || 'Beginner'}
               </div>
             </div>
 
@@ -325,10 +392,25 @@ export const LessonPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
-              <Sparkles size={120} />
-            </div>
           </Card>
+
+          {/* Common Mistakes Section (New) */}
+          {(lesson as any).commonMistakes && (lesson as any).commonMistakes.length > 0 && (
+            <Card className="p-8 border-2 border-red-500/20 bg-red-500/5 space-y-6">
+              <div className="flex items-center gap-3 text-red-500">
+                <AlertCircle size={20} />
+                <h4 className="font-black uppercase text-xs tracking-[0.2em]">Common Beginner Mistakes</h4>
+              </div>
+              <div className="space-y-3">
+                {(lesson as any).commonMistakes.map((mistake: string, i: number) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-2xl bg-black/20 border border-white/5">
+                    <X size={16} className="text-red-500 shrink-0 mt-1" />
+                    <p className="text-white/70 text-sm leading-relaxed font-medium">{mistake}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Analogy */}
           <Card className="p-8 border-2 border-indigo-500/20 bg-indigo-500/10 space-y-4">
@@ -336,20 +418,41 @@ export const LessonPage: React.FC = () => {
               <Lightbulb size={20} />
               <h4 className="font-black uppercase text-xs tracking-[0.2em]">Real-World Analogy</h4>
             </div>
-            <p className="text-white/70 leading-relaxed italic">"{lesson?.analogy || 'Think of it like learning a new language.'}"</p>
+            <p className="text-white/70 leading-relaxed italic">"{lesson?.analogy || 'This concept works similarly to real-world communication systems.'}"</p>
           </Card>
+
+          {/* Exercises Section (New) */}
+          {(lesson as any).exercises && (lesson as any).exercises.length > 0 && (
+            <section className="space-y-6">
+              <div className="flex items-center gap-3 text-amber-400">
+                <Target size={20} />
+                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Practice Exercises</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(lesson as any).exercises.map((ex: string, i: number) => (
+                  <Card key={i} className="p-6 bg-white/[0.02] border-white/10 hover:border-amber-400/30 transition-all group">
+                    <div className="flex gap-4">
+                      <div className="w-8 h-8 rounded-lg bg-amber-400/10 text-amber-400 flex items-center justify-center text-xs font-black shrink-0 group-hover:scale-110 transition-transform">
+                        {i + 1}
+                      </div>
+                      <p className="text-white/60 text-sm leading-relaxed">{ex}</p>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Code Block Section */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 text-emerald-400">
                 <Terminal size={20} />
-                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Code Example</h3>
+                <h3 className="font-black uppercase text-xs tracking-[0.2em]">Technical Implementation</h3>
               </div>
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(lesson?.codeExample || '');
-                  // Add toast notification here if available
+                  navigator.clipboard.writeText(lesson?.codeImplementation || lesson?.codeExample || '');
                 }}
                 className="text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-emerald-400 transition-colors"
               >
@@ -365,74 +468,54 @@ export const LessonPage: React.FC = () => {
                   <div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
                 <pre className="text-emerald-300/90">
-                  {lesson?.codeExample || '// Code example loading...'}
+                  {lesson?.codeImplementation || lesson?.codeExample || '// Advanced implementation loading...'}
                 </pre>
               </div>
             </div>
           </section>
 
-          {/* Line by Line */}
+          {/* Logic Decoding (Line by Line) */}
           <section className="space-y-6">
             <div className="flex items-center gap-3 text-emerald-400">
               <Code size={20} />
-              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Line-by-Line Explanation</h3>
+              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Logic Decoding</h3>
             </div>
-            <p className="text-lg text-white/60 leading-relaxed whitespace-pre-wrap">
-              {lesson?.lineByLine || 'Loading breakdown...'}
-            </p>
+            <div className="space-y-4">
+              {((Array.isArray((lesson as any).lineByLineArray) && (lesson as any).lineByLineArray.length > 0) 
+                  ? (lesson as any).lineByLineArray 
+                  : (lesson?.lineByLine?.split('\n') || [])
+                ).filter((l: string) => l.trim().length > 0).map((line: string, i: number) => (
+                <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                  <span className="text-emerald-500 font-mono text-xs pt-1 opacity-40">{String(i+1).padStart(2, '0')}</span>
+                  <p className="text-white/70 text-sm leading-relaxed">{line}</p>
+                </div>
+              ))}
+              {(!(Array.isArray((lesson as any).lineByLineArray) ? (lesson as any).lineByLineArray : lesson?.lineByLine) || (lesson?.lineByLine?.length === 0)) && (
+                <p className="text-white/20 italic text-sm">Deep logic breakdown in progress...</p>
+              )}
+            </div>
           </section>
 
-          {/* Teaching Cards Grid */}
-          <div className="grid grid-cols-1 gap-6">
-            {/* Common Mistakes */}
-            <Card className="p-8 border-2 border-red-500/20 bg-red-500/10 space-y-4">
-              <div className="flex items-center gap-3 text-red-400">
-                <AlertCircle size={20} />
-                <h4 className="font-black uppercase text-xs tracking-[0.2em]">Common Mistakes</h4>
+          {/* Implementation Lab / Project */}
+          <section className="space-y-8">
+            <div className="flex items-center gap-3 text-emerald-400">
+              <Layers size={20} />
+              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Implementation Lab</h3>
+            </div>
+            
+            <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 space-y-8">
+              <div className="space-y-2">
+                <h4 className="text-2xl font-black tracking-tight">{((lesson as any).practicalProject?.title || (lesson as any).projectTitle || lesson?.title || 'Practical Skill Application')}</h4>
+                <p className="text-white/40 text-sm italic">"{((lesson as any).practicalProject?.description || 'Real-world lab to solidify your mastery.')}"</p>
               </div>
-              <div className="space-y-3">
-                {(lesson.commonMistakes || []).map((mistake, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 shrink-0" />
-                    <p className="text-white/70 leading-relaxed">{mistake}</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
 
-            {/* Practice Exercise */}
-            <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/10 space-y-4">
-              <div className="flex items-center gap-3 text-emerald-400">
-                <Target size={20} />
-                <h4 className="font-black uppercase text-xs tracking-[0.2em]">Practice Exercise</h4>
-              </div>
-              <p className="text-white/70 leading-relaxed">{lesson?.practice || 'Try to implement the code above in your own editor.'}</p>
-            </Card>
-
-            {/* Mini Challenge */}
-            <Card className="p-8 border-2 border-orange-500/20 bg-orange-500/10 space-y-4">
-              <div className="flex items-center gap-3 text-orange-400">
-                <Zap size={20} />
-                <h4 className="font-black uppercase text-xs tracking-[0.2em]">Mini Challenge</h4>
-              </div>
-              <p className="text-white/70 leading-relaxed">{lesson?.challenge || 'Can you modify the code to do something slightly different?'}</p>
-            </Card>
-
-            {/* Project Section (New) */}
-            {(lesson as any).project && (
-              <Card className="p-8 border-2 border-emerald-500/20 bg-emerald-500/5 space-y-6">
-                <div className="flex items-center gap-3 text-emerald-400">
-                  <Layers size={20} />
-                  <h4 className="font-black uppercase text-xs tracking-[0.2em]">Module Project</h4>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <h5 className="text-xl font-black">{(lesson as any).project.title}</h5>
-                  <p className="text-white/60 leading-relaxed">{(lesson as any).project.description}</p>
-                  <div className="space-y-3 pt-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Implementation Steps:</p>
-                    {((lesson as any).project.steps || []).map((step: string, i: number) => (
-                      <div key={i} className="flex gap-4 items-start">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-[10px] font-black shrink-0 border border-emerald-500/20">
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Implementation Steps</h5>
+                  <div className="space-y-3">
+                    {((lesson as any).practicalProject?.steps || (lesson as any).implementationSteps || ['Define core logic', 'Build functional component', 'Verify system output']).map((step: string, i: number) => (
+                      <div key={i} className="flex gap-3 items-start group">
+                        <div className="w-5 h-5 rounded-md bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-[10px] font-black shrink-0 border border-emerald-500/20 transition-all group-hover:scale-110">
                           {i + 1}
                         </div>
                         <p className="text-sm text-white/70 leading-relaxed">{step}</p>
@@ -440,14 +523,43 @@ export const LessonPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              </Card>
-            )}
 
-          {/* Test (Quiz) Section */}
+                <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500">Career Readiness</h5>
+                  <div className="space-y-3">
+                    {((lesson as any).careerReadiness || ['Essential for production environments', 'High-value senior developer skill']).map((tip: string, i: number) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500 mt-2 shrink-0" />
+                        <p className="text-sm text-white/70 leading-relaxed font-medium italic">{tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Interview Mastery Box */}
+              <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/20 space-y-4">
+                <div className="flex items-center gap-2 text-orange-400">
+                  <MessageSquare size={16} />
+                  <h5 className="text-[10px] font-black uppercase tracking-widest">Interview Mastery</h5>
+                </div>
+                <div className="space-y-3">
+                   {((lesson as any).interviewMastery || ['Explain the architectural benefits', 'Discuss performance considerations']).map((tip: string, i: number) => (
+                      <div key={i} className="flex gap-2">
+                        <span className="text-orange-500/50 text-xs font-black">TIP:</span>
+                        <p className="text-sm text-white/60 leading-relaxed">{tip}</p>
+                      </div>
+                   ))}
+                </div>
+              </div>
+            </Card>
+          </section>
+
+          {/* Conceptual Assessment (Quiz) */}
           <section className="space-y-8">
             <div className="flex items-center gap-3 text-emerald-400">
               <HelpCircle size={20} />
-              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Test Your Knowledge</h3>
+              <h3 className="font-black uppercase text-xs tracking-[0.2em]">Conceptual Assessment</h3>
             </div>
             <div className="space-y-4">
               {(lesson.quiz || []).map((q, qIdx) => (
@@ -499,15 +611,23 @@ export const LessonPage: React.FC = () => {
             </div>
           </section>
 
-          {/* Recap */}
-          <Card className="p-8 border-2 border-purple-500/20 bg-purple-500/10 space-y-4">
+          {/* Summary & Next Connection (New) */}
+          <Card className="p-8 border-2 border-purple-500/20 bg-purple-500/10 space-y-6">
             <div className="flex items-center gap-3 text-purple-400">
               <RefreshCcw size={20} />
-              <h4 className="font-black uppercase text-xs tracking-[0.2em]">Recap</h4>
+              <h4 className="font-black uppercase text-xs tracking-[0.2em]">Lesson Summary</h4>
             </div>
-            <p className="text-white/70 leading-relaxed">{lesson?.recap || 'Great job completing this lesson!'}</p>
+            <div className="space-y-4">
+              <p className="text-white/70 leading-relaxed">{(lesson as any).summary || lesson?.recap || 'Great job completing this lesson! You have taken another step toward mastery.'}</p>
+              
+              {(lesson as any).nextLessonConnection && (
+                <div className="pt-4 border-t border-purple-500/10">
+                  <p className="text-[10px] font-black uppercase text-purple-400/50 tracking-widest mb-2">Connecting to next lesson:</p>
+                  <p className="text-sm text-white/50 italic">"{(lesson as any).nextLessonConnection}"</p>
+                </div>
+              )}
+            </div>
           </Card>
-          </div>
         </div>
       </main>
 

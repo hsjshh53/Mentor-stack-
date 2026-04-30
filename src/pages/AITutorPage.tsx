@@ -16,11 +16,12 @@ import {
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { ref, get } from 'firebase/database';
+import { ref } from 'firebase/database';
 import { db } from '../lib/firebase';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { firebaseSafeGet } from '../lib/FirebaseService';
 
 // --- Components ---
 
@@ -126,7 +127,7 @@ export const AITutorPage: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [searchParams] = useSearchParams();
   const { progress, loading: userLoading } = useUserData();
-  const { user } = useAuth();
+  const { user, profileReady } = useAuth();
   
   const [contextData, setContextData] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -141,20 +142,18 @@ export const AITutorPage: React.FC = () => {
       if (!skillId) return;
       
       try {
-        const [skillSnap, lessonsSnap] = await Promise.all([
-          get(ref(db, `skills/${skillId}`)),
-          lessonId ? get(ref(db, `lessons/${lessonId}`)) : Promise.resolve(null),
+        const [skillData, lessonData] = await Promise.all([
+          firebaseSafeGet(ref(db, `skills/${skillId}`), "SkillContext"),
+          lessonId ? firebaseSafeGet(ref(db, `lessons/${lessonId}`), "LessonContext") : Promise.resolve(null),
         ]);
 
-        const lessonData = lessonsSnap?.val();
         let finalLessonContent = lessonData;
         if (lessonId && !lessonData && skillId) {
-          const aiLessonSnap = await get(ref(db, `ai_generated_lessons/${skillId}/${lessonId}`));
-          finalLessonContent = aiLessonSnap.val();
+          finalLessonContent = await firebaseSafeGet(ref(db, `ai_generated_lessons/${skillId}/${lessonId}`), "AILessonContext");
         }
 
         setContextData({
-          skill: skillSnap.val(),
+          skill: skillData,
           lesson: finalLessonContent
         });
       } catch (err) {
@@ -162,10 +161,10 @@ export const AITutorPage: React.FC = () => {
       }
     };
 
-    if (!userLoading) {
+    if (!userLoading && user && profileReady) {
       fetchContext();
     }
-  }, [skillId, lessonId, userLoading]);
+  }, [skillId, lessonId, userLoading, user, profileReady]);
 
   useEffect(() => {
     if (scrollRef.current) {

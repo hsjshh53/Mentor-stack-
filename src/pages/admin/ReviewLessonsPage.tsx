@@ -18,10 +18,36 @@ import {
 } from 'lucide-react';
 import { ref, onValue, update, remove, get } from 'firebase/database';
 import { db } from '../../lib/firebase';
-import { approveLesson } from '../../services/aiGeneratorService';
+import { approveLesson, repairLesson } from '../../services/aiGeneratorService';
+import { calculateLessonScore } from '../../lib/qualitySystem';
 import { motion, AnimatePresence } from 'motion/react';
 
-export const ReviewLessonsPage: React.FC = () => {
+class ReviewErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-12 text-center">
+          <Card className="p-8 border-red-500/20 bg-red-500/5">
+            <h2 className="text-xl font-black text-red-500 mb-2">Something went wrong loading lesson review.</h2>
+            <p className="text-sm text-white/40">Please refresh or go back to curriculum.</p>
+          </Card>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export const ReviewLessonsPageContent: React.FC = () => {
   const { skillId, moduleId } = useParams<{ skillId: string; moduleId: string }>();
   const navigate = useNavigate();
   
@@ -29,6 +55,7 @@ export const ReviewLessonsPage: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
+  const [repairing, setRepairing] = useState(false);
   const [editingLesson, setEditingLesson] = useState<any>(null);
   const [skill, setSkill] = useState<any>(null);
   const [module, setModule] = useState<any>(null);
@@ -38,36 +65,40 @@ export const ReviewLessonsPage: React.FC = () => {
 
     // Fetch Skill and Module info
     const skillRef = ref(db, `skills/${skillId}`);
-    get(skillRef).then(snap => setSkill(snap.val()));
+    get(skillRef).then(snap => setSkill(snap.val())).catch(err => console.error(err));
 
     // Fetch Pending Lessons
     const lessonsRef = ref(db, `ai_generated_lessons/${skillId}`);
     const unsubscribe = onValue(lessonsRef, (snapshot) => {
       if (snapshot.exists()) {
-        const allLessons = Object.values(snapshot.val()) as any[];
-        const moduleLessons = allLessons
-          .filter(l => l.moduleId === moduleId)
-          .sort((a, b) => a.order - b.order);
+        const data = snapshot.val();
+        const allLessons = Array.isArray(data) ? data : (data ? Object.values(data) : []);
+        const moduleLessons = (allLessons || [])
+          .filter(l => l && l.moduleId === moduleId)
+          .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
         setLessons(moduleLessons);
       } else {
         setLessons([]);
       }
+      setLoading(false);
+    }, (error) => {
+      console.error(error);
+      setLessons([]);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [skillId, moduleId]);
 
-  const currentLesson = lessons[currentIndex];
+  const currentLesson = lessons[currentIndex] || null;
 
   const handleApprove = async () => {
     if (!currentLesson || !skillId || !moduleId) return;
     setApproving(true);
     try {
       await approveLesson(skillId, currentLesson.id);
-      // Move to next lesson if available
       if (currentIndex < lessons.length - 1) {
-        // The list will update via onValue, but we might need to adjust index
+        // Stay on same index, the next lesson will roll in
       } else if (lessons.length === 1) {
         navigate('/admin/curriculum');
       }
@@ -81,16 +112,31 @@ export const ReviewLessonsPage: React.FC = () => {
 
   const handleReject = async () => {
     if (!currentLesson || !skillId) return;
-    if (!window.confirm('Are you sure you want to delete this AI-generated lesson?')) return;
+    if (!window.confirm('Are you sure you want to reject and delete this lesson?')) return;
     
     try {
       await remove(ref(db, `ai_generated_lessons/${skillId}/${currentLesson.id}`));
+      if (currentIndex > 0) setCurrentIndex(prev => prev - 1);
       if (lessons.length === 1) {
         navigate('/admin/curriculum');
       }
     } catch (error) {
       console.error(error);
       alert('Failed to delete lesson');
+    }
+  };
+
+  const handleRepair = async () => {
+    if (!currentLesson || !skillId || !skill) return;
+    setRepairing(true);
+    try {
+      await repairLesson(currentLesson, skill.title);
+      alert('Lesson repaired successfully!');
+    } catch (error) {
+      console.error(error);
+      alert('Repair failed.');
+    } finally {
+      setRepairing(false);
     }
   };
 
@@ -109,19 +155,19 @@ export const ReviewLessonsPage: React.FC = () => {
     <AdminLayout>
       <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
         <Loader2 size={40} className="animate-spin text-emerald-500" />
-        <p className="text-white/40 font-black uppercase tracking-widest text-xs">Loading Lessons for Review...</p>
+        <p className="text-white/40 font-black uppercase tracking-widest text-xs">Loading lessons...</p>
       </div>
     </AdminLayout>
   );
 
-  if (lessons.length === 0) return (
+  if (!lessons || lessons.length === 0) return (
     <AdminLayout>
       <div className="h-[60vh] flex flex-col items-center justify-center space-y-6 text-center">
         <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
           <CheckCircle2 size={40} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-black tracking-tight">All Lessons Reviewed</h2>
+          <h2 className="text-2xl font-black tracking-tight">No lessons found.</h2>
           <p className="text-white/40 max-w-xs mx-auto">There are no more pending lessons to review in this module.</p>
         </div>
         <Button onClick={() => navigate('/admin/curriculum')} className="h-14 px-8 rounded-2xl">
@@ -150,7 +196,7 @@ export const ReviewLessonsPage: React.FC = () => {
                 <h1 className="text-2xl font-black tracking-tight">Review AI Lessons</h1>
               </div>
               <p className="text-white/40 font-medium text-sm">
-                {skill?.title} • Module: {currentLesson?.moduleTitle || 'Loading...'}
+                {skill?.title} • Module: {currentLesson?.moduleTitle || 'Reviewing...'}
               </p>
             </div>
           </div>
@@ -158,7 +204,7 @@ export const ReviewLessonsPage: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="text-right mr-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Progress</p>
-              <p className="text-sm font-black">{currentIndex + 1} / {lessons.length}</p>
+              <p className="text-sm font-black">{currentIndex + 1} / {(lessons || []).length}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button 
@@ -171,7 +217,7 @@ export const ReviewLessonsPage: React.FC = () => {
               </Button>
               <Button 
                 variant="ghost" 
-                disabled={currentIndex === lessons.length - 1}
+                disabled={currentIndex === (lessons || []).length - 1}
                 onClick={() => setCurrentIndex(prev => prev + 1)}
                 className="h-12 w-12 p-0 rounded-xl"
               >
@@ -189,7 +235,7 @@ export const ReviewLessonsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[8px] font-black uppercase tracking-widest">AI Generated Content</Badge>
-                  <h2 className="text-3xl font-black tracking-tight">{currentLesson.title}</h2>
+                  <h2 className="text-3xl font-black tracking-tight">{currentLesson?.title || "Untitled Lesson"}</h2>
                 </div>
                 <Button 
                   variant="ghost" 
@@ -201,37 +247,54 @@ export const ReviewLessonsPage: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Summary</h4>
-                  <p className="text-white/60 leading-relaxed">{currentLesson.summary}</p>
-                </div>
+                <div className="space-y-6">
+                 <div className="space-y-2">
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Learning Objective</h4>
+                   <p className="text-white/60 leading-relaxed font-bold">{currentLesson?.objective}</p>
+                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Explanation</h4>
-                  <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 text-white/80 leading-relaxed whitespace-pre-wrap">
-                    {currentLesson.explanation}
-                  </div>
-                </div>
+                 <div className="space-y-2">
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Analogy</h4>
+                   <p className="text-sm text-white/40 italic">"{currentLesson?.analogy}"</p>
+                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Analogy</h4>
-                    <p className="text-sm text-white/40 italic">"{currentLesson.analogy}"</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Pro Tip</h4>
-                    <p className="text-sm text-purple-400 font-medium">{currentLesson.proTip}</p>
-                  </div>
-                </div>
+                 <div className="space-y-2">
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Academic Explanation</h4>
+                   <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 text-white/80 leading-relaxed whitespace-pre-wrap">
+                     {currentLesson?.explanation}
+                   </div>
+                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Code Example</h4>
-                  <pre className="p-6 rounded-2xl bg-black/50 border border-white/5 text-emerald-400/80 font-mono text-sm overflow-x-auto">
-                    {currentLesson.codeExample}
-                  </pre>
-                </div>
-              </div>
+                 <div className="space-y-4">
+                   <div className="space-y-2">
+                     <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Code Masterpiece</h4>
+                     <pre className="p-6 rounded-2xl bg-black/50 border border-white/5 text-emerald-400 font-mono text-sm overflow-x-auto">
+                       {currentLesson?.codeExample}
+                     </pre>
+                   </div>
+                   <div className="space-y-2">
+                     <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Line-by-Line Breakdown</h4>
+                     <div className="p-4 rounded-xl bg-white/5 text-white/40 text-xs leading-relaxed whitespace-pre-wrap">
+                       {currentLesson?.codeExplanation}
+                     </div>
+                   </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div className="p-6 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 space-y-3">
+                     <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Interview Prep</h4>
+                     <ul className="space-y-2">
+                       {(currentLesson?.interviewQuestions || []).map((q: string, i: number) => (
+                         <li key={i} className="text-xs text-white/60">• {q}</li>
+                       ))}
+                     </ul>
+                   </div>
+                   <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 space-y-3">
+                     <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Real-World Insight (FAANG)</h4>
+                     <p className="text-xs text-white/60 italic leading-relaxed">{currentLesson?.realWorldInsight}</p>
+                   </div>
+                 </div>
+               </div>
             </Card>
 
             {/* Quiz Section */}
@@ -241,15 +304,15 @@ export const ReviewLessonsPage: React.FC = () => {
                 Knowledge Check
               </h3>
               <div className="space-y-8">
-                {currentLesson.quiz?.map((q: any, i: number) => (
+                {(currentLesson?.quiz || []).map((q: any, i: number) => (
                   <div key={i} className="space-y-4 p-6 rounded-2xl bg-white/[0.02] border border-white/5">
-                    <p className="font-bold text-white/80">{q.question}</p>
+                    <p className="font-bold text-white/80">{q?.question}</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {q.options.map((opt: string, optIdx: number) => (
+                      {(q?.options || []).map((opt: string, optIdx: number) => (
                         <div 
                           key={optIdx} 
                           className={`p-4 rounded-xl border text-sm font-medium ${
-                            optIdx === q.correctIndex 
+                            optIdx === q?.correctIndex 
                               ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
                               : 'bg-white/5 border-white/5 text-white/40'
                           }`}
@@ -258,7 +321,7 @@ export const ReviewLessonsPage: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    <p className="text-xs text-white/20 italic mt-2">{q.explanation}</p>
+                    <p className="text-xs text-white/20 italic mt-2">{q?.explanation}</p>
                   </div>
                 ))}
               </div>
@@ -269,41 +332,93 @@ export const ReviewLessonsPage: React.FC = () => {
           <div className="space-y-6">
             <Card className="p-8 space-y-6 border-white/5 bg-white/[0.03] sticky top-32">
               <div className="space-y-2">
-                <h3 className="font-black text-xl tracking-tight">Quality Control</h3>
-                <p className="text-xs text-white/40 font-medium">Review the AI content for accuracy, depth, and MentorStack standards before publishing.</p>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-black text-xl tracking-tight">Quality Score</h3>
+                  <div className={`text-2xl font-black ${
+                    (currentLesson?.score || 0) >= 90 ? 'text-emerald-500' : 
+                    (currentLesson?.score || 0) >= 70 ? 'text-blue-500' :
+                    (currentLesson?.score || 0) >= 40 ? 'text-orange-500' : 'text-red-500'
+                  }`}>
+                    {currentLesson?.score || 0}/100
+                  </div>
+                </div>
+                
+                <div className="space-y-3 pt-2">
+                  {[
+                    { label: 'Clarity', value: currentLesson?.qualityMetrics?.clarity || 0 },
+                    { label: 'Depth', value: currentLesson?.qualityMetrics?.depth || 0 },
+                    { label: 'Examples', value: currentLesson?.qualityMetrics?.examples || 0 },
+                    { label: 'Practical', value: currentLesson?.qualityMetrics?.practical || 0 },
+                    { label: 'Structure', value: currentLesson?.qualityMetrics?.structure || 0 },
+                  ].map((metric) => (
+                    <div key={metric.label} className="space-y-1">
+                      <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-white/20">
+                        <span>{metric.label}</span>
+                        <span>{metric.value}/20</span>
+                      </div>
+                      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-500 ${
+                            metric.value >= 15 ? 'bg-emerald-500' : 
+                            metric.value >= 10 ? 'bg-orange-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${(metric.value / 20) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 pt-4">
                 <Button 
                   onClick={handleApprove}
-                  disabled={approving}
-                  className="w-full h-16 rounded-2xl bg-emerald-500 text-black font-black shadow-xl shadow-emerald-500/20"
+                  disabled={approving || repairing}
+                  className="w-full h-14 rounded-2xl bg-emerald-500 text-black font-black"
                 >
                   {approving ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} className="mr-2" />}
-                  Approve & Publish
+                  Approve & Live
                 </Button>
+                
                 <Button 
-                  variant="outline" 
-                  onClick={handleReject}
-                  className="w-full h-16 rounded-2xl border-red-500/20 text-red-400 hover:bg-red-500/10"
+                  onClick={handleRepair}
+                  disabled={repairing || approving}
+                  variant="outline"
+                  className="w-full h-14 rounded-2xl border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
                 >
-                  <Trash2 size={20} className="mr-2" />
-                  Reject & Delete
+                  {repairing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} className="mr-2" />}
+                  Auto Repair AI
+                </Button>
+
+                <Button 
+                  variant="ghost" 
+                  onClick={handleReject}
+                  className="w-full h-12 rounded-xl text-red-500/40 hover:text-red-500 hover:bg-red-500/5 text-[10px] font-black uppercase tracking-widest"
+                >
+                  <XCircle size={16} className="mr-2" />
+                  Reject & Rebuild
                 </Button>
               </div>
 
-              <div className="pt-6 border-t border-white/5 space-y-4">
+              <div className="pt-6 border-t border-white/5 space-y-3">
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/20">
-                  <span>Difficulty</span>
-                  <span className="text-white">{currentLesson.difficulty}</span>
+                  <span>Status</span>
+                  <Badge className={`px-2 py-0 text-[8px] ${
+                    currentLesson?.status === 'published' ? 'bg-emerald-500/10 text-emerald-500' :
+                    currentLesson?.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' :
+                    currentLesson?.status === 'needs_repair' ? 'bg-orange-500/10 text-orange-500' :
+                    'bg-purple-500/10 text-purple-500'
+                  }`}>
+                    {currentLesson?.status?.toUpperCase().replace('_', ' ') || 'PENDING'}
+                  </Badge>
                 </div>
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/20">
                   <span>Duration</span>
-                  <span className="text-white">{currentLesson.estimatedDuration}</span>
+                  <span className="text-white">{currentLesson?.estimatedDuration}</span>
                 </div>
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-white/20">
                   <span>Quiz Questions</span>
-                  <span className="text-white">{currentLesson.quiz?.length || 0}</span>
+                  <span className="text-white">{currentLesson?.quiz?.length || 0}</span>
                 </div>
               </div>
             </Card>
@@ -314,8 +429,8 @@ export const ReviewLessonsPage: React.FC = () => {
                 <h4 className="font-black text-sm uppercase tracking-widest">Module Project</h4>
               </div>
               <div className="space-y-2">
-                <p className="font-bold text-sm">{currentLesson.project?.title}</p>
-                <p className="text-xs text-white/40 leading-relaxed">{currentLesson.project?.description}</p>
+                <p className="font-bold text-sm">{currentLesson?.project?.title || currentLesson?.miniProject?.title}</p>
+                <p className="text-xs text-white/40 leading-relaxed">{currentLesson?.project?.description || currentLesson?.miniProject?.description}</p>
               </div>
             </Card>
           </div>
@@ -341,29 +456,29 @@ export const ReviewLessonsPage: React.FC = () => {
           <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4">
             <Input 
               label="Lesson Title" 
-              value={editingLesson.title} 
+              value={editingLesson?.title} 
               onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
             />
             <Textarea 
               label="Summary" 
-              value={editingLesson.summary} 
+              value={editingLesson?.summary} 
               onChange={(e) => setEditingLesson({ ...editingLesson, summary: e.target.value })}
             />
             <Textarea 
               label="Explanation" 
               rows={15}
-              value={editingLesson.explanation} 
+              value={editingLesson?.explanation} 
               onChange={(e) => setEditingLesson({ ...editingLesson, explanation: e.target.value })}
             />
             <div className="grid grid-cols-2 gap-4">
               <Input 
                 label="Difficulty" 
-                value={editingLesson.difficulty} 
+                value={editingLesson?.difficulty} 
                 onChange={(e) => setEditingLesson({ ...editingLesson, difficulty: e.target.value })}
               />
               <Input 
                 label="Duration" 
-                value={editingLesson.estimatedDuration} 
+                value={editingLesson?.estimatedDuration} 
                 onChange={(e) => setEditingLesson({ ...editingLesson, estimatedDuration: e.target.value })}
               />
             </div>
@@ -371,7 +486,7 @@ export const ReviewLessonsPage: React.FC = () => {
               label="Code Example" 
               rows={10}
               className="font-mono"
-              value={editingLesson.codeExample} 
+              value={editingLesson?.codeExample} 
               onChange={(e) => setEditingLesson({ ...editingLesson, codeExample: e.target.value })}
             />
           </div>
@@ -380,3 +495,9 @@ export const ReviewLessonsPage: React.FC = () => {
     </AdminLayout>
   );
 };
+
+export const ReviewLessonsPage: React.FC = () => (
+  <ReviewErrorBoundary>
+    <ReviewLessonsPageContent />
+  </ReviewErrorBoundary>
+);

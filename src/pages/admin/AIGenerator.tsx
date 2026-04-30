@@ -17,14 +17,10 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  generateRoadmap, 
-  generateFullCurriculum, 
-  generateMissingLessons,
-  GenerationMode,
-  cancelGeneration 
+  generateEliteCurriculum, 
+  generateEliteLesson,
 } from '../../services/aiGeneratorService';
-import { getQueueStatus, AIStatus } from '../../lib/gemini-utils';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, get } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { Skill } from '../../types';
 
@@ -41,38 +37,11 @@ export const AIGenerator: React.FC = () => {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [genType, setGenType] = useState<'roadmap' | 'full' | 'lessons'>('roadmap');
-  const [mode, setMode] = useState<GenerationMode>('missing');
+  const [genType, setGenType] = useState<'roadmap' | 'modular_lessons'>('roadmap');
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
   const [logs, setLogs] = useState<string[]>([]);
-  const [stats, setStats] = useState<GenerationStats | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<string>('');
-  const [aiStatus, setAiStatus] = useState<{ status: AIStatus, pending: number }>({ status: 'Healthy', pending: 0 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const q = getQueueStatus();
-      setAiStatus({ status: q.status, pending: q.pending });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if (isGenerating && stats && stats.modulesDone > 0) {
-      const elapsed = Date.now() - stats.startTime;
-      const avgPerModule = elapsed / stats.modulesDone;
-      const remaining = (stats.modulesTotal - stats.modulesDone) * avgPerModule;
-      
-      if (remaining > 0) {
-        const mins = Math.floor(remaining / 60000);
-        const secs = Math.floor((remaining % 60000) / 1000);
-        setEstimatedTime(`${mins}m ${secs}s`);
-      }
-    } else {
-      setEstimatedTime('');
-    }
-  }, [stats, stats?.modulesDone, isGenerating]);
 
   useEffect(() => {
     const skillsRef = ref(db, 'skills');
@@ -80,82 +49,75 @@ export const AIGenerator: React.FC = () => {
       if (snapshot.exists()) {
         const skillsData = Object.values(snapshot.val()) as Skill[];
         setSkills(skillsData);
-        
-        // Handle query param or localStorage
-        const params = new URLSearchParams(window.location.search);
-        const skillId = params.get('skill') || localStorage.getItem('lastSelectedSkillId');
-        if (skillId) {
-          setSelectedSkillId(skillId);
-          if (params.get('skill')) setGenType('full');
-        }
+        const skillId = localStorage.getItem('lastSelectedSkillId');
+        if (skillId) setSelectedSkillId(skillId);
       }
+    }, (error) => {
+      console.error("[AIGenerator] Skills listener error:", error);
     });
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (selectedSkillId) {
-      localStorage.setItem('lastSelectedSkillId', selectedSkillId);
-    }
-  }, [selectedSkillId]);
-
   const addLog = (msg: string) => {
-    setLogs(prev => [msg, ...prev].slice(0, 100));
-  };
-
-  const handleCancel = () => {
-    cancelGeneration();
-    setIsGenerating(false);
-    setStatus('Generation cancelled.');
-    addLog('User requested termination. Cleaning up workers...');
+    setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 100));
   };
 
   const handleGenerate = async () => {
     const skill = skills.find(s => s.id === selectedSkillId);
     if (!skill) return;
-    
+
     setIsGenerating(true);
     setProgress(0);
     setLogs([]);
-    setStats(null);
-    setStatus(`Initializing ${genType} generation...`);
-    addLog(`Starting ${genType} automation for ${skill.title}...`);
+    setStatus(`Initializing Elite V3 Engine for ${skill.title}...`);
+    addLog(`Initiating career-focused generation for ${skill.title}`);
 
     try {
       if (genType === 'roadmap') {
-        const result = await generateRoadmap(skill, (p, s) => {
-          setProgress(p);
+        await generateEliteCurriculum(skill.id, skill.title, (s) => {
           setStatus(s);
           addLog(s);
-        }, mode);
-        if (result) {
-          setStatus('Roadmap complete!');
-          addLog('Architecture and modules finalized.');
-        }
-      } else if (genType === 'full') {
-        const result = await generateFullCurriculum(skill, (p, s, st) => {
-          setProgress(Math.round(p));
-          setStatus(s);
-          addLog(s);
-          if (st) setStats({ ...st });
-        }, mode);
-        if (result) {
-          setStatus('Full academy ready!');
-          addLog('Massive generation success.');
-        }
-      } else if (genType === 'lessons') {
-        await generateMissingLessons(skill.id, (p, s, st) => {
-          setProgress(Math.round(p));
-          setStatus(s);
-          addLog(s);
-          if (st) setStats({ ...st });
+          setProgress(prev => Math.min(prev + 15, 95));
         });
-        setStatus('Missing lessons generated!');
+        setProgress(100);
+        setStatus("Academy Roadmap Finalized!");
+        addLog("Curriculum Architecture persisted to database.");
+      } else {
+        setStatus("Scanning roadmap modules...");
+        const stagesSnap = await get(ref(db, `curriculum_stages/${skill.id}`));
+        if (!stagesSnap.exists()) throw new Error("No roadmap found. Please generate Curriculum first.");
+        
+        const stages = Object.values(stagesSnap.val()) as any[];
+        const mods: any[] = [];
+
+        for (const stage of stages) {
+          const weeksSnap = await get(ref(db, `curriculum_weeks/${stage.id}`));
+          const weeks = weeksSnap.exists() ? Object.values(weeksSnap.val()) : [];
+          for (const week of weeks as any[]) {
+            const modulesSnap = await get(ref(db, `curriculum_modules/${week.id}`));
+            if (modulesSnap.exists()) mods.push(...Object.values(modulesSnap.val() || {}));
+          }
+        }
+
+        addLog(`Found ${mods.length} modules. Initializing deep content production...`);
+        for (let i = 0; i < mods.length; i++) {
+          const mod = mods[i];
+          const titles = mod.lessonTitles || [mod.title];
+          setStatus(`Crafting Module: ${mod.title}`);
+          
+          for (const t of titles) {
+            addLog(`Generating Elite Lesson: ${t}`);
+            await generateEliteLesson(skill.id, skill.title, mod.title, t, mod.id);
+          }
+          setProgress(Math.round(((i + 1) / mods.length) * 100));
+        }
+        setStatus("Elite Content Generation Complete!");
+        addLog("All lessons produced at Premium level.");
       }
     } catch (error: any) {
       console.error(error);
-      setStatus('Generation failed.');
-      addLog(`CRITICAL ERROR: ${error.message}`);
+      setStatus('Elite Generation FAILED.');
+      addLog(`❌ ERROR: ${error.message}`);
     } finally {
       setIsGenerating(false);
     }
@@ -171,14 +133,11 @@ export const AIGenerator: React.FC = () => {
           </div>
             <div className="flex gap-4">
               {isGenerating ? (
-                <Button 
-                  variant="outline" 
-                  onClick={handleCancel}
-                  className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-red-500/50 text-red-500 hover:bg-red-500/10"
-                >
-                  Cancel Task
-                </Button>
-              ) : status === 'Generation failed.' ? (
+                <div className="h-12 px-6 flex items-center justify-center rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/5 bg-white/5 text-white/40">
+                  <Loader2 size={14} className="mr-2 animate-spin" />
+                  Engine Busy
+                </div>
+              ) : status === 'Elite Generation FAILED.' ? (
                 <Button 
                   onClick={handleGenerate}
                   className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500 text-white hover:bg-emerald-600"
@@ -211,13 +170,13 @@ export const AIGenerator: React.FC = () => {
                 label="Target Program"
                 placeholder="Choose program..."
                 value={selectedSkillId}
-                displayValue={skills.find(s => s.id === selectedSkillId)?.title}
+                displayValue={(skills || []).find(s => s.id === selectedSkillId)?.title}
                 onChange={(e) => setSelectedSkillId(e.target.value)}
                 disabled={isGenerating}
               >
                 <option value="">Choose program...</option>
-                {skills.map(skill => (
-                  <option key={skill.id} value={skill.id}>{skill.title}</option>
+                {(skills || []).map((skill, index) => (
+                  <option key={`${skill.id}-${index}`} value={skill.id}>{skill.title}</option>
                 ))}
               </Select>
 
@@ -225,12 +184,11 @@ export const AIGenerator: React.FC = () => {
                 <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Generation Type</label>
                 <div className="grid grid-cols-1 gap-2">
                   {[
-                    { id: 'roadmap', label: 'Curriculum Only', sub: 'Stages, weeks, and modules', color: 'emerald' },
-                    { id: 'full', label: 'Full Academy', sub: 'Roadmap + Batch lessons', color: 'purple' },
-                    { id: 'lessons', label: 'Missing Lessons', sub: 'Fill gaps in roadmap', color: 'blue' }
-                  ].map(t => (
+                    { id: 'roadmap', label: 'Curriculum Roadmap', sub: 'Elite V3 career-defining structure', color: 'emerald' },
+                    { id: 'modular_lessons', label: 'Premium Lesson Batch', sub: 'Generate high-density expert content', color: 'purple' }
+                  ].map((t, idx) => (
                     <button
-                      key={t.id}
+                      key={`${t.id}-${idx}`}
                       onClick={() => setGenType(t.id as any)}
                       disabled={isGenerating}
                       className={`p-4 rounded-2xl border-2 text-left transition-all ${
@@ -246,49 +204,22 @@ export const AIGenerator: React.FC = () => {
                 </div>
               </div>
 
-              {genType !== 'lessons' && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Delta Mode</label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {[
-                      { id: 'missing', label: 'Missing Only', icon: PlusCircle },
-                      { id: 'update', label: 'Overwrite Metadata', icon: RefreshCw },
-                      { id: 'regenerate', label: 'Deep Rebuild (Wipe)', icon: AlertCircle, destructive: true }
-                    ].map(m => (
-                      <button
-                        key={m.id}
-                        onClick={() => setMode(m.id as any)}
-                        disabled={isGenerating}
-                        className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${
-                          mode === m.id 
-                            ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' 
-                            : 'border-white/5 bg-white/5 text-white/40 hover:border-white/20'
-                        }`}
-                      >
-                        <m.icon size={16} className={m.destructive ? 'text-red-500' : ''} />
-                        <span className={`text-[10px] font-black uppercase ${m.destructive && mode === m.id ? 'text-red-400' : ''}`}>{m.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               <Button 
                 fullWidth 
                 size="lg" 
                 onClick={handleGenerate}
                 disabled={!selectedSkillId || isGenerating}
-                className="h-16 rounded-2xl shadow-xl shadow-emerald-500/10"
+                className="h-16 rounded-2xl shadow-xl shadow-emerald-500/10 bg-emerald-500 hover:bg-emerald-600"
               >
                 {isGenerating ? (
                   <>
                     <Loader2 size={20} className="mr-2 animate-spin" />
-                    Crunching Data...
+                    Generating Elite Content...
                   </>
                 ) : (
                   <>
                     <Sparkles size={20} className="mr-2" />
-                    Initialize Engine
+                    Launch Elite Engine
                   </>
                 )}
               </Button>
@@ -301,13 +232,8 @@ export const AIGenerator: React.FC = () => {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3 text-emerald-400">
                   <RefreshCw size={20} className={isGenerating ? 'animate-spin' : ''} />
-                  <h3 className="font-black uppercase text-xs tracking-[0.2em]">Live Telemetry</h3>
+                  <h3 className="font-black uppercase text-xs tracking-[0.2em]">V3 Live Telemetry</h3>
                 </div>
-                {estimatedTime && (
-                  <Badge className="bg-emerald-500/10 text-emerald-400 border-none font-black text-[10px]">
-                    EST: {estimatedTime}
-                  </Badge>
-                )}
               </div>
 
               <div className="space-y-12">
@@ -324,22 +250,20 @@ export const AIGenerator: React.FC = () => {
                   
                   <div className="relative h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
                     <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                      className="h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-purple-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                       initial={{ width: 0 }}
+                       animate={{ width: `${progress}%` }}
+                       className="h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-purple-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { label: 'AI Status', value: aiStatus.status, color: aiStatus.status === 'Healthy' ? 'emerald' : aiStatus.status === 'Limited Quota' ? 'amber' : 'red' },
-                    { label: 'AI Queue', value: aiStatus.pending, color: 'blue' },
-                    { label: 'Modules', value: stats ? `${stats.modulesDone}/${stats.modulesTotal}` : '0/0', color: 'blue' },
-                    { label: 'Lessons Born', value: stats?.lessonsCreated || 0, color: 'emerald' },
-                    { label: 'Saved', value: stats?.lessonsSkipped || 0, color: 'amber' }
-                  ].map((s, i) => (
-                    <div key={i} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
+                    { label: 'Provider', value: 'Gemini 1.5 Pro', color: 'emerald' },
+                    { label: 'Architecture', value: 'V3 Elite Engine', color: 'purple' },
+                    { label: 'Status', value: isGenerating ? 'RUNNING' : 'IDLE', color: isGenerating ? 'emerald' : 'blue' }
+                  ].map((s, idx) => (
+                    <div key={`${s.label}-${idx}`} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-1">
                       <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{s.label}</p>
                       <p className={`text-sm font-black text-${s.color}-400`}>{s.value}</p>
                     </div>
@@ -362,18 +286,17 @@ export const AIGenerator: React.FC = () => {
                 </button>
               </div>
               
-              <div className="h-48 overflow-y-auto space-y-1 font-mono text-[9px] text-white/40 custom-scrollbar pr-4">
+              <div className="h-64 overflow-y-auto space-y-1 font-mono text-[9px] text-white/40 custom-scrollbar pr-4">
                 {logs.length === 0 ? (
                   <p className="italic text-white/10">No logs streaming yet...</p>
                 ) : (
                   logs.map((log, i) => (
                     <motion.div 
-                      key={i} 
+                      key={`log-${log}-${i}`} 
                       initial={{ opacity: 0, x: -10 }} 
                       animate={{ opacity: 1, x: 0 }} 
                       className="flex gap-3 py-1 border-b border-white/[0.02]"
                     >
-                      <span className="text-emerald-500/20 tabular-nums">[{new Date().toLocaleTimeString()}]</span>
                       <span className="text-white/60">{log}</span>
                     </motion.div>
                   ))

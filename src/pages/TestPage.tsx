@@ -12,10 +12,13 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { STAGE_TESTS } from '../constants/tests';
 import { StageTest } from '../types';
 
+import { usePremiumStatus } from '../hooks/usePremiumStatus';
+
 export const TestPage: React.FC = () => {
   const { testId } = useParams<{ testId: string }>();
   const navigate = useNavigate();
   const { progress, loading: userLoading, updateProgress, addXP } = useUserData();
+  const { isPremium } = usePremiumStatus();
   const [test, setTest] = useState<StageTest | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
@@ -124,7 +127,7 @@ export const TestPage: React.FC = () => {
                   <RefreshCcw size={18} className="mr-2" />
                   Retry Test
                 </Button>
-                {progress.isPremium ? (
+                {isPremium ? (
                   <Button 
                     onClick={() => navigate('/tutor')} 
                     variant="outline" 

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ref, get, update } from 'firebase/database';
+import { ref, get, update, query, orderByChild, equalTo, onValue } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { LoadingScreen } from './LoadingScreen';
 
 interface SubscriptionGuardProps {
   children: React.ReactNode;
 }
+
+import { isAdmin as checkAdmin } from '../lib/adminCheck';
 
 export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }) => {
   const { user, profile, loading: authLoading } = useAuth();
@@ -16,52 +18,61 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
   const location = useLocation();
 
   useEffect(() => {
-    const checkAccess = async () => {
-      if (!user || !profile) {
-        if (!authLoading) setLoading(false);
-        return;
-      }
-
-      try {
-        // 1. Expiry Check
-        if (profile.progress.subscription_status === 'active' && profile.progress.subscription_expiry_date) {
-          if (Date.now() > profile.progress.subscription_expiry_date) {
-            // Update status to inactive in DB
-            await update(ref(db, `users/${user.uid}/progress`), {
-              subscription_status: 'inactive'
-            });
-            // Profile is still stale in current render, but the next render/refresh will catch it.
-            // For now we continue with the logic.
-          }
-        }
-
-        // 2. Whitelist Check
-        const whitelistRef = ref(db, 'subscription/whitelist');
-        const snapshot = await get(whitelistRef);
-        
-        if (snapshot.exists()) {
-          const whitelist = snapshot.val();
-          const emails = Object.values(whitelist) as string[];
-          if (emails.map(e => e.toLowerCase()).includes(user.email?.toLowerCase() || '')) {
-            setIsWhitelisted(true);
-            setLoading(false);
-            return;
-          }
-        }
-        setIsWhitelisted(false);
-      } catch (error) {
-        console.error("Error checking access details:", error);
-        setIsWhitelisted(false);
-      }
-      setLoading(false);
-    };
-
-    if (!authLoading && profile) {
-      checkAccess();
-    } else if (!authLoading && !user) {
-      setLoading(false);
+    if (!user || authLoading) {
+      if (!authLoading) setLoading(false);
+      return;
     }
-  }, [user, authLoading, profile]);
+
+    console.log("[SubscriptionShield] Verifying access for:", user.uid);
+    
+    // Admin checking
+    const isAdmin = checkAdmin(profile) || checkAdmin(user);
+    if (isAdmin) {
+      console.log("[SubscriptionShield] Admin bypass activated.");
+      setIsWhitelisted(true);
+      setLoading(false);
+      return; // CRITICAL: Stop here to prevent unauthorized query logs
+    }
+
+    const paymentsRef = ref(db, 'payments');
+    const paymentsQuery = query(paymentsRef, orderByChild('user_id'), equalTo(user.uid));
+
+    const unsubscribe = onValue(paymentsQuery, (snapshot) => {
+      console.log("[SubscriptionShield] Payment data hydrated.");
+      let approved = false;
+      
+      if (snapshot.exists()) {
+        const paymentsData = snapshot.val();
+        const paymentsList = Object.values(paymentsData) as any[];
+        approved = paymentsList.some(p => p.status === 'approved');
+      }
+
+      const now = Date.now();
+      const isProfileActive = profile?.progress?.subscription_status === 'active' && 
+                              profile?.progress?.subscription_expiry && 
+                              profile.progress.subscription_expiry > now;
+
+      const latestAdminStatus = checkAdmin(profile) || checkAdmin(user);
+      
+      setIsWhitelisted(approved || isProfileActive || latestAdminStatus);
+      setLoading(false);
+    }, (error) => {
+      console.error("[SubscriptionShield] Permission leak or query error:", error.message);
+      
+      // Secondary fallback
+      const currentAdminStatus = checkAdmin(profile) || checkAdmin(user);
+      if (currentAdminStatus) {
+        setIsWhitelisted(true);
+      }
+      
+      setLoading(false);
+    });
+
+    return () => {
+      console.log("[SubscriptionShield] Closing verification stream.");
+      unsubscribe();
+    };
+  }, [user, profile, authLoading]);
 
   if (authLoading || loading) {
     return <LoadingScreen message="Verifying access..." />;
@@ -76,28 +87,11 @@ export const SubscriptionGuard: React.FC<SubscriptionGuardProps> = ({ children }
     return <>{children}</>;
   }
 
-  // 1. ADMIN OVERRIDE (Specific Email or Role)
-  if (user.email === 'hh5217924@gmail.com' || profile?.progress?.role === 'admin') {
+  // FINAL SOURCE OF TRUTH CHECK
+  if (isWhitelisted) {
     return <>{children}</>;
   }
 
-  // 2. WHITELISTED (Flag or Email List)
-  if (profile?.progress?.is_whitelisted === true || isWhitelisted) {
-    return <>{children}</>;
-  }
-
-  // 3. SUBSCRIPTION STATUS CHECK
-  const status = profile?.progress?.subscription_status;
-
-  if (status === 'active') {
-    // Double check expiry just in case the update above is pending
-    if (profile.progress.subscription_expiry_date && Date.now() > profile.progress.subscription_expiry_date) {
-       return <Navigate to="/subscription" replace />;
-    }
-    return <>{children}</>;
-  }
-
-  // IF PENDING, allow access to subscription page handles the "Waiting" view
-  // But we need to redirect them away from core pages
+  // IF NOT APPROVED, redirect to subscription page
   return <Navigate to="/subscription" replace />;
 };

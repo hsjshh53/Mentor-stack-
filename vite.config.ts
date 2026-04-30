@@ -9,11 +9,26 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GOOGLE_AI_API_KEY': JSON.stringify(env.GOOGLE_AI_API_KEY),
+      'process.env.GROQ_API_KEY': JSON.stringify(env.GROQ_API_KEY),
+      'process.env.OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY),
     },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
       },
+      dedupe: ['three'],
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            three: ['three'],
+            fiber: ['@react-three/fiber'],
+            drei: ['@react-three/drei']
+          }
+        }
+      }
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

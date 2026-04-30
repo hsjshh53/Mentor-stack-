@@ -4,13 +4,20 @@ import { db } from '../../lib/firebase';
 import { ReceiptRecord } from '../../types';
 import { Card, Button, Badge } from '../../components/ui';
 import { CheckCircle2, XCircle, Clock, Search, Image as ImageIcon, ExternalLink, Calendar } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+import { isAdmin as checkAdmin } from '../../lib/adminCheck';
 
 export const ManageReceipts: React.FC = () => {
+  const { profile, user: currentUser } = useAuth();
   const [receipts, setReceipts] = useState<ReceiptRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptRecord | null>(null);
   const [userReceipts, setUserReceipts] = useState<ReceiptRecord[]>([]);
+
+  // Permission check helper
+  const isAdmin = checkAdmin(profile) || checkAdmin(currentUser);
 
   useEffect(() => {
     if (selectedReceipt) {
@@ -22,23 +29,67 @@ export const ManageReceipts: React.FC = () => {
   }, [selectedReceipt, receipts]);
 
   useEffect(() => {
+    console.log("[AdminShield] Syncing global receipts...");
     const receiptsRef = ref(db, 'receipts');
+    
+    // Enterprise Shield Listener
     const unsubscribe = onValue(receiptsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const receiptsList = Object.values(data) as ReceiptRecord[];
-        setReceipts(receiptsList.sort((a, b) => b.timestamp - a.timestamp));
-      } else {
-        setReceipts([]);
+      console.log("[AdminShield] Receipts data hydrated:", snapshot.val());
+      try {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const receiptsList = Object.keys(data).map(id => ({ ...data[id], id })) as ReceiptRecord[];
+          setReceipts(receiptsList.sort((a, b) => b.timestamp - a.timestamp));
+        } else {
+          setReceipts([]);
+        }
+      } catch (err) {
+        console.error("[AdminShield] Receipts processing error:", err);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      console.error("[AdminShield] Receipts stream blocked:", error.message);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log("[AdminShield] Releasing receipts stream.");
+      unsubscribe();
+    };
   }, []);
 
+  const logDiagnostic = (buttonName: string, recordId: string, status: 'action_started' | 'action_success' | 'failed', error?: string) => {
+    console.log(`[Admin Diagnostics] Button: ${buttonName} | ID: ${recordId} | State: ${status} | User: ${currentUser?.email}${error ? ` | Error: ${error}` : ''}`);
+    
+    // Audit logging
+    const auditRef = ref(db, `admin_audit_logs/${Date.now()}`);
+    update(auditRef, {
+      button_name: buttonName,
+      clicked: true,
+      record_id: recordId,
+      admin_uid: currentUser?.uid,
+      admin_email: currentUser?.email,
+      timestamp: Date.now(),
+      status,
+      error: error || null
+    }).catch(err => console.error("Failed to write audit log:", err));
+  };
+
   const handleApprove = async (receipt: ReceiptRecord) => {
+    if (!isAdmin) {
+      alert("Unauthorized: Your admin role is not synced. Please re-login.");
+      return;
+    }
+
+    if (!receipt.id) {
+      alert("ID Error: Receipt ID is missing.");
+      return;
+    }
+
     if (!window.confirm(`Approve bank transfer from ${receipt.email}?`)) return;
+
+    logDiagnostic('Approve Receipt', receipt.id, 'action_started');
 
     try {
       const now = Date.now();
@@ -47,31 +98,58 @@ export const ManageReceipts: React.FC = () => {
 
       const updates: any = {};
       updates[`receipts/${receipt.id}/status`] = 'approved';
+      updates[`receipts/${receipt.id}/processed_by`] = currentUser?.uid;
+      updates[`receipts/${receipt.id}/updated_at`] = now;
+      
       updates[`users/${receipt.user_id}/progress/subscription_status`] = 'active';
       updates[`users/${receipt.user_id}/progress/subscription_start_date`] = now;
       updates[`users/${receipt.user_id}/progress/subscription_expiry_date`] = expiry;
+      updates[`users/${receipt.user_id}/progress/isPremium`] = true;
+      updates[`users/${receipt.user_id}/progress/subscription_reference`] = receipt.id;
       
       await update(ref(db), updates);
-      alert('Your ₦10,000 MentorStack Premium subscription is now active.');
-    } catch (err) {
+      
+      logDiagnostic('Approve Receipt', receipt.id, 'action_success');
+      alert('Payment approved successfully. Subscription activated.');
+    } catch (err: any) {
+      logDiagnostic('Approve Receipt', receipt.id, 'failed', err.message);
       console.error("Error approving receipt:", err);
-      alert('Failed to approve receipt.');
+      alert(`Could not approve receipt. ${err.message}`);
     }
   };
 
   const handleReject = async (receipt: ReceiptRecord) => {
+    if (!isAdmin) {
+      alert("Unauthorized: Your admin role is not synced. Please re-login.");
+      return;
+    }
+
+    if (!receipt.id) {
+      alert("ID Error: Receipt ID is missing.");
+      return;
+    }
+
     if (!window.confirm(`Reject bank transfer from ${receipt.email}?`)) return;
+
+    logDiagnostic('Reject Receipt', receipt.id, 'action_started');
 
     try {
       const updates: any = {};
       updates[`receipts/${receipt.id}/status`] = 'rejected';
+      updates[`receipts/${receipt.id}/processed_by`] = currentUser?.uid;
+      updates[`receipts/${receipt.id}/updated_at`] = Date.now();
+      
       updates[`users/${receipt.user_id}/progress/subscription_status`] = 'inactive';
+      updates[`users/${receipt.user_id}/progress/isPremium`] = false;
       
       await update(ref(db), updates);
-      alert('Receipt rejected.');
-    } catch (err) {
+      
+      logDiagnostic('Reject Receipt', receipt.id, 'action_success');
+      alert('Payment rejected.');
+    } catch (err: any) {
+      logDiagnostic('Reject Receipt', receipt.id, 'failed', err.message);
       console.error("Error rejecting receipt:", err);
-      alert('Failed to reject receipt.');
+      alert(`Could not reject receipt. ${err.message}`);
     }
   };
 
@@ -80,7 +158,7 @@ export const ManageReceipts: React.FC = () => {
     r.status.toLowerCase() === searchTerm.toLowerCase()
   );
 
-  if (loading) {
+  if (loading && receipts.length === 0) {
     return <div className="text-white/40 text-center py-12">Loading receipts...</div>;
   }
 

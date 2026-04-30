@@ -13,23 +13,27 @@ import {
   ShieldCheck,
   ShieldAlert
 } from 'lucide-react';
-import { ref, onValue, set, update } from 'firebase/database';
+import { ref } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { motion } from 'motion/react';
+import { useAuth } from '../../context/AuthContext';
+import { firebaseSafeOnValue, firebaseSafeUpdate } from '../../lib/FirebaseService';
 
 export const ManageUsers: React.FC = () => {
+  const { profile, user: currentUserAuth, isAdmin, adminReady } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const usersRef = ref(db, 'users');
-    const unsubscribe = onValue(usersRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
+    if (!adminReady || !isAdmin) return;
+
+    const unsubscribe = firebaseSafeOnValue(ref(db, 'users'), (data) => {
+      if (data) {
         const list = Object.keys(data).map(uid => ({
           uid,
           ...data[uid],
+          role: data[uid].progress?.role || 'user',
           progress: data[uid].progress || {}
         }));
         setUsers(list);
@@ -37,14 +41,49 @@ export const ManageUsers: React.FC = () => {
         setUsers([]);
       }
       setLoading(false);
-    });
+    }, "ManageUsers");
+
     return () => unsubscribe();
-  }, []);
+  }, [isAdmin, adminReady]);
+
+  const logDiagnostic = async (buttonName: string, recordId: string, status: 'action_started' | 'action_success' | 'failed', error?: string) => {
+    console.log(`[Admin Diagnostics] User Admin Action: ${buttonName} | Target ID: ${recordId} | State: ${status} | Admin: ${currentUserAuth?.email}${error ? ` | Error: ${error}` : ''}`);
+    
+    // Audit logging
+    await firebaseSafeUpdate(`admin_audit_logs/${Date.now()}`, {
+      button_name: buttonName,
+      clicked: true,
+      record_id: recordId,
+      admin_uid: currentUserAuth?.uid,
+      admin_email: currentUserAuth?.email,
+      timestamp: Date.now(),
+      status,
+      error: error || null
+    }, "AuditLog");
+  };
 
   const toggleAdmin = async (uid: string, currentRole: string) => {
+    if (!isAdmin) {
+      alert("Unauthorized: Your admin role is not synced. Please re-login.");
+      return;
+    }
+
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
-      await update(ref(db, `users/${uid}`), { role: newRole });
+    if (!window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+
+    await logDiagnostic('Toggle Admin Role', uid, 'action_started');
+
+    try {
+      const success = await firebaseSafeUpdate(`users/${uid}/progress`, { role: newRole }, "ToggleAdmin");
+      if (success) {
+        await logDiagnostic('Toggle Admin Role', uid, 'action_success');
+        alert(`User role updated to ${newRole}.`);
+      } else {
+        throw new Error("Update failed in Firebase");
+      }
+    } catch (err: any) {
+      await logDiagnostic('Toggle Admin Role', uid, 'failed', err.message);
+      alert(`Role update failed: ${err.message}`);
     }
   };
 

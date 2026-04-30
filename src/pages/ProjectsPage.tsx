@@ -21,10 +21,13 @@ import { ProjectPlayground } from '../components/ProjectPlayground';
 import { ProjectSubmissionModal } from '../components/ProjectSubmissionModal';
 import { PaywallModal } from '../components/PaywallModal';
 
+import { usePremiumStatus } from '../hooks/usePremiumStatus';
+
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { progress, loading, submitProject, saveProjectDraft } = useUserData();
+  const { isPremium } = usePremiumStatus();
   const [userProjects, setUserProjects] = useState<Record<string, UserProjectProgress>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Projects');
@@ -44,15 +47,17 @@ export const ProjectsPage: React.FC = () => {
   if (loading || !progress) return <LoadingScreen />;
 
   const filteredProjects = DETAILED_PROJECTS.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         project.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === 'All Projects' || project.category.includes(activeFilter);
+    const title = project?.title || '';
+    const description = project?.description || '';
+    const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'All Projects' || (project?.category || '').includes(activeFilter);
     return matchesSearch && matchesFilter;
   });
 
   const handleStartProject = async (project: DetailedProject) => {
     if (!user) return;
-    if (!progress.isPremium && project.isPremium) {
+    if (!isPremium && project.isPremium) {
       setShowPaywall(true);
       return;
     }
@@ -415,7 +420,7 @@ export const ProjectsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {project.isPremium && !progress.isPremium ? (
+                    {project.isPremium && !isPremium ? (
                       <Button 
                         onClick={(e) => {
                           e.stopPropagation();

@@ -11,12 +11,13 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserData } from '../hooks/useUserData';
-import { ref, push, set, get, onValue, update } from 'firebase/database';
-import { db } from '../lib/firebase';
+import { firebaseSafeOnValue, firebaseSafeGet, firebaseSafeUpdate, firebaseSafeSet, firebaseUserScopedQuery } from '../lib/FirebaseService';
+import { auth, db } from '../lib/firebase';
+import { ref, push } from 'firebase/database';
 import { PaymentRecord, ReceiptRecord } from '../types';
 
 export const SubscriptionPage: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, profileReady, adminReady, isAdmin } = useAuth();
   const { updateProgress } = useUserData();
   const navigate = useNavigate();
   const [checkingPayment, setCheckingPayment] = useState(true);
@@ -26,60 +27,100 @@ export const SubscriptionPage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
-  const status = profile?.progress?.subscription_status;
-  const isPending = status === 'pending' || (existingReceipt?.status === 'pending');
-  const isActive = status === 'active';
-
-  // Admin Override
-  const isAdmin = profile?.progress?.role === 'admin' || user?.email === 'hh5217924@gmail.com';
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  
+  const isPending = paymentStatus === 'paid_pending_verification' || paymentStatus === 'initiated' || (existingReceipt?.status === 'pending');
+  const isActive = paymentStatus === 'approved' || (
+    profile?.progress?.subscription_status === 'active' && 
+    profile?.progress?.subscription_expiry && 
+    profile.progress.subscription_expiry > Date.now()
+  );
 
   useEffect(() => {
-    if (isAdmin && !checkingPayment) {
+    if ((isAdmin || isActive) && !checkingPayment && profileReady && adminReady) {
       navigate('/dashboard');
     }
-  }, [isAdmin, checkingPayment, navigate]);
+  }, [isAdmin, isActive, checkingPayment, navigate, profileReady, adminReady]);
 
   useEffect(() => {
-    const checkExistingPayments = async () => {
-      if (!user) {
-        setCheckingPayment(false);
-        return;
-      }
+    if (!user || !profileReady) {
+      if (profileReady) setCheckingPayment(false);
+      return;
+    }
 
-      try {
-        const paymentsRef = ref(db, 'payments');
-        const receiptsRef = ref(db, 'receipts');
+    console.log("[SubscriptionShield] Syncing premium status...");
+    
+    // SYNC SOURCE OF TRUTH: payments collection
+    const paymentsQuery = firebaseUserScopedQuery('payments', user.uid);
+
+    const unsubscribe = firebaseSafeOnValue(paymentsQuery, (data: any) => {
+      console.log("[SubscriptionShield] Payment stream updated.");
+      if (data) {
+        const paymentsList = Object.keys(data).map(key => ({
+          ...data[key],
+          id: key
+        })) as PaymentRecord[];
         
-        // Check Payments
-        const pSnapshot = await get(paymentsRef);
-        if (pSnapshot.exists()) {
-          const paymentsList = Object.values(pSnapshot.val()) as PaymentRecord[];
-          const userPayments = paymentsList.filter(p => p.user_id === user.uid);
-          const currentRef = profile?.progress?.subscription_reference;
-          const specificPayment = currentRef ? userPayments.find(p => p.payment_reference === currentRef) : null;
-          
-          if (specificPayment && specificPayment.status !== 'cancelled') setExistingPayment(specificPayment);
-          else {
-            const activeOrPending = userPayments.find(p => ['initiated', 'paid_pending_verification', 'approved'].includes(p.status));
-            if (activeOrPending) setExistingPayment(activeOrPending);
-          }
+        const sorted = paymentsList.sort((a, b) => b.timestamp - a.timestamp);
+        const approved = sorted.find(p => p.status === 'approved');
+        const activeOrPending = approved || sorted.find(p => ['initiated', 'paid_pending_verification'].includes(p.status));
+        
+        if (activeOrPending) {
+          setExistingPayment(activeOrPending);
+          setPaymentStatus(activeOrPending.status);
+          console.log("[SubscriptionShield] Status resolved:", activeOrPending.status);
+        } else {
+          setPaymentStatus(null);
+          setExistingPayment(null);
         }
-
-        // Check Receipts
-        const rSnapshot = await get(receiptsRef);
-        if (rSnapshot.exists()) {
-          const receiptsList = Object.values(rSnapshot.val()) as ReceiptRecord[];
-          const userReceipt = receiptsList.find(r => r.user_id === user.uid && (r.status === 'pending' || r.status === 'approved'));
-          if (userReceipt) setExistingReceipt(userReceipt);
-        }
-      } catch (err) {
-        console.error("Error checking status:", err);
+      } else {
+        setPaymentStatus(null);
+        setExistingPayment(null);
       }
       setCheckingPayment(false);
+    }, "UserPayments");
+
+    // Check Receipts
+    const receiptsQuery = firebaseUserScopedQuery('receipts', user.uid);
+    
+    firebaseSafeGet(receiptsQuery, "UserReceipts").then(data => {
+      if (data) {
+        const receiptsList = Object.keys(data).map(key => ({
+          ...data[key],
+          id: key
+        })) as ReceiptRecord[];
+        
+        const userReceipt = receiptsList.find(r => r.status === 'pending' || r.status === 'approved');
+        if (userReceipt) {
+          console.log("[SubscriptionShield] Receipt found.");
+          setExistingReceipt(userReceipt);
+        }
+      }
+    }).catch(error => {
+      console.error("[SubscriptionShield] Receipts lookup error:", error.message);
+    });
+
+    return () => {
+      console.log("[SubscriptionShield] Terminating status monitor.");
+      unsubscribe();
+    };
+  }, [user, profileReady]);
+
+  const logDiagnostic = async (buttonName: string, status: 'action_started' | 'action_success' | 'failed', details?: any) => {
+    console.log(`[Payment Diagnostics] Button: ${buttonName} | State: ${status} | User: ${user?.email}`, details || '');
+    
+    // Audit logging for critical payment steps
+    const auditData = {
+      button_name: buttonName,
+      user_uid: user?.uid,
+      user_email: user?.email,
+      timestamp: Date.now(),
+      status,
+      details: details ? JSON.stringify(details) : null
     };
 
-    checkExistingPayments();
-  }, [user, profile?.progress?.subscription_reference]);
+    await firebaseSafeUpdate(`payment_audit_logs/${Date.now()}`, auditData, "PaymentAuditLog");
+  };
 
   const handleRestart = async () => {
     if (!user) return;
@@ -91,14 +132,11 @@ export const SubscriptionPage: React.FC = () => {
 
     if (!window.confirm(confirmMsg)) return;
 
+    logDiagnostic('Restart Payment Flow', 'action_started');
+
     try {
       const updates: any = {};
       
-      await updateProgress({ 
-        subscription_status: 'inactive',
-        subscription_reference: null 
-      });
-
       if (existingPayment && existingPayment.status !== 'approved') {
         updates[`payments/${existingPayment.id}/status`] = 'cancelled';
         updates[`payments/${existingPayment.id}/cancelled_at`] = Date.now();
@@ -110,23 +148,33 @@ export const SubscriptionPage: React.FC = () => {
       }
 
       if (Object.keys(updates).length > 0) {
-        await update(ref(db), updates);
+        await firebaseSafeUpdate("/", updates, "RestartPaymentFlow");
       }
 
       setExistingPayment(null);
       setExistingReceipt(null);
       setReceiptPreview(null);
+      logDiagnostic('Restart Payment Flow', 'action_success');
       alert("Payment process restarted.");
-    } catch (err) {
+    } catch (err: any) {
+      logDiagnostic('Restart Payment Flow', 'failed', err.message);
       console.error("Error restarting flow:", err);
+      alert(`Restart failed: ${err.message}`);
     }
   };
 
   const handlePaymentClick = async () => {
-    if (!user) return;
-    if (existingPayment && ['initiated', 'paid_pending_verification', 'approved'].includes(existingPayment.status)) {
+    if (!user) {
+      alert("Please log in to continue.");
       return;
     }
+
+    if (existingPayment && ['initiated', 'paid_pending_verification', 'approved'].includes(existingPayment.status)) {
+      alert("A payment process is already in progress.");
+      return;
+    }
+
+    logDiagnostic('Initiate Selar Payment', 'action_started');
 
     try {
       const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -146,41 +194,61 @@ export const SubscriptionPage: React.FC = () => {
         payment_reference: internalRef
       };
       
-      await set(newPaymentRef, paymentData);
-      await updateProgress({ subscription_reference: internalRef });
-      setExistingPayment(paymentData);
-      window.open('https://selar.com/73766131m1', '_blank');
-    } catch (err) {
+      const success = await firebaseSafeSet(`payments/${newPaymentRef.key}`, paymentData, "InitiatePayment");
+      if (success) {
+        setExistingPayment(paymentData);
+        logDiagnostic('Initiate Selar Payment', 'action_success', { paymentId: newPaymentRef.key });
+        window.open('https://selar.com/73766131m1', '_blank');
+      } else {
+        throw new Error("Initialization failed at database level");
+      }
+    } catch (err: any) {
+      logDiagnostic('Initiate Selar Payment', 'failed', err.message);
       console.error("Payment error:", err);
+      alert(`Initialization failed: ${err.message}`);
     }
   };
 
   const handleConfirmPayment = async () => {
+    logDiagnostic('Confirm Payment (Manual)', 'action_started');
     const refId = window.prompt('Please enter your Selar Payment Reference ID:');
-    if (!refId) return;
+    if (!refId) {
+      logDiagnostic('Confirm Payment (Manual)', 'failed', 'No reference ID provided by user');
+      return;
+    }
 
     if (user && existingPayment) {
       try {
-        const paymentRef = ref(db, `payments/${existingPayment.id}`);
-        await set(paymentRef, {
+        const updateData = {
           ...existingPayment,
           status: 'paid_pending_verification',
           reference_id: refId,
           timestamp: Date.now()
-        });
+        };
+        const success = await firebaseSafeSet(`payments/${existingPayment.id}`, updateData, "ConfirmPaymentManual");
         
-        await updateProgress({ subscription_status: 'pending' });
-        setExistingPayment({ ...existingPayment, status: 'paid_pending_verification', reference_id: refId });
-        alert('Payment verification request submitted!');
-      } catch (err) {
+        if (success) {
+          setExistingPayment(updateData as PaymentRecord);
+          logDiagnostic('Confirm Payment (Manual)', 'action_success', { refId });
+          alert('Payment verification request submitted!');
+        }
+      } catch (err: any) {
+        logDiagnostic('Confirm Payment (Manual)', 'failed', err.message);
         console.error("Verification error:", err);
+        alert(`Verification submission failed: ${err.message}`);
       }
+    } else {
+      logDiagnostic('Confirm Payment (Manual)', 'failed', 'No existing payment context found');
+      alert("No active payment session found. Please start a new payment first.");
     }
   };
 
   const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+
+    logDiagnostic('Upload Receipt', 'action_started', { fileName: file.name, fileSize: file.size });
+
     setUploading(true);
     const reader = new FileReader();
     reader.onloadend = async () => {
@@ -198,15 +266,24 @@ export const SubscriptionPage: React.FC = () => {
           status: 'pending',
           timestamp: Date.now()
         };
-        await set(newReceiptRef, receiptData);
-        await updateProgress({ subscription_status: 'pending' });
-        setExistingReceipt(receiptData);
-        alert('Receipt uploaded! Verification usually takes less than 24 hours.');
-      } catch (err) {
+        const success = await firebaseSafeSet(`receipts/${newReceiptRef.key}`, receiptData, "UploadReceipt");
+        if (success) {
+          setExistingReceipt(receiptData);
+          logDiagnostic('Upload Receipt', 'action_success', { receiptId: newReceiptRef.key });
+          alert('Receipt uploaded! Verification usually takes less than 24 hours.');
+        }
+      } catch (err: any) {
+        logDiagnostic('Upload Receipt', 'failed', err.message);
         console.error("Upload error:", err);
+        alert(`Upload failed: ${err.message}`);
       } finally {
         setUploading(false);
       }
+    };
+    reader.onerror = () => {
+      logDiagnostic('Upload Receipt', 'failed', 'FileReader error');
+      setUploading(false);
+      alert("Could not read file. Please try a different image.");
     };
     reader.readAsDataURL(file);
   };

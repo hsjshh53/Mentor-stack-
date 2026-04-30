@@ -1,1303 +1,398 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { ref, set, push, get, update, remove } from "firebase/database";
+/**
+ * MENTORSTACK AI GENERATOR V3 (ELITE EDITION)
+ * Focus: High-density technical knowledge, Career Readiness, and Premium Content.
+ * Provider: Gemini 1.5 Pro (Exclusive)
+ */
+
+import { ref, update, set, get } from "firebase/database";
 import { db } from "../lib/firebase";
-import { sleep, callGeminiWithRetry, safeJsonParse, getQueueStatus } from "../lib/gemini-utils";
-import { 
-  Skill, 
-  CurriculumPath, 
-  CurriculumStage, 
-  CurriculumWeek,
-  CurriculumModule, 
-  CurriculumLesson,
-  GeneratedLesson 
-} from "../types";
+import { safeJsonParse, smartGenerate, isAiConfigured } from "../lib/gemini-utils";
+import { ModerationService } from "./ModerationService";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
-
-export type GenerationMode = 'missing' | 'update' | 'regenerate';
-
-// Global abort controller for generation tasks
-let currentGenerationId: string | null = null;
-export const cancelGeneration = () => {
-  currentGenerationId = null;
-};
+// -- CONFIG --
 
 /**
  * Normalizes a title for consistent comparison.
  */
-export const normalizeTitle = (title: string): string => {
-  return title.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-};
-
-/**
- * Generates a consistent slug from a title.
- */
 export const generateSlug = (title: string): string => {
-  return title.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  if (!title) return `item-${Math.random().toString(36).substr(2, 9)}`;
+  return String(title).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 };
 
-/**
- * Local helper removed in favor of shared utility from gemini-utils.
- */
+// -- ELITE PROMPTS --
 
-export const generateRoadmap = async (
-  skill: Skill,
-  onProgress: (progress: number, status: string) => void,
-  mode: GenerationMode = 'missing'
+const CURRICULUM_PROMPT = (skillTitle: string) => `
+You are MentorStack AI Router. Generate a compact career Learning Path for: "${skillTitle}".
+ABSOLUTE RULE: Return ONLY valid JSON. No markdown. No code blocks. No preamble. Single-line strings.
+
+MENTORSTACK STAGES (Mandatory Order):
+1. Foundations (Absolute Beginner)
+2. Core Concepts (Foundations)
+3. Practical Skills (Core Principles)
+4. Real Projects (Hand-on Building)
+5. Advanced Systems (Industry Grade)
+6. Career Readiness (Job-Ready)
+
+{
+  "title": "${skillTitle}",
+  "careerOverview": "Quick industry summary",
+  "salaryRange": { "entry": "$40k+", "mid": "$80k+", "senior": "$130k+" },
+  "weeksToMastery": 12,
+  "difficulty": "Intermediate",
+  "jobReadinessChecklist": ["Skill A", "Skill B"],
+  "stages": [
+    {
+      "title": "Foundations",
+      "weeks": [
+        {
+          "weekNumber": 1,
+          "topic": "Main Theme",
+          "modules": [
+            {
+              "title": "Module A",
+              "duration": "45m",
+              "objective": "Goal",
+              "lessons": ["L1", "L2"]
+            }
+          ]
+        }
+      ]
+    },
+    { "title": "Core Concepts", "weeks": [] },
+    { "title": "Practical Skills", "weeks": [] },
+    { "title": "Real Projects", "weeks": [] },
+    { "title": "Advanced Systems", "weeks": [] },
+    { "title": "Career Readiness", "weeks": [] }
+  ],
+  "capstoneProject": {
+    "title": "Project",
+    "description": "Summary",
+    "deliverables": ["A", "B"]
+  }
+}
+`;
+
+export const LESSON_PROMPT = (skillTitle: string, path: string, difficulty: string, topic: string) => `
+You are an expert curriculum designer for MentorStack AI Academy.
+Generate a structured lesson for:
+Topic: "${topic}"
+Path: "${path}"
+Difficulty: "${difficulty}"
+
+🎯 DIFFICULTY RULES
+- Beginner: Absolute zero knowledge. Simple explanations, no heavy jargon, real-life analogies, basic examples only.
+- Intermediate: Assumes basic knowledge, introduce real frameworks/tools, structured code, small projects.
+- Advanced: Deep system design, optimization concepts, architecture thinking, production-level examples.
+- Expert: Industry-level engineering, scalability, distributed systems, performance tuning, real-world case studies.
+
+ABSOLUTE RULES:
+- Return ONLY valid JSON. No markdown. No code blocks. No preamble.
+- No empty fields. No placeholders.
+- Use real-world examples and industry standards.
+
+{
+  "title": "${topic}",
+  "objective": "1-2 sentences on what will be learned",
+  "analogy": "Real-world analogy (difficulty-scaled)",
+  "difficulty": "${difficulty}",
+  "estimatedMinutes": 20,
+  "technicalExplanation": "Deep high-density explanation based on ${difficulty} level",
+  "codeExample": "Production-grade working code snippet showing ${difficulty} techniques",
+  "stepByStep": ["Step 1 logic", "Step 2 logic"],
+  "commonMistakes": ["Mistake 1", "Mistake 2"],
+  "careerUseCase": "Real-world scenario in industry",
+  "industryInsight": "Industry perspective or trend",
+  "knowledgeCheck": {
+    "question": "Deep conceptual question tied to ${difficulty} level",
+    "options": ["Opt A", "Opt B", "Opt C", "Opt D"],
+    "answer": "Opt A"
+  },
+  "practicalProject": {
+    "title": "Real-world Project Name",
+    "description": "Project goal and scope scaled for ${difficulty}",
+    "steps": ["Actionable step 1", "Actionable step 2", "Actionable step 3"]
+  },
+  "interviewMastery": ["Interview Q&A 1", "Interview Q&A 2"]
+}
+`;
+
+// -- CORE GENERATOR V3 --
+
+export const generateEliteCurriculum = async (
+  skillId: string, 
+  skillTitle: string,
+  onProgress: (status: string) => void
 ) => {
-  if (!ai) throw new Error("Gemini API Key not found");
-  const generationId = Math.random().toString(36).substring(7);
-  currentGenerationId = generationId;
-  let currentProgress = 0;
-
-  const skillId = skill.id;
-
-  // 0. Handle Regenerate Mode
-  if (mode === 'regenerate') {
-    onProgress(5, "Wiping existing curriculum for regeneration...");
-    const stagesSnap = await get(ref(db, `curriculum_stages/${skillId}`));
-    if (stagesSnap.exists()) {
-      const stagesData = stagesSnap.val();
-      for (const sId in stagesData) {
-        const weeksSnap = await get(ref(db, `curriculum_weeks/${sId}`));
-        if (weeksSnap.exists()) {
-          const weeksData = weeksSnap.val();
-          for (const wId in weeksData) {
-            await remove(ref(db, `curriculum_modules/${wId}`));
-          }
-        }
-        await remove(ref(db, `curriculum_weeks/${sId}`));
-      }
-    }
-    await Promise.all([
-      remove(ref(db, `curriculum_paths/${skillId}`)),
-      remove(ref(db, `curriculum_stages/${skillId}`)),
-      remove(ref(db, `ai_generated_lessons/${skillId}`))
-    ]);
-  }
-
-  // 1. Fetch Existing Data for Duplicate Checks
-  onProgress(10, "Checking existing curriculum structure...");
-  const [existingPathSnap, existingStagesSnap] = await Promise.all([
-    get(ref(db, `curriculum_paths/${skillId}`)),
-    get(ref(db, `curriculum_stages/${skillId}`))
-  ]);
-
-  const existingPath = existingPathSnap.val() as CurriculumPath | null;
-  const existingStages = existingStagesSnap.exists() ? Object.values(existingStagesSnap.val()) as CurriculumStage[] : [];
+  if (!isAiConfigured()) throw new Error("AI Architecture not initialized. API Keys missing.");
   
-  const existingStagesMap = new Map<string, CurriculumStage>();
-  existingStages.forEach(s => existingStagesMap.set(normalizeTitle(s.title), s));
+  onProgress("Architecting roadmap via Elite AI Engine...");
+  const rawText = await smartGenerate(CURRICULUM_PROMPT(skillTitle), onProgress);
+  const data = safeJsonParse(rawText);
+  if (!data) throw new Error("AI returned empty or invalid roadmap data.");
 
-  // If path exists and we are in 'missing' mode, we might still want to generate missing stages/weeks/modules
-  // But if the path is already deep, we should be careful.
-
-  onProgress(15, `Designing ${skill.category} roadmap...`);
-
-  const isLanguage = skill.category === 'coding-languages';
-  const isCareerPrep = skill.category === 'career-prep';
+  onProgress("Structuring career path metadata...");
   
-  let prompt = '';
+  const updates: any = {};
   
-  if (isLanguage) {
-    prompt = `
-    You are a senior curriculum architect for MentorStack Academy.
-    Design a comprehensive, professional "Zero-to-Pro" learning program for the coding language: "${skill.title}".
-    This program must cover the language/technology in extreme depth, from basic syntax to advanced internals and professional usage.
+  // Save Path info
+  updates[`curriculum_paths/${skillId}`] = {
+    id: skillId,
+    title: data.title || skillTitle,
+    careerOverview: data.careerOverview || "Career path overview in development...",
+    salaryRange: data.salaryRange || { entry: "N/A", mid: "N/A", senior: "N/A" },
+    jobReadinessChecklist: data.jobReadinessChecklist || [],
+    capstoneProject: data.capstoneProject || { title: "Capstone Project", description: "Details to follow", deliverables: [] },
+    updatedAt: Date.now()
+  };
+
+  // Process Stages
+  if (data.stages && Array.isArray(data.stages)) {
+    data.stages.forEach((stage: any, sIdx: number) => {
+    const stageId = `${skillId}-s${sIdx}`;
     
-    The program must cover 5 distinct stages:
-    1. Foundations: Syntax, core concepts, basic structure, and environment setup.
-    2. Intermediate Concepts: Control flow, data structures, styling (if CSS), or core logic.
-    3. Advanced Patterns: Complex structures, optimization, best practices, and advanced features.
-    4. Professional Internals: Performance, security, architecture, and advanced integration.
-    5. Ecosystem & Projects: Build systems, testing, professional tools, and building a major capstone project in ${skill.title}.
+    // Explicit stage-to-difficulty mapping
+    const stageDifficulty = 
+      sIdx === 0 ? "Beginner" :
+      sIdx === 1 ? "Intermediate" :
+      sIdx === 2 ? "Advanced" : "Expert";
 
-    IMPORTANT: 
-    - If this is HTML, focus ONLY on HTML (Semantic HTML, Accessibility, SEO, Forms, etc.).
-    - If this is CSS, focus ONLY on CSS (Selectors, Box Model, Flexbox, Grid, Animations, etc.).
-    - If this is a programming language (JS, Python, Java, etc.), focus on its specific syntax and paradigms.
-    - Focus ONLY on the ${skill.title} and its immediate ecosystem.
-    - Every module title must be unique and descriptive.
-    - The total duration is ${skill.estimatedWeeks} weeks.
-    - Distribute these weeks across the stages logically.
-    - Each week must have 2-3 deep modules.
-
-    Return a JSON object with this structure:
-    {
-      "path": {
-        "title": "Mastering ${skill.title}: The Complete Professional Guide",
-        "description": "A comprehensive journey from absolute beginner to expert ${skill.title} programmer.",
-        "summary": "Master ${skill.title} through a structured ${skill.estimatedWeeks}-week program.",
-        "durationWeeks": ${skill.estimatedWeeks},
-        "targetOutcome": "${skill.careerOutcome}",
-        "estimatedDuration": "${skill.estimatedCompletionTime}",
-        "projectsCount": number,
-        "jobOutcome": "${skill.careerOutcome}"
-      },
-      "stages": [
-        {
-          "title": "Stage Title",
-          "levelName": "Beginner" | "Intermediate" | "Advanced" | "Expert" | "Career Prep",
-          "order": number,
-          "weeks": [
-            {
-              "weekNumber": number,
-              "title": "Week Title",
-              "description": "What this week covers in depth",
-              "learningGoals": ["Goal 1", "Goal 2", "Goal 3"],
-              "modules": [
-                {
-                  "title": "Module Title",
-                  "description": "What this module covers",
-                  "order": number,
-                  "estimatedDuration": "4-6 hours"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  `;
-  } else if (isCareerPrep) {
-    prompt = `
-    You are a senior career coach and talent acquisition expert for MentorStack Academy.
-    Design a comprehensive "Job-Ready" career preparation program for: "${skill.title}".
-    This program must focus on non-technical skills, personal branding, and job search strategies.
-    
-    The program must cover 5 distinct stages:
-    1. Personal Branding: Resume, LinkedIn, and portfolio strategy.
-    2. Networking & Outreach: Cold emailing, informational interviews, and community building.
-    3. Interview Mastery: Behavioral questions, STAR method, and mock interviews.
-    4. Technical Interview Strategy: How to approach coding challenges and system design (from a process perspective).
-    5. Job Search & Negotiation: Offer evaluation, salary negotiation, and long-term career growth.
-
-    The total duration is ${skill.estimatedWeeks} weeks.
-    Distribute these weeks across the stages logically.
-    Each week must have 2-3 deep modules.
-    
-    IMPORTANT: 
-    - Every module title must be unique and descriptive.
-
-    Return a JSON object with this structure:
-    {
-      "path": {
-        "title": "${skill.title}: Professional Career Prep",
-        "description": "A comprehensive journey from job seeker to hired professional.",
-        "summary": "Master the art of the job search through a structured ${skill.estimatedWeeks}-week program.",
-        "durationWeeks": ${skill.estimatedWeeks},
-        "targetOutcome": "${skill.careerOutcome}",
-        "estimatedDuration": "${skill.estimatedCompletionTime}",
-        "projectsCount": number,
-        "jobOutcome": "${skill.careerOutcome}"
-      },
-      "stages": [
-        {
-          "title": "Stage Title",
-          "levelName": "Beginner" | "Intermediate" | "Advanced" | "Expert" | "Career Prep",
-          "order": number,
-          "weeks": [
-            {
-              "weekNumber": number,
-              "title": "Week Title",
-              "description": "What this week covers in depth",
-              "learningGoals": ["Goal 1", "Goal 2", "Goal 3"],
-              "modules": [
-                {
-                  "title": "Module Title",
-                  "description": "What this module covers",
-                  "order": number,
-                  "estimatedDuration": "4-6 hours"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  `;
-  } else {
-    prompt = `
-    You are a world-class senior curriculum architect for MentorStack Academy.
-    Design a comprehensive, professional "Zero-to-Senior-Engineer" career roadmap for: "${skill.title}".
-    This program is for high-end international talent. It must be deep, practical, and rigorous.
-    
-    The program must cover 5 distinct mastery stages:
-    1. Foundations & Mental Models: Core building blocks, syntax, environment setup, and computer science foundations relevant to ${skill.title}.
-    2. Deep Dive & Patterns: Practical application, structural patterns, building real features, and idiomatic best practices.
-    3. Advanced Systems & Internals: Complex architecture, optimization, underlying mechanics, and scalability.
-    4. Enterprise & Professional Excellence: Industry standards (Clean Code, TDD), security, Cloud/CI-CD, and advanced integration.
-    5. Career Mastery & Leadership: Strategic interview mastery, professional networking, technical leadership, and building a high-impact capstone portfolio project.
-
-    The curriculum must be extremely thorough.
-    
-    IMPORTANT: 
-    - Every module title must be unique, professional, and descriptive.
-    - The total duration is ${skill.estimatedWeeks} weeks.
-    - Each week MUST have 2-4 deep modules.
-    - Do NOT generate shallow modules. Every module must representative a significant learning milestone.
-    - Ensure a logical flow from absolute basics to advanced job-ready skills.
-
-    Return a JSON object with this structure:
-    {
-      "path": {
-        "title": "Professional ${skill.title} Mastery Program",
-        "description": "A world-class journey from digital literacy to a career as a senior ${skill.title} professional.",
-        "summary": "Master ${skill.title} through a rigorous ${skill.estimatedWeeks}-week career transformation program.",
-        "durationWeeks": ${skill.estimatedWeeks},
-        "targetOutcome": "${skill.careerOutcome}",
-        "estimatedDuration": "${skill.estimatedCompletionTime}",
-        "projectsCount": 12,
-        "jobOutcome": "${skill.careerOutcome}"
-      },
-      "stages": [
-        {
-          "title": "Stage Title (e.g., Foundations of ${skill.title})",
-          "levelName": "Beginner" | "Intermediate" | "Advanced" | "Expert" | "Career Prep",
-          "order": number,
-          "weeks": [
-            {
-              "weekNumber": number,
-              "title": "Week Title (e.g., Reactive Programming & State)",
-              "description": "Deep dive into ...",
-              "learningGoals": ["Master X", "Understand Z"],
-              "modules": [
-                {
-                  "title": "Module Title",
-                  "description": "Deep technical coverage of ...",
-                  "order": number,
-                  "estimatedDuration": "6-8 hours"
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    }
-  `;
-  }
-
-  try {
-    // Add a small jittered startup delay (0-5s) to avoid immediate quota burst
-    await sleep(Math.random() * 5000);
-
-    const result = await callGeminiWithRetry(() => (ai as any).models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { 
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            path: {
-              type: Type.OBJECT,
-              properties: {
-                title: { type: Type.STRING },
-                description: { type: Type.STRING },
-                summary: { type: Type.STRING },
-                durationWeeks: { type: Type.NUMBER },
-                targetOutcome: { type: Type.STRING },
-                estimatedDuration: { type: Type.STRING },
-                projectsCount: { type: Type.NUMBER },
-                jobOutcome: { type: Type.STRING }
-              },
-              required: ["title", "description", "summary", "durationWeeks", "targetOutcome", "estimatedDuration", "projectsCount", "jobOutcome"]
-            },
-            stages: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  title: { type: Type.STRING },
-                  levelName: { type: Type.STRING },
-                  order: { type: Type.NUMBER },
-                  weeks: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        weekNumber: { type: Type.NUMBER },
-                        title: { type: Type.STRING },
-                        description: { type: Type.STRING },
-                        learningGoals: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        modules: {
-                          type: Type.ARRAY,
-                          items: {
-                            type: Type.OBJECT,
-                            properties: {
-                              title: { type: Type.STRING },
-                              description: { type: Type.STRING },
-                              order: { type: Type.NUMBER },
-                              estimatedDuration: { type: Type.STRING }
-                            },
-                            required: ["title", "description", "order", "estimatedDuration"]
-                          }
-                        }
-                      },
-                      required: ["weekNumber", "title", "description", "learningGoals", "modules"]
-                    }
-                  }
-                },
-                required: ["title", "levelName", "order", "weeks"]
-              }
-            }
-          },
-          required: ["path", "stages"]
-        }
-      }
-    }), { id: skillId, name: `Roadmap: ${skill.title}`, priority: 10 });
-
-    const data = safeJsonParse(result.text);
-
-    // 1. Save/Update Path
-    const pathRef = ref(db, `curriculum_paths/${skillId}`);
-    const pathData: CurriculumPath = {
-      id: skillId,
-      skillId: skillId,
-      title: data.path.title,
-      description: data.path.description,
-      summary: data.path.summary,
-      durationWeeks: data.path.durationWeeks,
-      targetOutcome: data.path.targetOutcome,
-      status: 'draft',
-      totalModules: data.stages.reduce((acc: number, s: any) => acc + s.weeks.reduce((wAcc: number, w: any) => wAcc + w.modules.length, 0), 0),
-      totalLessons: existingPath?.totalLessons || 0,
-      estimatedDuration: data.path.estimatedDuration,
-      projectsCount: data.path.projectsCount || 10,
-      jobOutcome: data.path.jobOutcome || skill.careerOutcome
+    updates[`curriculum_stages/${skillId}/${stageId}`] = {
+      id: stageId,
+      skillId,
+      title: stage.title,
+      difficulty: stageDifficulty,
+      order: sIdx
     };
 
-    if (mode === 'missing' && existingPath) {
-      onProgress(20, "Path already exists, skipping path creation...");
-    } else {
-      await set(pathRef, pathData);
-    }
-
-    let stagesCreated = 0;
-    let stagesSkipped = 0;
-    let weeksCreated = 0;
-    let weeksSkipped = 0;
-    let modulesCreated = 0;
-    let modulesSkipped = 0;
-
-    // 2. Save Stages, Weeks & Modules
-    for (const stageData of data.stages) {
-      const normalizedStageTitle = normalizeTitle(stageData.title);
-      let stageId: string;
-      let stageRef;
-
-      if (mode !== 'regenerate' && existingStagesMap.has(normalizedStageTitle)) {
-        const existingStage = existingStagesMap.get(normalizedStageTitle)!;
-        stageId = existingStage.id;
-        stageRef = ref(db, `curriculum_stages/${skillId}/${stageId}`);
-        stagesSkipped++;
-        if (mode === 'update') {
-          await update(stageRef, {
-            title: stageData.title,
-            levelName: stageData.levelName,
-            order: stageData.order
-          });
-        }
-      } else {
-        stageRef = push(ref(db, `curriculum_stages/${skillId}`));
-        stageId = stageRef.key!;
-        const stage: CurriculumStage = {
-          id: stageId,
-          curriculumPathId: skillId,
-          skillId: skillId,
-          title: stageData.title,
-          levelName: stageData.levelName,
-          order: stageData.order
-        };
-        await set(stageRef, stage);
-        stagesCreated++;
-      }
-
-      // Fetch existing weeks for this stage
-      const existingWeeksSnap = await get(ref(db, `curriculum_weeks/${stageId}`));
-      const existingWeeks = existingWeeksSnap.exists() ? Object.values(existingWeeksSnap.val()) as CurriculumWeek[] : [];
-      const existingWeeksMap = new Map<string, CurriculumWeek>();
-      existingWeeks.forEach(w => {
-        existingWeeksMap.set(`${w.weekNumber}-${normalizeTitle(w.title)}`, w);
-      });
-
-      for (const weekData of stageData.weeks) {
-        const weekKey = `${weekData.weekNumber}-${normalizeTitle(weekData.title)}`;
-        let weekId: string;
-        let weekRef;
-
-        if (mode !== 'regenerate' && existingWeeksMap.has(weekKey)) {
-          const existingWeek = existingWeeksMap.get(weekKey)!;
-          weekId = existingWeek.id;
-          weekRef = ref(db, `curriculum_weeks/${stageId}/${weekId}`);
-          weeksSkipped++;
-          if (mode === 'update') {
-            await update(weekRef, {
-              title: weekData.title,
-              description: weekData.description,
-              learningGoals: weekData.learningGoals
-            });
-          }
-        } else {
-          weekRef = push(ref(db, `curriculum_weeks/${stageId}`));
-          weekId = weekRef.key!;
-          const week: CurriculumWeek = {
-            id: weekId,
-            skillId,
-            curriculumPathId: skillId,
-            stageId,
-            weekNumber: weekData.weekNumber,
-            title: weekData.title,
-            description: weekData.description,
-            learningGoals: weekData.learningGoals
-          };
-          await set(weekRef, week);
-          weeksCreated++;
-        }
-
-        // Fetch existing modules for this week
-        const existingModulesSnap = await get(ref(db, `curriculum_modules/${weekId}`));
-        const existingModules = existingModulesSnap.exists() ? Object.values(existingModulesSnap.val()) as CurriculumModule[] : [];
-        const existingModulesMap = new Map<string, CurriculumModule>();
-        existingModules.forEach(m => existingModulesMap.set(normalizeTitle(m.title), m));
-
-        for (const moduleData of weekData.modules) {
-          const normalizedModuleTitle = normalizeTitle(moduleData.title);
-          let moduleRef;
-
-          if (mode !== 'regenerate' && existingModulesMap.has(normalizedModuleTitle)) {
-            const existingModule = existingModulesMap.get(normalizedModuleTitle)!;
-            moduleRef = ref(db, `curriculum_modules/${weekId}/${existingModule.id}`);
-            modulesSkipped++;
-            if (mode === 'update') {
-              await update(moduleRef, {
-                title: moduleData.title,
-                description: moduleData.description,
-                order: moduleData.order,
-                estimatedDuration: moduleData.estimatedDuration
-              });
-            }
-          } else {
-            moduleRef = push(ref(db, `curriculum_modules/${weekId}`));
-            const module: CurriculumModule = {
-              id: moduleRef.key!,
-              skillId,
-              curriculumPathId: skillId,
-              stageId,
-              weekId,
-              title: moduleData.title,
-              description: moduleData.description,
-              order: moduleData.order,
-              estimatedDuration: moduleData.estimatedDuration
-            };
-            await set(moduleRef, module);
-            modulesCreated++;
-          }
-        }
-      }
-    }
-
-    // Update skill with counts
-    const skillRef = ref(db, `skills/${skillId}`);
-    await update(skillRef, {
-      totalStages: data.stages.length,
-      totalModules: pathData.totalModules,
-      totalProjects: pathData.projectsCount
-    });
-
-    const summary = `Roadmap complete! Created: ${stagesCreated} stages, ${weeksCreated} weeks, ${modulesCreated} modules. Skipped: ${stagesSkipped} stages, ${weeksSkipped} weeks, ${modulesSkipped} modules.`;
-    onProgress(100, summary);
-    return skillId;
-  } catch (error: any) {
-    if (currentGenerationId !== generationId) {
-      onProgress(0, "Generation cancelled by user.");
-      return null;
-    }
-    console.error("Error generating roadmap:", error);
-    let errorMsg = "";
-    if (typeof error.message === 'string') errorMsg = error.message;
-    else if (error.error?.message) errorMsg = error.error.message;
-    else {
-      try { errorMsg = JSON.stringify(error); } catch { errorMsg = String(error); }
-    }
-    
-    const errorStr = errorMsg.toLowerCase();
-    const isRateLimit = 
-      errorStr.includes("429") || 
-      errorStr.includes("resource_exhausted") || 
-      errorStr.includes("quota") ||
-      errorStr.includes("rate limit") ||
-      (error.status === 429) ||
-      (error.code === 429) ||
-      (error.error?.code === 429) ||
-      (error.error?.status === "RESOURCE_EXHAUSTED");
-
-    const isTransient = errorStr.includes("500") || errorStr.includes("xhr error") || errorStr.includes("rpc failed") || errorStr.includes("overloaded");
-
-    if (isRateLimit) {
-      throw new Error("Academy AI quota reached or busy. Please wait a few minutes before trying again.");
-    }
-    if (isTransient) {
-      throw new Error("Academy Logic Engine is experiencing common network issues. Please try again in a few moments.");
-    }
-    throw error;
-  }
-};
-
-export const generateFullCurriculum = async (
-  skill: Skill,
-  onProgress: (progress: number, status: string, stats?: any) => void,
-  mode: GenerationMode = 'missing'
-) => {
-  if (!ai) throw new Error("Gemini API Key not found");
-  const generationId = Math.random().toString(36).substring(7);
-  currentGenerationId = generationId;
-
-  const stats = {
-    modulesTotal: 0,
-    modulesDone: 0,
-    lessonsCreated: 0,
-    lessonsUpdated: 0,
-    lessonsSkipped: 0,
-    startTime: Date.now()
-  };
-
-  try {
-    // 1. Generate Roadmap
-    onProgress(5, "Designing full career roadmap...", stats);
-    const skillId = await generateRoadmap(skill, (p, s) => onProgress(5 + (p * 0.1), s, stats), mode);
-    if (!skillId || currentGenerationId !== generationId) return null;
-
-    // 2. Fetch all modules
-    onProgress(15, "Fetching generated modules...", stats);
-    const stagesRef = ref(db, `curriculum_stages/${skillId}`);
-    const [pathSnap, stagesSnap] = await Promise.all([
-      get(ref(db, `curriculum_paths/${skillId}`)),
-      get(stagesRef)
-    ]);
-    
-    if (!stagesSnap.exists()) throw new Error("Failed to fetch stages");
-    const existingPath = pathSnap.val() as CurriculumPath | null;
-    const stages = Object.values(stagesSnap.val()) as CurriculumStage[];
-    
-    const allModules: { module: CurriculumModule, weekId: string }[] = [];
-    for (const stage of stages) {
-      const weeksRef = ref(db, `curriculum_weeks/${stage.id}`);
-      const weeksSnap = await get(weeksRef);
-      if (weeksSnap.exists()) {
-        const weeks = Object.values(weeksSnap.val()) as CurriculumWeek[];
-        for (const week of weeks) {
-          const modsRef = ref(db, `curriculum_modules/${week.id}`);
-          const modsSnap = await get(modsRef);
-          if (modsSnap.exists()) {
-            const modules = Object.values(modsSnap.val()) as CurriculumModule[];
-            modules.forEach(m => allModules.push({ module: m, weekId: week.id }));
-          }
-        }
-      }
-    }
-
-    stats.modulesTotal = allModules.length;
-    onProgress(20, `Starting architecture-aware lesson generation for ${stats.modulesTotal} modules...`, stats);
-
-    // Group modules by week for batch processing
-    const modulesByWeek: Record<string, typeof allModules> = {};
-    allModules.forEach(m => {
-      if (!modulesByWeek[m.weekId]) modulesByWeek[m.weekId] = [];
-      modulesByWeek[m.weekId].push(m);
-    });
-
-    const weekIds = Object.keys(modulesByWeek);
-    
-    for (const weekId of weekIds) {
-      if (currentGenerationId !== generationId) break;
-      
-      // Stability System Pacing: strictly respect 2 RPM limit
-      if (weekId !== weekIds[0]) {
-        const cooldown = 45000 + Math.random() * 5000;
-        onProgress(
-          20 + (stats.modulesDone / stats.modulesTotal) * 75,
-          `We're preparing your lessons. AI capacity is temporarily busy. (${Math.round(cooldown/1000)}s)`,
-          stats
-        );
-        await sleep(cooldown);
-      }
-
-      const weekModules = modulesByWeek[weekId];
-      const weekNumber = weekModules[0].module.weekId; // This is actually the weekId, we need label
-
-      onProgress(
-        20 + (stats.modulesDone / stats.modulesTotal) * 75, 
-        `Generating lessons ${stats.modulesDone + 1} of ${stats.modulesTotal}...`, 
-        stats
-      );
-
-      // Implement SMART CACHING / RESUME
-      // Check if lessons already exist for these modules if mode is 'missing'
-      let modulesToGenerate = weekModules;
-      if (mode === 'missing') {
-        const existingLessonsSnap = await get(ref(db, `ai_generated_lessons/${skillId}`));
-        const existingLessons = existingLessonsSnap.exists() ? Object.values(existingLessonsSnap.val()) as GeneratedLesson[] : [];
-        
-        modulesToGenerate = weekModules.filter(wm => {
-          const hasLessons = existingLessons.some(l => l.moduleId === wm.module.id);
-          if (hasLessons) {
-            stats.modulesDone++;
-            stats.lessonsSkipped += existingLessons.filter(l => l.moduleId === wm.module.id).length;
-          }
-          return !hasLessons;
-        });
-      }
-
-      if (modulesToGenerate.length === 0) continue;
-
-      // Use the new Week Batch Generator for high efficiency
-      try {
-        const result = await generateWeekLessons(
-          skillId,
-          modulesToGenerate.map(wm => ({ id: wm.module.id, title: wm.module.title, stageId: wm.module.stageId })),
-          skill.title,
-          weekId,
-          () => {},
-          mode
-        );
-        
-        if (result) {
-          stats.lessonsCreated += result.created;
-          stats.lessonsUpdated += result.updated;
-          stats.lessonsSkipped += result.skipped;
-        }
-        stats.modulesDone += modulesToGenerate.length;
-
-        // Incremental save of path progress
-        const pathRef = ref(db, `curriculum_paths/${skillId}`);
-        await update(pathRef, { 
-          totalLessons: (existingPath?.totalLessons || 0) + stats.lessonsCreated,
-          updatedAt: Date.now()
-        });
-      } catch (err) {
-        console.error(`Failed to process week batch ${weekId}:`, err);
-        // Fallback to individual module generation if week-batch fails (e.g. context too long)
-        onProgress(stats.modulesDone / stats.modulesTotal * 100, `Retrying week ${weekId} with individual module processing...`, stats);
-        
-        for (const { module } of modulesToGenerate) {
-          const result = await generateLessonsForModule(
-            skillId,
-            module.id,
-            module.title,
-            skill.title,
-            4,
-            module.stageId,
-            weekId,
-            () => {},
-            mode
-          ) as { created: number, updated: number, skipped: number };
-          if (result) stats.lessonsCreated += result.created;
-          stats.modulesDone++;
-        }
-      }
-    }
-
-    if (currentGenerationId !== generationId) {
-      onProgress(0, "Generation cancelled.", stats);
-      return null;
-    }
-
-    onProgress(100, "Full curriculum and lessons generated successfully!", stats);
-    return skillId;
-  } catch (error: any) {
-    console.error("Error generating full curriculum:", error);
-    const errorStr = (error.message || JSON.stringify(error) || "").toLowerCase();
-    const isRateLimit = errorStr.includes("429") || errorStr.includes("resource_exhausted") || errorStr.includes("quota");
-    const isTransient = errorStr.includes("500") || errorStr.includes("xhr error") || errorStr.includes("rpc failed") || errorStr.includes("overloaded");
-
-    if (isRateLimit) {
-      throw new Error("We're preparing your lessons. AI capacity is temporarily busy. Generation will resume automatically later.");
-    }
-    if (isTransient) {
-      throw new Error("Academy AI is currently unstable. We've attempted retries but the connection is failing. Please try again soon.");
-    }
-    throw error;
-  }
-};
-
-/**
- * Bachelor generation for an entire week of modules in one request.
- */
-export const generateWeekLessons = async (
-  skillId: string,
-  modules: { id: string, title: string, stageId: string }[],
-  skillTitle: string,
-  weekId: string,
-  onProgress: (progress: number, status: string) => void,
-  mode: GenerationMode = 'missing'
-) => {
-  if (!ai) throw new Error("Gemini API Key not found");
-
-  const moduleTitles = modules.map(m => `"${m.title}"`).join(", ");
-  const prompt = `
-    Generate 5 deep technical lessons for "${skillTitle}".
-    MODULES: ${modules.map(m => m.title).join(", ")}.
-    
-    Structure:
-    - title
-    - slug
-    - summary
-    - objectives (list)
-    - explanation
-    - codeExample
-    - quiz (3 questions)
-  `;
-
-  try {
-    const queue = getQueueStatus();
-    
-    // Fallback Mode if Quota is Reached
-    if (queue.isPaused) {
-      console.warn("AI Engine is paused. Generating fallback template lessons.");
-      const data: any = { modules: {} };
-      for (const mod of modules) {
-        data.modules[mod.id] = Array.from({ length: 1 }).map((_, i) => ({
-          title: `${mod.title} Masterclass`,
-          slug: generateSlug(`${mod.title} draft`),
-          summary: "Learning architecture and mental models.",
-          objectives: ["Master core fundamentals", "Implement professional patterns"],
-          explanation: "Draft lesson placeholder. Full AI generation will resume when capacity is available.",
-          codeExample: "// Code logic here...",
-          quiz: [{ question: "Is this a draft?", options: ["Yes", "No"], correctIndex: 0, explanation: "Draft mode." }],
-          status: 'draft_generated'
-        }));
-      }
-      
-      const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
-      const bulkUpdates: any = {};
-      let createdTotal = 0;
-
-      for (const mod of modules) {
-        const lessons = data.modules[mod.id] || [];
-        lessons.forEach((lesson: any, i: number) => {
-          const lessonSlug = lesson.slug || generateSlug(lesson.title);
-          bulkUpdates[lessonSlug] = {
-            ...lesson,
-            id: lessonSlug,
-            slug: lessonSlug,
-            moduleId: mod.id,
-            weekId,
-            skillId,
-            curriculumPathId: skillId,
-            stageId: mod.stageId,
-            order: i + 1,
-            status: 'draft_generated',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            body: lesson.explanation,
-            tags: [skillTitle.toLowerCase()]
-          };
-          createdTotal++;
-        });
-      }
-      if (Object.keys(bulkUpdates).length > 0) await update(poolRef, bulkUpdates);
-      return { created: createdTotal, updated: 0, skipped: 0 };
-    }
-
-    // Low-Quota Mode Adjustments
-    const lessonCountPerModule = queue.lowQuotaMode ? 1 : 2;
-    const finalPrompt = queue.lowQuotaMode 
-      ? `Generate 1 short, compact technical lesson for each module: ${modules.map(m => m.title).join(", ")}. Focus on efficiency.`
-      : prompt;
-
-    const result = await callGeminiWithRetry(() => (ai as any).models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
-      config: { 
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            modules: {
-              type: Type.OBJECT,
-              additionalProperties: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    slug: { type: Type.STRING },
-                    summary: { type: Type.STRING },
-                    objectives: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    explanation: { type: Type.STRING },
-                    codeExample: { type: Type.STRING },
-                    quiz: {
-                      type: Type.ARRAY,
-                      items: {
-                        type: Type.OBJECT,
-                        properties: {
-                          question: { type: Type.STRING },
-                          options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                          correctIndex: { type: Type.NUMBER },
-                          explanation: { type: Type.STRING }
-                        },
-                        required: ["question", "options", "correctIndex", "explanation"]
-                      }
-                    }
-                  },
-                  required: ["title", "slug", "summary", "objectives", "explanation", "codeExample", "quiz"]
-                }
-              }
-            }
-          },
-          required: ["modules"]
-        }
-      }
-    }), { id: skillId, name: `Week Batch: ${skillTitle}`, priority: 5 });
-
-    const data = safeJsonParse(result.text);
-    if (!data || !data.modules) throw new Error("Invalid batch response from AI Engine");
-
-    const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
-    const bulkUpdates: any = {};
-    let createdTotal = 0;
-
-    for (const mod of modules) {
-      const lessons = data.modules[mod.id] || [];
-      lessons.forEach((lesson: any, i: number) => {
-        const lessonSlug = lesson.slug || generateSlug(lesson.title);
-        bulkUpdates[lessonSlug] = {
-          ...lesson,
-          id: lessonSlug,
-          slug: lessonSlug,
-          moduleId: mod.id,
-          weekId,
-          skillId,
-          curriculumPathId: skillId,
-          stageId: mod.stageId,
-          order: i + 1,
-          status: 'pending',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          body: lesson.explanation,
-          tags: [skillTitle.toLowerCase()]
-        };
-        createdTotal++;
-      });
-    }
-
-    if (Object.keys(bulkUpdates).length > 0) {
-      await update(poolRef, bulkUpdates);
-    }
-
-    return { created: createdTotal, updated: 0, skipped: 0 };
-  } catch (error: any) {
-    console.error("Error in week batch generation:", error);
-    
-    let errorMsg = "";
-    if (typeof error.message === 'string') errorMsg = error.message;
-    else if (error.error?.message) errorMsg = error.error.message;
-    else {
-      try { errorMsg = JSON.stringify(error); } catch { errorMsg = String(error); }
-    }
-    
-    const errorStr = errorMsg.toLowerCase();
-    const isRateLimit = 
-      errorStr.includes("429") || 
-      errorStr.includes("resource_exhausted") || 
-      errorStr.includes("quota") ||
-      errorStr.includes("rate limit") ||
-      (error.status === 429) ||
-      (error.code === 429) ||
-      (error.error?.code === 429) ||
-      (error.error?.status === "RESOURCE_EXHAUSTED");
-
-    if (isRateLimit) {
-      throw new Error("We're preparing your lessons. AI capacity is temporarily busy. Generation will continue automatically.");
-    }
-    
-    throw error;
-  }
-};
-
-export const generateLessonsForModule = async (
-  skillId: string,
-  moduleId: string,
-  moduleTitle: string,
-  skillTitle: string,
-  lessonCount: number = 5,
-  stageId: string,
-  weekId: string,
-  onProgress: (progress: number, status: string) => void,
-  mode: GenerationMode = 'missing'
-): Promise<{ created: number, updated: number, skipped: number }> => {
-  if (!ai) throw new Error("Gemini API Key not found");
-
-  // Fetch existing lessons for duplicate check
-  const existingLessonsSnap = await get(ref(db, `ai_generated_lessons/${skillId}`));
-  const existingLessons = existingLessonsSnap.exists() ? Object.values(existingLessonsSnap.val()) as GeneratedLesson[] : [];
-  const existingLessonsMap = new Map<string, GeneratedLesson>();
-  existingLessons.forEach(l => {
-    if (l.moduleId === moduleId) {
-      existingLessonsMap.set(normalizeTitle(l.title), l);
-      existingLessonsMap.set(l.slug, l);
-    }
-  });
-
-  const prompt = `
-    Generate ${lessonCount} high-quality technical lessons for "${moduleTitle}" in "${skillTitle}".
-    
-    STRUCTURE:
-    - title
-    - slug
-    - objectives (list)
-    - explanation (deep dive)
-    - codeExample (production grade)
-    - quiz (3 questions)
-    
-    Return a JSON array of objects with these keys. No generic content.
-  `;
-
-  try {
-    const queue = getQueueStatus();
-    if (queue.isPaused) {
-      console.warn("AI Engine is paused. Generating fallback template lessons.");
-      const drafts = Array.from({ length: lessonCount }).map((_, i) => {
-        const title = `${moduleTitle} Module Pt ${i+1}`;
-        const slug = generateSlug(title);
-        return {
-          id: slug,
-          title,
-          slug,
-          moduleId,
-          weekId,
-          skillId,
-          curriculumPathId: skillId,
-          stageId,
-          order: i + 1,
-          status: 'draft_generated',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          summary: "Learning architecture and mental models.",
-          objectives: "Master core fundamentals, Implement professional patterns",
-          explanation: "Draft lesson placeholder. AI generation will resume when capacity is available.",
-          body: "Draft lesson placeholder. AI generation will resume when capacity is available.",
-          codeExample: "// Code logic here...",
-          quiz: [{ question: "Is this a draft?", options: ["Yes", "No"], correctIndex: 0, explanation: "Draft mode." }],
-          tags: [skillTitle.toLowerCase()],
-          difficulty: "Beginner",
-          estimatedDuration: "45 mins",
-          prerequisites: [],
-          todayYouAreLearning: "Fundamentals",
-          whyItMatters: "Standard mastery",
-          analogy: "Building blocks",
-          lineByLine: "N/A",
-          commonMistakes: [],
-          practice: "Review fundamentals",
-          challenge: "Connect concepts",
-          proTip: "Stay consistent",
-          recap: "Draft complete"
-        } as GeneratedLesson;
-      });
-
-      const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
-      const bulk: any = {};
-      drafts.forEach(d => bulk[d.slug] = d);
-      await update(poolRef, bulk);
-
-      return { created: drafts.length, updated: 0, skipped: 0 };
-    }
-
-    const result = await callGeminiWithRetry(() => (ai as any).models.generateContent({
-      model: "gemini-3.1-pro-preview",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { 
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              slug: { type: Type.STRING },
-              summary: { type: Type.STRING },
-              objectives: { type: Type.STRING },
-              explanation: { type: Type.STRING },
-              codeExample: { type: Type.STRING },
-              quiz: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    question: { type: Type.STRING },
-                    options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    correctIndex: { type: Type.NUMBER },
-                    explanation: { type: Type.STRING }
-                  },
-                  required: ["question", "options", "correctIndex", "explanation"]
-                }
-              }
-            },
-            required: ["title", "slug", "summary", "objectives", "explanation", "codeExample", "quiz"]
-          }
-        }
-      }
-    }), { id: moduleId, name: `Lessons: ${moduleTitle}`, priority: 1 });
-
-    const lessonsData = safeJsonParse(result.text) as any[];
-    const poolRef = ref(db, `ai_generated_lessons/${skillId}`);
-
-    let created = 0;
-    let skipped = 0;
-    let updatedCount = 0;
-
-    const addedInBatch = new Set<string>();
-    const bulkUpdates: any = {};
-
-    for (let i = 0; i < lessonsData.length; i++) {
-      const lesson = lessonsData[i];
-      const normalizedLessonTitle = normalizeTitle(lesson.title);
-      const lessonSlug = lesson.slug || generateSlug(lesson.title);
-      
-      // Batch duplicate protection
-      if (addedInBatch.has(normalizedLessonTitle) || addedInBatch.has(lessonSlug)) {
-        skipped++;
-        continue;
-      }
-
-      const lessonWithMeta: GeneratedLesson = {
-        ...lesson,
-        id: lessonSlug,
-        slug: lessonSlug,
-        moduleId,
-        weekId,
-        skillId,
-        curriculumPathId: skillId,
+    stage.weeks.forEach((week: any, wIdx: number) => {
+      const weekId = `${stageId}-w${week.weekNumber}`;
+      updates[`curriculum_weeks/${stageId}/${weekId}`] = {
+        id: weekId,
         stageId,
-        order: i + 1,
-        status: 'pending',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        body: lesson.explanation,
-        prerequisites: [],
-        tags: [skillTitle.toLowerCase()]
+        title: week.topic,
+        order: week.weekNumber
       };
 
-      if (mode !== 'regenerate' && (existingLessonsMap.has(normalizedLessonTitle) || existingLessonsMap.has(lessonSlug))) {
-        if (mode === 'missing') {
-          skipped++;
-          continue;
-        } else if (mode === 'update') {
-          const existingLesson = existingLessonsMap.get(normalizedLessonTitle) || existingLessonsMap.get(lessonSlug)!;
-          bulkUpdates[existingLesson.slug || existingLesson.id] = lessonWithMeta;
-          updatedCount++;
-        }
-      } else {
-        bulkUpdates[lessonSlug] = lessonWithMeta;
-        created++;
-      }
-      
-      addedInBatch.add(normalizedLessonTitle);
-      addedInBatch.add(lessonSlug);
-    }
+      week.modules.forEach((mod: any, mIdx: number) => {
+        const moduleId = `${weekId}-m${mIdx}`;
+        updates[`curriculum_modules/${weekId}/${moduleId}`] = {
+          id: moduleId,
+          weekId,
+          title: mod.title,
+          description: mod.objective,
+          duration: mod.duration,
+          lessonTitles: mod.lessons,
+          difficulty: stageDifficulty, // Pass down
+          order: mIdx
+        };
+      });
+    });
+  });
+}
 
-    if (Object.keys(bulkUpdates).length > 0) {
-      await update(poolRef, bulkUpdates);
-    }
-
-    // Update counts
-    if (created > 0) {
-      const pathRef = ref(db, `curriculum_paths/${skillId}`);
-      const skillRef = ref(db, `skills/${skillId}`);
-      const [pathSnap, skillSnap] = await Promise.all([get(pathRef), get(skillRef)]);
-      
-      const pathUpdates: any = {};
-      const skillUpdates: any = {};
-      
-      if (pathSnap.exists()) pathUpdates.totalLessons = (pathSnap.val().totalLessons || 0) + created;
-      if (skillSnap.exists()) skillUpdates.totalLessons = (skillSnap.val().totalLessons || 0) + created;
-      
-      await Promise.all([
-        Object.keys(pathUpdates).length > 0 ? update(pathRef, pathUpdates) : Promise.resolve(),
-        Object.keys(skillUpdates).length > 0 ? update(skillRef, skillUpdates) : Promise.resolve()
-      ]);
-    }
-
-    return { created, updated: updatedCount, skipped };
-  } catch (error: any) {
-    console.error("Error generating lessons:", error);
-    
-    let errorMsg = "";
-    if (typeof error.message === 'string') errorMsg = error.message;
-    else if (error.error?.message) errorMsg = error.error.message;
-    else {
-      try { errorMsg = JSON.stringify(error); } catch { errorMsg = String(error); }
-    }
-    
-    const errorStr = errorMsg.toLowerCase();
-    const isRateLimit = 
-      errorStr.includes("429") || 
-      errorStr.includes("resource_exhausted") || 
-      errorStr.includes("quota") ||
-      errorStr.includes("rate limit") ||
-      (error.status === 429) ||
-      (error.code === 429) ||
-      (error.error?.code === 429) ||
-      (error.error?.status === "RESOURCE_EXHAUSTED");
-    
-    const isTransient = errorStr.includes("500") || errorStr.includes("xhr error") || errorStr.includes("rpc failed") || errorStr.includes("overloaded");
-    
-    if (isRateLimit) {
-      throw new Error("Academy Lesson Architect is reaching capacity. Please wait a few minutes and try again.");
-    }
-    if (isTransient) {
-      throw new Error("Academy Lesson Architect is experiencing transient errors. Please try again in a minute.");
-    }
-    throw error;
-  }
+  await update(ref(db), updates);
+  return data;
 };
 
-/**
- * Generates only missing lessons for existing path.
- */
-export const generateMissingLessons = async (
+export const generateEliteLesson = async (
   skillId: string,
-  onProgress: (p: number, s: string, stats?: any) => void
+  skillTitle: string,
+  moduleTitle: string,
+  lessonTitle: string,
+  moduleId: string
 ) => {
-  const [skillSnap, stagesSnap] = await Promise.all([
-    get(ref(db, `skills/${skillId}`)),
-    get(ref(db, `curriculum_stages/${skillId}`))
-  ]);
+  if (!isAiConfigured()) throw new Error("AI Architecture not initialized. API Keys missing.");
+  
+  // 1. Get accurate context (Path and Difficulty)
+  const skillSnap = await get(ref(db, `skills/${skillId}`));
+  const skillData = skillSnap.val() || {};
+  const path = skillData.category || "Fullstack";
 
-  if (!skillSnap.exists()) throw new Error("Program (Skill) not found in database.");
-  if (!stagesSnap.exists()) throw new Error("No curriculum roadmap found for this program. Please generate the Roadmap first.");
-  const skill = skillSnap.val() as Skill;
-  const stages = Object.values(stagesSnap.val()) as CurriculumStage[];
-
-  const allModules: { module: CurriculumModule, weekId: string }[] = [];
-  for (const stage of stages) {
-    const weeksRef = ref(db, `curriculum_weeks/${stage.id}`);
-    const weeksSnap = await get(weeksRef);
-    if (weeksSnap.exists()) {
-      const weeks = Object.values(weeksSnap.val()) as CurriculumWeek[];
-      for (const week of weeks) {
-        const modsRef = ref(db, `curriculum_modules/${week.id}`);
-        const modsSnap = await get(modsRef);
-        if (modsSnap.exists()) {
-          const modules = Object.values(modsSnap.val()) as CurriculumModule[];
-          modules.forEach(m => allModules.push({ module: m, weekId: week.id }));
-        }
-      }
-    }
+  // 2. Fetch module to get associated difficulty from stage
+  // We need to traverse up: module -> week -> stage
+  const modSnap = await get(ref(db, `curriculum_modules`));
+  const modules = modSnap.val() || {};
+  let targetModule: any = null;
+  
+  // Find the module in the deep structure (weeks -> modules)
+  // But wait, the flat modules path is might be easier if it existed.
+  // Actually, let's look at the moduleId prefixing logic.
+  // moduleId = `${weekId}-m${mIdx}`; weekId = `${stageId}-w${week.weekNumber}`; stageId = `${skillId}-s${sIdx}`;
+  
+  let difficulty = "Beginner";
+  let stage = "Foundations";
+  if (moduleId && moduleId.includes('-s')) {
+    const stageInfo = moduleId.split('-s')[1]?.split('-')[0];
+    const sIdx = parseInt(stageInfo);
+    difficulty = 
+      sIdx === 0 ? "Beginner" :
+      sIdx === 1 ? "Intermediate" :
+      sIdx === 2 ? "Advanced" : "Expert";
+    
+    const MS_STAGES = ["Foundations", "Core Concepts", "Practical Skills", "Real Projects", "Advanced Systems", "Career Readiness"];
+    stage = MS_STAGES[sIdx] || "Foundations";
+  } else {
+    // Fallback detection
+    difficulty = 
+      lessonTitle.toLowerCase().includes('expert') ? 'Expert' :
+      lessonTitle.toLowerCase().includes('advanced') ? 'Advanced' : 
+      lessonTitle.toLowerCase().includes('intermediate') ? 'Intermediate' : 'Beginner';
+    stage = "Foundations";
   }
 
-  const generationId = Math.random().toString(36).substring(7);
-  currentGenerationId = generationId;
+  console.log(`[EliteGenerator] Generating ${difficulty} lesson for: ${lessonTitle}`);
 
-  const stats = {
-    modulesTotal: allModules.length,
-    modulesDone: 0,
-    lessonsCreated: 0,
-    lessonsUpdated: 0,
-    lessonsSkipped: 0,
-    startTime: Date.now()
+  const rawText = await smartGenerate(LESSON_PROMPT(skillTitle, path, difficulty, lessonTitle));
+  const data = safeJsonParse(rawText);
+  if (!data) throw new Error("AI failed to produce lesson content.");
+
+  const lessonId = generateSlug(lessonTitle);
+  const qualityScore = ModerationService.calculateQualityScore(data);
+  const lessonData = {
+    id: lessonId,
+    lessonId,
+    skillId,
+    pathId: skillId,
+    moduleId,
+    title: data.title || lessonTitle,
+    difficulty: difficulty, // Hardened
+    path: path,
+    stage: stage, // mapped
+    status: "pending",
+    isPublished: false,
+    qualityScore,
+    estimatedMinutes: data.estimatedMinutes || 20,
+    createdAt: Date.now(),
+    objective: data.objective || "Master this technical concept.",
+    analogy: data.analogy || "Think of this conceptually.",
+    technicalExplanation: data.technicalExplanation || "Advanced technical implementation details.",
+    codeExample: data.codeExample || "// Implementation pending...",
+    stepByStep: Array.isArray(data.stepByStep) ? data.stepByStep : [],
+    commonMistakes: Array.isArray(data.commonMistakes) ? data.commonMistakes : [],
+    careerUseCase: data.careerUseCase || "",
+    industryInsight: data.industryInsight || "",
+    
+    knowledgeCheck: data.knowledgeCheck || { 
+      question: "What is the primary benefit of this technical pattern?", 
+      options: ["Performance", "Maintainability", "Scalability", "All of the above"],
+      answer: "All of the above"
+    },
+    
+    practicalProject: data.practicalProject || {
+      title: "Mastery Lab",
+      description: "Apply what you learned in a real-world scenario.",
+      steps: ["Design", "Build", "Validate"]
+    },
+    
+    interviewMastery: data.interviewMastery || ["Explain the core mechanism", "Discuss performance trade-offs"],
+    
+    // Legacy support fields for backward compatibility with older UI components
+    todayYouAreLearning: data.objective || "A modern engineering standard.",
+    explanation: data.technicalExplanation || "Advanced technical implementation details.",
+    lineByLineArray: Array.isArray(data.stepByStep) ? data.stepByStep : [],
+    codeImplementation: data.codeExample || "// Implementation pending...",
+    lineByLine: Array.isArray(data.stepByStep) ? data.stepByStep.join("\n") : "",
+    projectTitle: data.practicalProject?.title || "Practical Lab",
+    implementationSteps: data.practicalProject?.steps || ["Define core logic", "Implement feature", "Validate output"],
+    practice: data.practicalProject ? `Complete the project: ${data.practicalProject.title}` : "Analyze the code implementation above.",
+    challenge: data.practicalProject?.steps ? data.practicalProject.steps[0] : "Modify the code to handle edge cases.",
+    recap: "You have mastered " + (data.title || lessonTitle) + ".",
+    
+    quiz: [
+      {
+        question: data.knowledgeCheck?.question || "Question?",
+        options: data.knowledgeCheck?.options || ["A", "B", "C", "D"],
+        correctIndex: data.knowledgeCheck?.options && data.knowledgeCheck?.answer 
+          ? data.knowledgeCheck.options.indexOf(data.knowledgeCheck.answer) 
+          : 0,
+        explanation: "This concept ensures industrial-grade code quality."
+      }
+    ]
   };
 
-  if (allModules.length === 0) {
-    onProgress(100, "Curriculum roadmap is empty. Please add modules or regenerate the roadmap first.", stats);
-    return;
-  }
+  await set(ref(db, `ai_generated_lessons/${skillId}/${lessonId}`), lessonData);
+  return lessonData;
+};
 
-  // Group modules by week for batching
-  const modulesByWeek: Record<string, typeof allModules> = {};
-  allModules.forEach(m => {
-    if (!modulesByWeek[m.weekId]) modulesByWeek[m.weekId] = [];
-    modulesByWeek[m.weekId].push(m);
-  });
-
-  const weekIds = Object.keys(modulesByWeek);
+// Legacy compatibility stubs (to prevent breakage during migration)
+export const cancelGeneration = () => {};
+export const unifiedAcademyGenerator = async (...args: any[]) => {};
+export const generateLessonsForModule = async (...args: any[]) => {};
+export const approveLesson = async (skillId: string, lessonId: string) => {
+  const stagingRef = ref(db, `ai_generated_lessons/${skillId}/${lessonId}`);
+  const snap = await get(stagingRef);
+  if (!snap.exists()) throw new Error("Lesson not found in staging pool.");
   
-  for (const weekId of weekIds) {
-    if (currentGenerationId !== generationId) break;
-    const weekModules = modulesByWeek[weekId];
+  const lessonData = snap.val();
+  const liveRef = ref(db, `lessons/${skillId}/${lessonId}`);
+  
+  // Update lesson data for live deployment
+  const liveData = {
+    ...lessonData,
+    status: 'published',
+    visibility: 'public',
+    publishedAt: Date.now()
+  };
+
+  await Promise.all([
+    set(liveRef, liveData),
+    update(stagingRef, { status: 'published', publishedAt: Date.now() })
+  ]);
+};
+
+export const repairLesson = async (lesson: any, skillTitle: string) => {
+  if (!lesson || !lesson.skillId || !lesson.moduleId) throw new Error("Invalid lesson data for repair.");
+  return await generateEliteLesson(
+    lesson.skillId, 
+    skillTitle, 
+    lesson.moduleTitle || "General Module", 
+    lesson.title, 
+    lesson.moduleId
+  );
+};
+
+export const repairIncompleteLessons = async () => {
+  console.log("INTEGRITY SYSTEM: Starting full lesson audit...");
+  const lessonsRef = ref(db, 'ai_generated_lessons');
+  const skillsRef = ref(db, 'skills');
+  
+  const [lessonsSnap, skillsSnap] = await Promise.all([get(lessonsRef), get(skillsRef)]);
+  if (!lessonsSnap.exists()) return 0;
+  
+  const skills = skillsSnap.val() || {};
+  const data = lessonsSnap.val();
+  let repairedCount = 0;
+  
+  for (const skillId of Object.keys(data)) {
+    const skillLessons = data[skillId];
+    const skillTitle = skills[skillId]?.title || skillId;
     
-    onProgress(
-      (stats.modulesDone / stats.modulesTotal) * 100, 
-      `Auditing lessons for Week ${weekId}...`,
-      stats
-    );
-
-    // Filter for truly missing modules
-    const existingLessonsSnap = await get(ref(db, `ai_generated_lessons/${skillId}`));
-    const existingLessons = existingLessonsSnap.exists() ? Object.values(existingLessonsSnap.val()) as GeneratedLesson[] : [];
-    
-    const modulesToGen = weekModules.filter(wm => {
-      const hasLessons = existingLessons.some(l => l.moduleId === wm.module.id);
-      if (hasLessons) {
-        stats.modulesDone++;
-        stats.lessonsSkipped += existingLessons.filter(l => l.moduleId === wm.module.id).length;
-      }
-      return !hasLessons;
-    });
-
-    if (modulesToGen.length === 0) continue;
-
-    // Use Week Batcher
-    try {
-      const result = await generateWeekLessons(
-        skillId,
-        modulesToGen.map(wm => ({ id: wm.module.id, title: wm.module.title, stageId: wm.module.stageId })),
-        skill.title,
-        weekId,
-        () => {}
-      );
-
-      if (result) {
-        stats.lessonsCreated += result.created;
-      }
-      stats.modulesDone += modulesToGen.length;
-    } catch (err) {
-      console.warn(`Parallel week batch failed, falling back to module level:`, err);
-      for (const { module } of modulesToGen) {
-        const result = await generateLessonsForModule(
-          skillId,
-          module.id,
-          module.title,
-          skill.title,
-          3,
-          module.stageId,
-          weekId,
-          () => {},
-          'missing'
-        ) as { created: number, updated: number, skipped: number };
-        if (result) stats.lessonsCreated += result.created;
-        stats.modulesDone++;
+    for (const lessonKey of Object.keys(skillLessons)) {
+      const lesson = skillLessons[lessonKey];
+      const isPlaceholder = 
+        !lesson.technicalExplanation || 
+        !lesson.projectTitle || 
+        lesson.projectTitle === 'No Project Title' ||
+        lesson.explanation?.includes("placeholder") ||
+        (Array.isArray(lesson.implementationSteps) && lesson.implementationSteps.length === 0);
+        
+      if (isPlaceholder) {
+        console.log(`INTEGRITY SYSTEM: Repairing incomplete lesson: ${lesson.title}`);
+        try {
+          await generateEliteLesson(
+            skillId,
+            skillTitle,
+            lesson.moduleTitle || "Core Module",
+            lesson.title,
+            lesson.moduleId || "unassigned"
+          );
+          repairedCount++;
+        } catch (err) {
+          console.error(`Failed to repair ${lesson.title}:`, err);
+        }
       }
     }
   }
-
-  onProgress(100, "Missing lessons generation complete.", stats);
-};
-
-export const generateAILessons = async (
-  skill: string, 
-  count: number, 
-  onProgress: (progress: number, status: string) => void
-) => {
-  // Legacy support or simple generation
-};
-
-export const approveLesson = async (skillId: string, lessonKey: string) => {
-  const poolRef = ref(db, `ai_generated_lessons/${skillId}/${lessonKey}`);
-  const snapshot = await get(poolRef);
   
-  if (snapshot.exists()) {
-    const lessonData = snapshot.val();
-    const mainLessonsRef = ref(db, `lessons/${lessonData.id}`);
-    
-    await set(mainLessonsRef, {
-      ...lessonData,
-      status: 'approved',
-      approvedAt: Date.now()
-    });
-
-    await update(poolRef, { status: 'approved' });
-  }
+  return repairedCount;
 };

@@ -203,19 +203,19 @@ export const CURRICULUM: Record<CareerPath, PathCurriculum> = {
             id: 'fe-foundations',
             title: 'Foundations',
             description: 'The absolute basics of programming and the web.',
-            lessons: ['what-is-coding', 'how-computers-work', 'how-websites-work', 'internet-basics', 'what-are-websites'],
+            lessons: ['how-computers-work', 'how-software-works', 'what-is-coding', 'what-is-the-internet', 'what-is-frontend-development'],
             testId: 'foundations-test'
           },
           {
             id: 'fe-html',
-            title: 'HTML',
+            title: 'HTML Mastery',
             description: 'The skeleton of every website.',
-            lessons: ['html-structure', 'tags-elements', 'links-images', 'html-forms', 'semantic-html'],
+            lessons: ['introduction-to-html', 'basic-html-tags', 'building-your-first-webpage', 'accessibility-fundamentals-wcag-a11y', 'links-and-images', 'html-forms-basics'],
             testId: 'html-test'
           },
           {
             id: 'fe-css',
-            title: 'CSS',
+            title: 'CSS Styling',
             description: 'Making the web beautiful.',
             lessons: ['css-basics', 'colors-typography', 'box-model', 'flexbox', 'css-grid', 'responsive-design'],
             testId: 'css-test'

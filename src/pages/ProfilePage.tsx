@@ -20,9 +20,12 @@ import { PaywallModal } from '../components/PaywallModal';
 import { getUserCertificates } from '../services/certificateService';
 import { Certificate } from '../types';
 
+import { usePremiumStatus } from '../hooks/usePremiumStatus';
+
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { progress, loading } = useUserData();
+  const { isPremium, loading: premiumLoading } = usePremiumStatus();
   const navigate = useNavigate();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -139,7 +142,7 @@ export const ProfilePage: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center justify-center md:justify-start gap-3">
                   <h1 className="text-4xl font-black tracking-tighter">{user?.displayName || 'Developer'}</h1>
-                  {progress.isPremium && (
+                  {isPremium && (
                     <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
                       <CheckCircle2 size={14} fill="currentColor" />
                     </div>
@@ -154,7 +157,7 @@ export const ProfilePage: React.FC = () => {
                 <Badge className="bg-white/5 text-white/40 border-white/10 px-4 py-1.5 rounded-xl font-black uppercase tracking-widest text-[10px]">
                   Level {Math.floor(progress.xp / 100) + 1}
                 </Badge>
-                {progress.isPremium && (
+                {isPremium && (
                   <Badge className="bg-gradient-to-r from-emerald-600 to-emerald-400 text-black border-none px-4 py-1.5 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20">
                     PRO MEMBER
                   </Badge>
@@ -164,7 +167,7 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {/* Premium Status Card */}
-          {!progress.isPremium && (
+          {!isPremium && (
             <Card className="p-8 border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] to-transparent relative overflow-hidden group">
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="space-y-4 text-center md:text-left">
@@ -208,7 +211,7 @@ export const ProfilePage: React.FC = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-xs font-black text-white/20 uppercase tracking-[0.2em]">Professional Certifications</h3>
-              {!progress.isPremium && (
+              {!isPremium && (
                 <button 
                   onClick={() => setShowPaywall(true)}
                   className="text-[10px] font-black text-emerald-500 uppercase tracking-widest hover:underline"
@@ -265,7 +268,7 @@ export const ProfilePage: React.FC = () => {
                     Complete a career path to earn your first verified professional certificate.
                   </p>
                 </div>
-                {!progress.isPremium && (
+                {!isPremium && (
                   <Button variant="outline" className="h-12 px-8 rounded-xl text-[10px] font-black uppercase tracking-widest border-white/10 group-hover:border-emerald-500/50">
                     Unlock Verified Certificates
                   </Button>
@@ -413,7 +416,7 @@ export const ProfilePage: React.FC = () => {
                   </div>
                 )}
 
-                {activeModal === 'subscription' && !progress.isPremium ? (
+                {activeModal === 'subscription' && !isPremium ? (
                   <div className="space-y-8">
                     <PremiumUpsell />
                   </div>
@@ -425,7 +428,7 @@ export const ProfilePage: React.FC = () => {
                     <div className="space-y-2">
                       <h3 className="font-bold text-lg">Feature Coming Soon</h3>
                       <p className="text-sm text-white/40 leading-relaxed">
-                        We're currently polishing the {sections.flatMap(s => s.items).find(i => i.id === activeModal)?.label.toLowerCase()} settings. This will be available in the next update!
+                        We're currently polishing the {sections.flatMap(s => s.items).find(i => i.id === activeModal)?.label?.toLowerCase() || 'this'} settings. This will be available in the next update!
                       </p>
                     </div>
                   </div>

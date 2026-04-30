@@ -17,12 +17,13 @@ import {
 } from 'lucide-react';
 import { Button, Card, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
-import { ref, push, set, onValue, get } from 'firebase/database';
+import { ref, push } from 'firebase/database';
 import { db } from '../lib/firebase';
 import { SupportTicket, TicketCategory } from '../types';
+import { firebaseSafeOnValue, firebaseSafeSet, firebaseUserScopedQuery } from '../lib/FirebaseService';
 
 export const SupportPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profileReady } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -34,18 +35,27 @@ export const SupportPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
-    const ticketsRef = ref(db, 'support_tickets');
-    const unsubscribe = onValue(ticketsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
+    if (!user || !profileReady) return;
+    console.log("[SupportShield] Syncing ticket history...");
+    
+    const ticketsQuery = firebaseUserScopedQuery('support_tickets', user.uid);
+    
+    const unsubscribe = firebaseSafeOnValue(ticketsQuery, (data: any) => {
+      console.log("[SupportShield] Tickets data refreshed.");
+      if (data) {
         const userTickets = Object.values(data) as SupportTicket[];
-        setTickets(userTickets.filter(t => t.user_id === user.uid).sort((a, b) => b.timestamp - a.timestamp));
+        setTickets(userTickets.sort((a, b) => b.timestamp - a.timestamp));
+      } else {
+        setTickets([]);
       }
       setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [user]);
+    }, "SupportTickets");
+
+    return () => {
+      console.log("[SupportShield] Terminating ticket stream.");
+      unsubscribe();
+    };
+  }, [user, profileReady]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,33 +76,32 @@ export const SupportPage: React.FC = () => {
       const ticketsRef = ref(db, 'support_tickets');
       const newTicketRef = push(ticketsRef);
       
-      // RULE 1, 2, 3: Safe Database Object & No Undefined
       const ticketData = {
         id: newTicketRef.key || '',
         user_id: user.uid || '',
         email: user.email || '',
         category: category || 'other',
         message: message || '',
-        image_attachment: image || null, // Explicit null if none
+        image_attachment: image || null,
         status: 'open',
         timestamp: Date.now()
       };
 
-      // RULE 4: Final Validation loop to remove any hidden undefined
       const verifiedData = Object.fromEntries(
         Object.entries(ticketData).filter(([_, v]) => v !== undefined)
       );
 
-      await set(newTicketRef, verifiedData);
-      setIsCreating(false);
-      setMessage('');
-      setImage(null);
-      
-      // RULE 5: Success Message
-      alert('Ticket submitted successfully.');
+      const success = await firebaseSafeSet(`support_tickets/${newTicketRef.key}`, verifiedData, "SubmitTicket");
+      if (success) {
+        setIsCreating(false);
+        setMessage('');
+        setImage(null);
+        alert('Ticket submitted successfully.');
+      } else {
+        throw new Error("Submission failed");
+      }
     } catch (err) {
       console.error("Error submitting ticket:", err);
-      // RULE 5: Failure Message
       alert('Please try again.');
     } finally {
       setSubmitting(false);

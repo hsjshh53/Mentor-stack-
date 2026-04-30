@@ -58,9 +58,12 @@ export const CodingLanguagesPage: React.FC = () => {
 
   const filteredSkills = useMemo(() => {
     return skills.filter(skill => {
-      const matchesSearch = skill.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          skill.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesDifficulty = selectedDifficulty === 'All' || skill.difficultyRange.includes(selectedDifficulty);
+      const title = skill?.title || '';
+      const description = skill?.description || '';
+      const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          description.toLowerCase().includes(searchQuery.toLowerCase());
+      const difficulty = skill?.difficultyRange || 'Intermediate';
+      const matchesDifficulty = selectedDifficulty === 'All' || difficulty.includes(selectedDifficulty);
       return matchesSearch && matchesDifficulty;
     });
   }, [skills, searchQuery, selectedDifficulty]);

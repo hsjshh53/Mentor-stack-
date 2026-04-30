@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ref, onValue, update, get } from 'firebase/database';
+import { ref, onValue, update, get, query, orderByChild, equalTo } from 'firebase/database';
 import { db } from '../../lib/firebase';
 import { SupportTicket, PaymentRecord, ReceiptRecord } from '../../types';
 import { Card, Button, Badge } from '../../components/ui';
@@ -17,7 +17,12 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+import { useAuth } from '../../context/AuthContext';
+
+import { isAdmin as checkAdmin } from '../../lib/adminCheck';
+
 export const ManageTickets: React.FC = () => {
+  const { profile, user: currentUser } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [userContext, setUserContext] = useState<{
@@ -29,39 +34,68 @@ export const ManageTickets: React.FC = () => {
   const [response, setResponse] = useState('');
   const [updating, setUpdating] = useState(false);
 
+  // Permission check helper
+  const isAdmin = checkAdmin(profile) || checkAdmin(currentUser);
+
+  const checkAdminAuth = () => {
+    if (!isAdmin) {
+      alert("Unauthorized: Your admin role is not synced. Please re-login.");
+      return false;
+    }
+    return true;
+  };
+
   useEffect(() => {
+    console.log("[AdminShield] Syncing support queue...");
     const ticketsRef = ref(db, 'support_tickets');
+    
     const unsubscribe = onValue(ticketsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const list = Object.values(data) as SupportTicket[];
-        setTickets(list.sort((a, b) => b.timestamp - a.timestamp));
-      } else {
-        setTickets([]);
+      console.log("[AdminShield] Support tickets snapshot:", snapshot.val());
+      try {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const list = Object.keys(data).map(id => ({ ...data[id], id })) as SupportTicket[];
+          setTickets(list.sort((a, b) => b.timestamp - a.timestamp));
+        } else {
+          setTickets([]);
+        }
+      } catch (err) {
+        console.error("[AdminShield] Support tickets mapping error:", err);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      console.error("[AdminShield] Support stream restricted:", error.message);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      console.log("[AdminShield] Releasing support stream.");
+      unsubscribe();
+    };
   }, []);
 
   const fetchUserContext = async (userId: string) => {
     const paymentsRef = ref(db, 'payments');
     const receiptsRef = ref(db, 'receipts');
+    
+    const pQuery = query(paymentsRef, orderByChild('user_id'), equalTo(userId));
+    const rQuery = query(receiptsRef, orderByChild('user_id'), equalTo(userId));
 
-    const [pSnap, rSnap] = await Promise.all([get(paymentsRef), get(receiptsRef)]);
+    const [pSnap, rSnap] = await Promise.all([get(pQuery), get(rQuery)]);
     
     let payments: PaymentRecord[] = [];
     let receipts: ReceiptRecord[] = [];
 
     if (pSnap.exists()) {
-      payments = (Object.values(pSnap.val()) as PaymentRecord[])
-        .filter(p => p.user_id === userId)
-        .sort((a, b) => b.timestamp - a.timestamp);
+      const data = pSnap.val() || {};
+      payments = Object.keys(data).map(id => ({ ...data[id], id }))
+        .sort((a, b) => b.timestamp - a.timestamp) as PaymentRecord[];
     }
     if (rSnap.exists()) {
-      receipts = (Object.values(rSnap.val()) as ReceiptRecord[])
-        .filter(r => r.user_id === userId)
-        .sort((a, b) => b.timestamp - a.timestamp);
+      const data = rSnap.val() || {};
+      receipts = Object.keys(data).map(id => ({ ...data[id], id }))
+        .sort((a, b) => b.timestamp - a.timestamp) as ReceiptRecord[];
     }
 
     setUserContext({ payments, receipts });
@@ -75,6 +109,8 @@ export const ManageTickets: React.FC = () => {
 
   const handleUpdateStatus = async (status: 'in_progress' | 'resolved') => {
     if (!selectedTicket) return;
+    if (!checkAdminAuth()) return;
+
     setUpdating(true);
     try {
       const updates: any = {};
@@ -87,8 +123,9 @@ export const ManageTickets: React.FC = () => {
       await update(ref(db), updates);
       alert(`Ticket marked as ${status.replace('_', ' ')}`);
       if (status === 'resolved') setSelectedTicket(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error updating ticket:", err);
+      alert(`Update failed: ${err.message}`);
     } finally {
       setUpdating(false);
     }
@@ -96,7 +133,7 @@ export const ManageTickets: React.FC = () => {
 
   const filteredTickets = tickets.filter(t => filter === 'all' || t.status === filter);
 
-  if (loading) return <div className="text-white/20 text-center py-20">Loading tickets...</div>;
+  if (loading && tickets.length === 0) return <div className="text-white/20 text-center py-20">Loading tickets...</div>;
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 min-h-[80vh]">

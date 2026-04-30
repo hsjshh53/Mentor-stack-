@@ -73,7 +73,23 @@ export type CareerPath =
   | 'Swift Programming'
   | 'PHP Programming';
 
-export type Stage = 'Beginner' | 'Intermediate' | 'Advanced' | 'Projects' | 'Final Exam';
+export type Stage = 'Foundations' | 'Core Concepts' | 'Practical Skills' | 'Real Projects' | 'Advanced Systems' | 'Career Readiness' | 'Final Exam' | 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert' | 'Career Prep';
+
+export enum Difficulty {
+  BEGINNER = 'Beginner',
+  INTERMEDIATE = 'Intermediate',
+  ADVANCED = 'Advanced',
+  EXPERT = 'Expert'
+}
+
+export enum LearningStage {
+  FOUNDATIONS = 'Foundations',
+  CORE_CONCEPTS = 'Core Concepts',
+  PRACTICAL_SKILLS = 'Practical Skills',
+  REAL_PROJECTS = 'Real Projects',
+  ADVANCED_SYSTEMS = 'Advanced Systems',
+  CAREER_READINESS = 'Career Readiness'
+}
 
 export interface Module {
   id: string;
@@ -187,9 +203,24 @@ export interface GithubRepoMetadata {
 
 export type SubscriptionStatus = 'inactive' | 'pending' | 'active';
 
+export interface PathProgress {
+  pathId: string;
+  pathName: string;
+  currentLessonId?: string | null;
+  completedLessons: string[];
+  progressPercent: number;
+  level: number;
+  xp: number;
+  lastActive: number | null;
+  startedAt: number;
+  stage: Stage;
+  totalLessons?: number;
+  completedLessonsCount?: number;
+}
+
 export interface UserProgress {
-  selectedPath: CareerPath | null;
-  activeProgramId?: string; // ID of the Skill/Program the user is currently focused on
+  selectedPath: CareerPath | string | null;
+  activeProgramId?: string; 
   currentStage: Stage;
   currentWeek?: string;
   currentPhaseId?: string;
@@ -200,21 +231,30 @@ export interface UserProgress {
   completedLessons: string[];
   completedTests: string[];
   completedExams: string[];
-  completedProjects: string[]; // Project IDs
-  submissions: Record<string, ProjectSubmission>; // projectId: submission
-  certificates: string[]; // Certificate IDs
+  completedProjects: string[];
+  submissions: Record<string, ProjectSubmission>;
+  certificates: string[];
   weakAreas: string[];
-  skills: Record<string, number>; // skillName: level
-  unlockedPaths: CareerPath[];
-  isPremium: boolean;
-  subscription_status?: SubscriptionStatus;
-  subscription_start_date?: number;
-  subscription_expiry_date?: number;
-  subscription_reference?: string;
-  is_whitelisted?: boolean;
+  skills: Record<string, number>;
+  unlockedPaths: (CareerPath | string)[];
+  currentLessonId?: string | null;
+  dailyGoal?: number;
+  dailyGoalMinutes?: number;
   role?: 'admin' | 'user';
   goal?: string;
   experienceLevel?: string;
+  subscription_status?: 'active' | 'inactive' | 'pending';
+  subscription_plan?: string;
+  subscription_start?: number;
+  subscription_expiry?: number;
+  premium_access?: boolean;
+  onboardingCompleted?: boolean;
+  onboardingVersion?: number;
+  profileLocked?: boolean;
+  onboardingCompletedAt?: number;
+  
+  // Real Data: Isolated Paths
+  paths?: Record<string, PathProgress>;
 }
 
 export interface UserProfile {
@@ -223,11 +263,16 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   progress: UserProgress;
+  role?: 'admin' | 'user';
+  is_admin?: boolean;
+  is_super_admin?: boolean;
+  createdAt?: number;
 }
 
 export interface LessonContent {
   id: string;
   title: string;
+  summary?: string;
   todayYouAreLearning: string;
   whyItMatters: string;
   explanation: string;
@@ -238,6 +283,7 @@ export interface LessonContent {
   practice: string;
   challenge: string;
   proTip?: string;
+  recommendation?: string;
   quiz: {
     question: string;
     options: string[];
@@ -246,6 +292,35 @@ export interface LessonContent {
   }[];
   recap: string;
   difficulty?: string;
+  score?: number;
+  status?: 'pending' | 'approved' | 'rejected' | 'draft_generated' | 'needs_repair' | 'generating' | 'published' | 'failed';
+  
+  // New Schema Fields
+  technicalExplanation?: string;
+  codeImplementation?: string;
+  lineByLineArray?: string[];
+  knowledgeCheck?: {
+    question: string;
+    options: string[];
+    answer: string;
+  };
+  projectTitle?: string;
+  implementationSteps?: string[];
+  practicalProject?: {
+    title: string;
+    description: string;
+    steps: string[];
+  };
+  interviewMastery?: string[];
+  careerReadiness?: string[];
+  
+  qualityMetrics?: {
+    clarity: number;
+    depth: number;
+    examples: number;
+    practical: number;
+    structure: number;
+  };
 }
 
 export interface Skill {
@@ -329,15 +404,19 @@ export interface CurriculumLesson extends LessonContent {
   moduleId: string;
   weekId: string;
   skillId: string;
+  pathId: string; // New: Same as curriculumPathId but for easier access
   curriculumPathId: string;
   stageId: string;
   slug: string;
-  summary: string;
   objectives: string;
   body: string;
   order: number;
+  orderIndex: number; // New mapped field
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+  stage: Stage | LearningStage; // New stage field
   estimatedDuration: string;
+  estimatedMinutes: number; // New
+  isPublished: boolean; // New
   prerequisites: string[];
   tags: string[];
   resources?: string[];
@@ -353,7 +432,6 @@ export interface CurriculumLesson extends LessonContent {
   };
   interviewTips?: string;
   careerTips?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'draft_generated';
 }
 
 export interface GeneratedLesson extends CurriculumLesson {
@@ -481,7 +559,7 @@ export interface PaymentRecord {
   user_id: string;
   email: string;
   amount: number;
-  status: 'initiated' | 'paid_pending_verification' | 'approved' | 'rejected' | 'cancelled';
+  status: 'initiated' | 'paid_pending_verification' | 'approved' | 'rejected' | 'cancelled' | 'success';
   payment_source: string;
   timestamp: number;
   reference_id: string; // Selar External Ref
@@ -495,7 +573,7 @@ export interface ReceiptRecord {
   email: string;
   image_url: string;
   amount_entered?: number;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'success';
   timestamp: number;
   cancelled_at?: number;
 }

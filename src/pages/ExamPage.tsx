@@ -11,7 +11,7 @@ import { Button, Card, Badge } from '../components/ui';
 import { useUserData } from '../hooks/useUserData';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { FINAL_EXAMS } from '../constants/exams';
-import { FinalExam, QuizQuestion } from '../types';
+import { FinalExam, QuizQuestion, CareerPath } from '../types';
 import { checkCertificateEligibility, generateCertificate } from '../services/certificateService';
 import { useAuth } from '../context/AuthContext';
 
@@ -44,7 +44,7 @@ export const ExamPage: React.FC = () => {
     }
   }, [examId]);
 
-  if (userLoading || !exam) return <LoadingScreen message="PREPARING FINAL EXAM..." />;
+  if (userLoading || !exam || !user) return <LoadingScreen message="PREPARING FINAL EXAM..." />;
 
   const handleAnswer = (optionIdx: number) => {
     if (showFeedback) return;
@@ -120,16 +120,17 @@ export const ExamPage: React.FC = () => {
 
         // Check for certificate eligibility
         if (progress.selectedPath) {
+          const selectedPath = progress.selectedPath as CareerPath;
           const isEligible = checkCertificateEligibility({
             ...progress,
             completedExams: newCompletedExams
-          }, progress.selectedPath);
+          }, selectedPath);
 
-          if (isEligible) {
+          if (isEligible && user) {
             const cert = await generateCertificate(
-              user!.uid,
-              user!.displayName || 'Learner',
-              progress.selectedPath,
+              user.uid,
+              user.displayName || 'Learner',
+              selectedPath,
               finalScore,
               progress
             );

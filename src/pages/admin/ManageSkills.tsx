@@ -62,13 +62,22 @@ export const ManageSkills: React.FC = () => {
 
     const skillsRef = ref(db, 'skills');
     const unsubscribe = onValue(skillsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const list = Object.keys(data).map(id => ({ ...data[id], id }));
-        setSkills(list);
-      } else {
-        setSkills([]);
+      console.log("[ManageSkills] SKILLS SNAPSHOT:", snapshot.val());
+      try {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const list = Object.keys(data).map(id => ({ ...data[id], id }));
+          setSkills(list);
+        } else {
+          setSkills([]);
+        }
+      } catch (err) {
+        console.error("[ManageSkills] Data mapping error:", err);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      console.error("[ManageSkills] Skills fetch error:", error);
       setLoading(false);
     });
     return () => unsubscribe();
@@ -79,7 +88,7 @@ export const ManageSkills: React.FC = () => {
     
     const skillData = {
       ...formData,
-      slug: formData.title.toLowerCase().replace(/\s+/g, '-'),
+      slug: (formData.title || '').toLowerCase().replace(/\s+/g, '-'),
       lessonCount: editingSkill?.lessonCount || 0,
       totalStages: editingSkill?.totalStages || 0,
       totalModules: editingSkill?.totalModules || 0,
@@ -135,7 +144,7 @@ export const ManageSkills: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
+          {loading && skills.length === 0 ? (
             <div className="col-span-full py-20 text-center text-white/20 font-black uppercase tracking-widest">Loading programs...</div>
           ) : skills.length === 0 ? (
             <div className="col-span-full py-20 text-center space-y-6">
@@ -148,8 +157,8 @@ export const ManageSkills: React.FC = () => {
               </div>
             </div>
           ) : (
-            skills.map((skill) => (
-              <Card key={skill.id} className="p-8 border-white/5 bg-white/[0.02] space-y-6 group">
+            skills.map((skill, index) => (
+              <Card key={`${skill.id}-${index}`} className="p-8 border-white/5 bg-white/[0.02] space-y-6 group">
                 <div className="flex items-start justify-between">
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                   <Layers size={28} />

@@ -12,12 +12,13 @@ import {
   Target, LayoutDashboard, MessageSquare, Search,
   Sparkles, CheckCircle2, Lock, Compass, ArrowRightLeft,
   Award, ShieldCheck, ExternalLink, Users, TrendingUp,
-  Heart, Map as MapIcon, AlertCircle, Bot
+  Heart, Map as MapIcon, AlertCircle, Bot, RefreshCcw
 } from 'lucide-react';
-import { ref, get } from 'firebase/database';
+import { ref, update } from 'firebase/database';
 import { db, auth } from '../lib/firebase';
 import { MentorChat } from '../components/MentorChat';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { firebaseSafeGet } from '../lib/FirebaseService';
 import { CURRICULUM } from '../constants/curriculum';
 import { STAGE_TESTS } from '../constants/tests';
 import { FINAL_EXAMS } from '../constants/exams';
@@ -35,9 +36,18 @@ import {
 import { getUserCertificates } from '../services/certificateService';
 import { DEFAULT_SKILLS } from '../constants/skills';
 
+import { DashboardRow } from '../components/DashboardRow';
+import { AITutorWidget } from '../components/AITutorWidget';
+import { LessonCard, PathCard, ProjectCard, QuizCard } from '../components/DashboardCards';
+
+import { CurriculumEngineService } from '../services/CurriculumEngineService';
+import { ProgressionService } from '../services/ProgressionService';
+import { ResetProgressModal } from '../components/ResetProgressModal';
+import { generateSlug } from '../services/aiGeneratorService';
+
 export const DashboardPage: React.FC = () => {
   const { progress, loading, updateProgress } = useUserData();
-  const { user } = useAuth();
+  const { user, profileReady } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -53,6 +63,91 @@ export const DashboardPage: React.FC = () => {
   const [dynamicProjects, setDynamicProjects] = useState<DetailedProject[]>([]);
   const [dynamicLessons, setDynamicLessons] = useState<any[]>([]);
   const [activeSkill, setActiveSkill] = useState<Skill | null>(null);
+
+  const [allQuizzes, setAllQuizzes] = useState<any[]>([]);
+  const [isAdminLockDisabled, setIsAdminLockDisabled] = useState(false);
+  const [newLessons, setNewLessons] = useState<any[]>([]);
+  const [recommendedLessons, setRecommendedLessons] = useState<any[]>([]);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchGlobalData = async () => {
+      const lessonsRef = ref(db, 'lessons');
+      const allLessonsSnap = await firebaseSafeGet(lessonsRef, "GlobalLessons");
+      if (allLessonsSnap) {
+        const flattened: any[] = [];
+        Object.keys(allLessonsSnap).forEach(skillId => {
+          Object.keys(allLessonsSnap[skillId]).forEach(lessonId => {
+            flattened.push({ ...allLessonsSnap[skillId][lessonId], skillId, lessonId });
+          });
+        });
+        
+        const sorted = flattened.sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+        setNewLessons(sorted.slice(0, 10));
+        setRecommendedLessons(sorted.filter(l => !progress?.completedLessons?.includes(l.lessonId)).slice(0, 8));
+      }
+
+      const quizzesRef = ref(db, 'curriculum_quizzes');
+      const quizzesSnap = await firebaseSafeGet(quizzesRef, "GlobalQuizzes");
+      if (quizzesSnap) {
+        setAllQuizzes(Object.values(quizzesSnap));
+      }
+    };
+
+    if (profileReady && !loading) {
+      fetchGlobalData();
+    }
+  }, [profileReady, loading, progress?.completedLessons]);
+
+  useEffect(() => {
+    // Check if admin has disabled locking
+    const settingsRef = ref(db, 'settings/admin_lock_disabled');
+    firebaseSafeGet(settingsRef, "AdminLockDisabled").then(val => {
+      if (val !== null) setIsAdminLockDisabled(!!val);
+    });
+  }, []);
+
+  const difficultyWeights: Record<string, number> = { Beginner: 1, Intermediate: 2, Advanced: 3, Expert: 4 };
+  const stageWeights: Record<string, number> = {
+    'Foundations': 1,
+    'Core Concepts': 2,
+    'Practical Skills': 3,
+    'Real Projects': 4,
+    'Advanced Systems': 5,
+    'Career Readiness': 6
+  };
+
+  const sortedLessons = useMemo(() => {
+    if (dynamicLessons.length > 0) {
+      return [...dynamicLessons].sort((a, b) => {
+        const diffA = difficultyWeights[a.difficulty] || 99;
+        const diffB = difficultyWeights[b.difficulty] || 99;
+        if (diffA !== diffB) return diffA - diffB;
+        
+        const stageA = stageWeights[a.stage] || 99;
+        const stageB = stageWeights[b.stage] || 99;
+        if (stageA !== stageB) return stageA - stageB;
+        
+        return (a.orderIndex ?? a.lessonNumber ?? 0) - (b.orderIndex ?? b.lessonNumber ?? 0);
+      });
+    }
+    return [];
+  }, [dynamicLessons]);
+
+  const allLessonsInPath = useMemo(() => {
+    return sortedLessons.map(l => l.id);
+  }, [sortedLessons]);
+
+  const nextLessonId = useMemo(() => {
+    if (!progress || !allLessonsInPath.length) return null;
+    const lessonId = allLessonsInPath.find(id => !progress.completedLessons?.includes(id));
+    return lessonId || allLessonsInPath[0];
+  }, [allLessonsInPath, progress?.completedLessons]);
+
+  const nextLesson = useMemo(() => {
+    if (!nextLessonId) return null;
+    return sortedLessons.find(l => l.id === nextLessonId);
+  }, [nextLessonId, sortedLessons]);
 
   const groupedPaths = useMemo(() => {
     const groups: Record<string, Skill[]> = {};
@@ -92,27 +187,30 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const fetchDynamicCurriculum = async () => {
+      if (!user || !profileReady) return;
+
       const skillsRef = ref(db, 'skills');
       const pathsRef = ref(db, 'curriculum_paths');
       
-      const [skillsSnapshot, pathsSnapshot] = await Promise.all([
-        get(skillsRef),
-        get(pathsRef)
-      ]);
+      try {
+        const [skillsSnapshot, pathsSnapshot] = await Promise.all([
+          firebaseSafeGet(skillsRef, "AllSkills"),
+          firebaseSafeGet(pathsRef, "AllPaths")
+        ]);
 
-      let skills = DEFAULT_SKILLS;
-      
-      if (skillsSnapshot.exists()) {
-        skills = Object.values(skillsSnapshot.val()) as Skill[];
-      }
-      
-      if (pathsSnapshot.exists()) {
-        setAllPaths(pathsSnapshot.val());
-      }
-      
-      setAllSkills(skills);
-      
-      // Find active skill by ID or Title
+        let skills = DEFAULT_SKILLS;
+        
+        if (skillsSnapshot) {
+          skills = Object.values(skillsSnapshot) as Skill[];
+        }
+        
+        if (pathsSnapshot) {
+          setAllPaths(pathsSnapshot);
+        }
+        
+        setAllSkills(skills);
+        
+        // Find active skill by ID or Title
         let skill = skills.find(s => s.id === progress?.activeProgramId);
         if (!skill && progress?.selectedPath) {
           skill = skills.find(s => s.title === progress.selectedPath);
@@ -125,52 +223,61 @@ export const DashboardPage: React.FC = () => {
 
         if (skill) {
           setActiveSkill(skill);
-          const pathRef = ref(db, `curriculum_paths/${skill.id}`);
-          const stagesRef = ref(db, `curriculum_stages/${skill.id}`);
-          const weeksRef = ref(db, `curriculum_weeks/${skill.id}`);
-          const projectsRef = ref(db, `curriculum_projects/${skill.id}`);
-          const lessonsRef = ref(db, `ai_generated_lessons/${skill.id}`);
+          const pRef = ref(db, `curriculum_paths/${skill.id}`);
+          const sRef = ref(db, `curriculum_stages/${skill.id}`);
+          const wRef = ref(db, `curriculum_weeks/${skill.id}`);
+          const prRef = ref(db, `curriculum_projects/${skill.id}`);
+          const lRef = ref(db, `ai_generated_lessons/${skill.id}`);
           
-          const [pathSnap, stagesSnap, weeksSnap, projectsSnap, lessonsSnap] = await Promise.all([
-            get(pathRef),
-            get(stagesRef),
-            get(weeksRef),
-            get(projectsRef),
-            get(lessonsRef)
+          const [pathData, stagesDataRaw, weeksDataRaw, projectsDataRaw, lessonsDataRaw] = await Promise.all([
+            firebaseSafeGet(pRef, "CurriculumPath"),
+            firebaseSafeGet(sRef, "CurriculumStages"),
+            firebaseSafeGet(wRef, "CurriculumWeeks"),
+            firebaseSafeGet(prRef, "CurriculumProjects"),
+            firebaseSafeGet(lRef, "CurriculumLessons")
           ]);
 
-          if (pathSnap.exists()) setDynamicPath(pathSnap.val());
-          if (lessonsSnap.exists()) {
-            setDynamicLessons(Object.values(lessonsSnap.val()));
+          if (pathData) setDynamicPath(pathData as CurriculumPath);
+          if (lessonsDataRaw) {
+            setDynamicLessons(Object.values(lessonsDataRaw));
           }
-          if (weeksSnap.exists()) {
-            setDynamicWeeks((Object.values(weeksSnap.val()) as CurriculumWeek[]).sort((a, b) => a.weekNumber - b.weekNumber));
+          if (weeksDataRaw) {
+            setDynamicWeeks((Object.values(weeksDataRaw) as CurriculumWeek[]).sort((a, b) => a.weekNumber - b.weekNumber));
           }
-          if (projectsSnap.exists()) {
-            setDynamicProjects(Object.values(projectsSnap.val()) as DetailedProject[]);
+          if (projectsDataRaw) {
+            setDynamicProjects(Object.values(projectsDataRaw) as DetailedProject[]);
           }
 
-          if (stagesSnap.exists()) {
-            const stagesData = Object.values(stagesSnap.val()) as CurriculumStage[];
+          if (stagesDataRaw) {
+            const stagesData = Object.values(stagesDataRaw) as CurriculumStage[];
             const sortedStages = stagesData.sort((a, b) => a.order - b.order);
             setDynamicStages(sortedStages);
 
             // Fetch modules for each stage
             const modulesMap: Record<string, CurriculumModule[]> = {};
-            for (const stage of sortedStages) {
-              const modsRef = ref(db, `curriculum_modules/${stage.id}`);
-              const modsSnap = await get(modsRef);
-              if (modsSnap.exists()) {
-                modulesMap[stage.id] = (Object.values(modsSnap.val()) as CurriculumModule[]).sort((a, b) => a.order - b.order);
+            const modulePromises = sortedStages.map(stage => 
+              firebaseSafeGet(ref(db, `curriculum_modules/${stage.id}`), `Modules_${stage.id}`)
+            );
+            const modulesDataArray = await Promise.all(modulePromises);
+            
+            modulesDataArray.forEach((modsData, idx) => {
+              if (modsData) {
+                const stage = sortedStages[idx];
+                modulesMap[stage.id] = (Object.values(modsData) as CurriculumModule[]).sort((a, b) => a.order - b.order);
               }
-            }
+            });
             setDynamicModules(modulesMap);
           }
         }
+      } catch (err) {
+        console.error("Dashboard Fetch Error:", err);
+      }
     };
 
-    fetchDynamicCurriculum();
-  }, [progress?.selectedPath, progress?.activeProgramId]);
+    if (!loading && user && profileReady) {
+      fetchDynamicCurriculum();
+    }
+  }, [progress?.selectedPath, progress?.activeProgramId, user, profileReady, loading]);
 
   const currentPathData = useMemo(() => {
     if (dynamicPath && dynamicStages.length > 0) {
@@ -178,10 +285,10 @@ export const DashboardPage: React.FC = () => {
         ...dynamicPath,
         finalExamId: `exam_${dynamicPath.id}`,
         levels: dynamicStages.reduce((acc: any, stage) => {
-          const levelKey = stage.levelName.toLowerCase() as any;
+          const levelKey = (stage.levelName || stage.title || 'Stage').toLowerCase().replace(/\s+/g, '-') as any;
           acc[levelKey] = {
             id: levelKey,
-            title: stage.title,
+            title: stage.title || 'Untitled Stage',
             description: '',
             modules: dynamicModules[stage.id] || [],
             projects: []
@@ -194,24 +301,6 @@ export const DashboardPage: React.FC = () => {
     return null;
   }, [dynamicPath, dynamicStages, dynamicModules]);
 
-  const allLessonsInPath = useMemo(() => {
-    if (dynamicLessons.length > 0) {
-      return dynamicLessons.sort((a, b) => a.order - b.order).map(l => l.id);
-    }
-    return [];
-  }, [dynamicLessons]);
-
-  const nextLessonId = useMemo(() => {
-    if (!progress || !allLessonsInPath.length) return null;
-    const lessonId = allLessonsInPath.find(id => !progress.completedLessons?.includes(id));
-    return lessonId || allLessonsInPath[0];
-  }, [allLessonsInPath, progress?.completedLessons]);
-
-  const nextLesson = useMemo(() => {
-    if (!nextLessonId) return null;
-    return dynamicLessons.find(l => l.id === nextLessonId);
-  }, [nextLessonId, dynamicLessons]);
-
   const currentWeek = useMemo(() => {
     if (!nextLesson || !dynamicWeeks.length) return 1;
     const week = dynamicWeeks.find(w => w.id === nextLesson.weekId);
@@ -219,8 +308,8 @@ export const DashboardPage: React.FC = () => {
   }, [nextLesson, dynamicWeeks]);
 
   const featuredLessons = useMemo(() => {
-    if (dynamicLessons.length > 0) {
-      return dynamicLessons
+    if (sortedLessons.length > 0) {
+      return sortedLessons
         .filter(l => !progress?.completedLessons?.includes(l.id))
         .slice(0, 3)
         .map((l, i) => ({
@@ -228,12 +317,12 @@ export const DashboardPage: React.FC = () => {
           id: l.id,
           title: l.title,
           desc: l.summary || l.todayYouAreLearning || 'Continue your learning journey.',
-          duration: l.estimatedDuration || '15 mins'
+          duration: l.estimatedDuration || l.estimatedMinutes ? `${l.estimatedMinutes} mins` : '15 mins'
         }));
     }
 
     return [];
-  }, [dynamicLessons, progress?.completedLessons]);
+  }, [sortedLessons, progress?.completedLessons]);
 
   const nextExam = useMemo(() => {
     if (!progress || !currentPathData?.finalExamId) return null;
@@ -269,10 +358,35 @@ export const DashboardPage: React.FC = () => {
     return null;
   }, [currentPathData, progress?.completedLessons, progress?.completedTests]);
 
+  const { pathPercent, pathCompletedCount, pathTotalCount } = useMemo(() => {
+    if (!activeSkill || !progress) return { pathPercent: 0, pathCompletedCount: 0, pathTotalCount: 0 };
+    
+    // Check if we have isolated path progress
+    const pathId = activeSkill.id.replace(/\s+/g, '_').toLowerCase();
+    const pathTrack = progress.paths?.[pathId];
+    
+    if (pathTrack) {
+       return { 
+         pathPercent: pathTrack.progressPercent || 0, 
+         pathCompletedCount: pathTrack.completedLessonsCount || 0, 
+         pathTotalCount: pathTrack.totalLessons || 0 
+       };
+    }
+
+    // Fallback to manual calculation from current lessons
+    const totalPublished = dynamicLessons.filter(l => l.isPublished || l.status === 'published').length;
+    const completedInPath = dynamicLessons.filter(l => 
+      (l.isPublished || l.status === 'published') && 
+      progress.completedLessons?.includes(l.id || l.lessonId)
+    ).length;
+    
+    const percent = totalPublished > 0 ? Math.round((completedInPath / totalPublished) * 100) : 0;
+    return { pathPercent: percent, pathCompletedCount: completedInPath, pathTotalCount: totalPublished };
+  }, [activeSkill, progress, dynamicLessons]);
+
   if (loading || !progress) return <LoadingScreen />;
 
   const xp = Number(progress.xp) || 0;
-  const xpProgress = xp % 100;
   const streak = Number(progress.streak) || 0;
   const currentStage = progress.currentStage || 'Beginner';
 
@@ -308,6 +422,41 @@ export const DashboardPage: React.FC = () => {
     navigate('/');
   };
 
+  const handleResetProgress = async () => {
+    if (!user || !progress?.selectedPath) return;
+    
+    try {
+      const foundations = CurriculumEngineService.getPhase0Lessons(progress.selectedPath);
+      const firstLessonId = foundations.length > 0 ? generateSlug(foundations[0]) : null;
+      
+      await ProgressionService.resetLearningProgress(
+        user.uid, 
+        progress.selectedPath, 
+        firstLessonId
+      );
+      
+      window.location.reload();
+    } catch (err) {
+      console.error("Reset Error:", err);
+      throw err;
+    }
+  };
+
+  const handleSyncProgress = async () => {
+    if (!user || !activeSkill) return;
+    try {
+      const result = await CurriculumEngineService.realignUserProgress(user.uid, activeSkill.id);
+      if (result?.success) {
+        alert(`Success: Realigned to [${result.nextLesson}]`);
+        window.location.reload();
+      } else {
+        alert(result?.msg || "Progression is already optimal.");
+      }
+    } catch (err: any) {
+      alert(`Sync failed: ${err.message}`);
+    }
+  };
+
   const menuItems = [
     { icon: <LayoutDashboard size={20} />, label: 'Dashboard', active: true, path: '/dashboard' },
     { icon: <Code size={20} />, label: 'Programming Languages', path: '/coding-languages' },
@@ -325,6 +474,14 @@ export const DashboardPage: React.FC = () => {
       path: '/admin' 
     });
   }
+
+  const roadmapPhases = [
+    { id: 0, title: "Phase 0: Absolute Beginner", stage: "Foundations", icon: <Sparkles size={20} /> },
+    { id: 1, title: "Phase 1: Foundations", stage: "Core Concepts", icon: <Compass size={20} /> },
+    { id: 2, title: "Phase 2: Build Skills", stage: "Practical Skills", icon: <Code size={20} /> },
+    { id: 3, title: "Phase 3: Projects", stage: "Real Projects", icon: <Target size={20} /> },
+    { id: 4, title: "Phase 4: Professional Level", stage: "Advanced Systems", icon: <Trophy size={20} /> },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-white flex flex-col">
@@ -346,6 +503,41 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-6">
+          {/* Stats Bar */}
+          <div className="hidden lg:flex items-center gap-8 px-8 py-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] mr-4">
+            <div className="flex items-center gap-3">
+              <Flame size={18} className="text-orange-500" fill="currentColor" />
+              <div className="text-left">
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/20 leading-none">Streak</p>
+                <p className="text-sm font-black tracking-tight">{progress?.streak || 0} Days</p>
+              </div>
+            </div>
+            <div className="w-px h-6 bg-white/[0.08]" />
+            <div className="flex items-center gap-3">
+              <Zap size={18} className="text-emerald-500" fill="currentColor" />
+              <div className="text-left">
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/20 leading-none">Level</p>
+                <p className="text-sm font-black tracking-tight">{progress?.level || 1}</p>
+              </div>
+            </div>
+            <div className="w-px h-6 bg-white/[0.08]" />
+            <div className="flex items-center gap-3">
+              <Trophy size={18} className="text-indigo-400" />
+              <div className="text-left">
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/20 leading-none">Academy XP</p>
+                <p className="text-sm font-black tracking-tight">{progress?.xp || 0}</p>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleSyncProgress}
+            className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-emerald-500/10 hover:border-emerald-500/20 text-white/40 hover:text-emerald-500 transition-all flex items-center gap-2 mr-2"
+            title="Sync & Fix Progress"
+          >
+            <RefreshCcw size={18} />
+            <span className="text-[9px] font-black uppercase tracking-widest hidden xl:inline">Sync Roadmap</span>
+          </button>
           <button 
             onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
             className="p-3 hover:bg-white/[0.05] rounded-2xl transition-all text-white/30 hover:text-white/60 relative active:scale-90"
@@ -480,13 +672,29 @@ export const DashboardPage: React.FC = () => {
                       </button>
                     </div>
                     <div>
-                      <h1 className="text-[2.5rem] md:text-8xl font-black tracking-tighter leading-[0.85] mb-2 drop-shadow-2xl">
+                      <h1 className="text-[2.5rem] md:text-8xl font-black tracking-tighter leading-[0.85] mb-2 drop-shadow-2xl uppercase">
                         {activeSkill?.title || progress.selectedPath} <br />
-                        <span className="text-gradient drop-shadow-none">Academy</span>
+                        <span className="text-gradient drop-shadow-none">Autonomous University</span>
                       </h1>
-                      <p className="text-white/40 font-medium text-lg md:text-2xl max-w-lg leading-tight pt-2">
-                        Welcome back, <span className="text-white font-black">{user?.displayName?.split(' ')[0] || 'Developer'}</span>. You're entering <span className="text-emerald-400 font-black tracking-tight underline decoration-emerald-500/30 underline-offset-4">Week {currentWeek}</span> of your professional journey.
+                      <p className="text-white/40 font-medium text-lg md:text-2xl max-w-lg leading-tight pt-4">
+                        Welcome back, Student <span className="text-white font-black">{user?.displayName?.split(' ')[0] || 'Developer'}</span>. Your curriculum is actively evolving based on your performance.
                       </p>
+                      
+                      <div className="flex flex-wrap gap-4 pt-8">
+                        <Button 
+                          onClick={() => nextLessonId && navigate(`/lesson/${nextLessonId}`)}
+                          className="h-16 px-10 rounded-2xl bg-emerald-500 text-black font-black shadow-2xl shadow-emerald-500/20 hover:scale-[1.03] transition-all flex items-center gap-3"
+                        >
+                          <Play size={20} fill="currentColor" /> Resume Curriculum
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => window.dispatchEvent(new CustomEvent('open-mentor-chat'))}
+                          className="h-16 px-10 rounded-2xl border-white/10 hover:bg-white/5 font-black flex items-center gap-4 text-white/60 hover:text-white"
+                        >
+                          <Bot size={20} /> Adaptive Support
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -498,13 +706,13 @@ export const DashboardPage: React.FC = () => {
                         <h4 className="font-black text-xl tracking-tighter">Level {currentStage} Professional</h4>
                       </div>
                       <div className="text-right">
-                        <span className="text-4xl font-black text-emerald-400 tracking-tighter">{allLessonsInPath.length > 0 ? Math.round((progress.completedLessons.length / allLessonsInPath.length) * 100) : 0}%</span>
-                        <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">Complete</p>
+                        <span className="text-4xl font-black text-emerald-400 tracking-tighter">{pathPercent}%</span>
+                        <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">{pathCompletedCount} of {pathTotalCount} Lessons</p>
                       </div>
                     </div>
                     <div className="flex gap-1 h-3">
                       {Array.from({ length: 20 }).map((_, i) => {
-                        const segmentProgress = (allLessonsInPath.length > 0 ? (progress.completedLessons?.length / allLessonsInPath.length) : 0) * 20;
+                        const segmentProgress = (pathPercent / 100) * 20;
                         const isActive = i < segmentProgress;
                         return (
                           <div 
@@ -585,93 +793,148 @@ export const DashboardPage: React.FC = () => {
                   >
                     View Mastery Profile
                   </Button>
+
+                  <button 
+                    onClick={() => setIsResetModalOpen(true)}
+                    className="w-full mt-4 py-3 text-[9px] font-black uppercase tracking-[0.3em] text-red-500/40 hover:text-red-500 transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCcw size={12} />
+                    Reset Learning Progress
+                  </button>
                 </div>
               </div>
             </Card>
           </div>
 
-          {/* Weekly Roadmap Section */}
-          {dynamicWeeks.length > 0 && (
-            <div className="space-y-10 pt-8">
-              <div className="flex justify-between items-end">
-                <div className="space-y-2">
-                  <h3 className="font-black text-4xl tracking-tighter">Your <span className="text-gradient">Roadmap</span></h3>
-                  <p className="text-white/30 font-medium">Clear path to your professional career goal.</p>
-                </div>
-                <div className="flex items-center gap-4">
-                   <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Current</span>
-                   </div>
-                   <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-white/10" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Upcoming</span>
-                   </div>
-                </div>
+          {/* Row 1: Continue Learning */}
+          <DashboardRow 
+            title="Continue Learning" 
+            subtitle="Resume your last lesson"
+            items={nextLesson ? [nextLesson] : []}
+            renderItem={(lesson) => <LessonCard lesson={lesson} />}
+          />
+
+          {/* Row 2: Recommended For You */}
+          <DashboardRow 
+            title="Recommended For You" 
+            subtitle="Based on your mastery progress"
+            items={recommendedLessons}
+            renderItem={(lesson) => <LessonCard lesson={lesson} />}
+          />
+
+          {/* Row 3: New Lessons Today */}
+          <DashboardRow 
+            title="New Lessons Today" 
+            subtitle="Fresh content from the academy"
+            items={newLessons}
+            renderItem={(lesson) => <LessonCard lesson={lesson} />}
+          />
+
+          {/* Row 4: Curriculum Overview */}
+          <DashboardRow 
+            title="Curriculum" 
+            subtitle="Your step-by-step career roadmap"
+            items={sortedLessons}
+            renderItem={(lesson: any) => {
+              const isCompleted = progress.completedLessons?.includes(lesson.id || lesson.lessonId);
+              const lessonIdx = sortedLessons.findIndex(l => (l.id || l.lessonId) === (lesson.id || lesson.lessonId));
+              const prevLessons = sortedLessons.slice(0, lessonIdx);
+              const isLocked = !isAdminLockDisabled && !isCompleted && prevLessons.some(l => !progress.completedLessons?.includes(l.id || l.lessonId));
+              return <LessonCard lesson={lesson} locked={isLocked} />;
+            }}
+          />
+
+          {/* Academy Roadmap Section */}
+          <div className="space-y-10 pt-8">
+            <div className="flex justify-between items-end">
+              <div className="space-y-2">
+                <h3 className="font-black text-4xl tracking-tighter">Academy <span className="text-gradient">Roadmap</span></h3>
+                <p className="text-white/30 font-medium">Your path from absolute beginner to industry expert.</p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {dynamicWeeks.map((week) => {
-                  const isCurrent = week.weekNumber === currentWeek;
-                  const isPast = week.weekNumber < currentWeek;
-                  
-                  return (
-                    <div 
-                      key={week.id}
-                      className="group/week relative"
-                    >
-                      {isCurrent && (
-                        <div className="absolute -inset-0.5 bg-gradient-to-b from-emerald-500 to-emerald-800 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition" />
-                      )}
-                      <Card 
-                        className={`h-full p-8 rounded-[2.5rem] border-white/[0.08] relative overflow-hidden transition-all duration-700 ${
-                          isCurrent 
-                            ? 'bg-[#0A0A0B]/80 backdrop-blur-3xl border-emerald-500/40' 
-                            : isPast 
-                              ? 'bg-white/[0.01] border-white/[0.02] opacity-50' 
-                              : 'bg-white/[0.02] border-white/[0.05]'
-                        }`}
-                      >
-                        <div className="space-y-6 relative z-10">
-                          <div className="flex justify-between items-start">
-                            <div className={`px-4 py-2 rounded-2xl ${isCurrent ? 'bg-emerald-500 text-black font-black shadow-lg shadow-emerald-500/30' : 'bg-white/5 text-white/40'}`}>
-                              <span className="text-[10px] font-black uppercase tracking-widest">Week {week.weekNumber}</span>
-                            </div>
-                            {isPast ? (
-                              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                <CheckCircle2 size={18} />
-                              </div>
-                            ) : !isCurrent ? (
-                              <Lock size={16} className="text-white/10" />
-                            ) : (
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                            )}
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <h4 className={`text-xl font-black tracking-tight leading-tight ${isCurrent ? 'text-white' : 'text-white/60'}`}>{week.title}</h4>
-                            <p className="text-xs font-medium text-white/30 line-clamp-2 leading-relaxed">{week.description}</p>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2">
-                            {week.learningGoals?.slice(0, 3).map((goal: string, idx: number) => (
-                              <span key={idx} className="px-3 py-1 rounded-lg bg-white/[0.03] border border-white/5 text-[8px] font-bold uppercase tracking-wider text-white/20">{goal}</span>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {isCurrent && (
-                          <div className="absolute -right-8 -bottom-8 p-12 opacity-[0.03] transform rotate-12 group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
-                            <Zap size={160} fill="currentColor" className="text-emerald-500" />
-                          </div>
-                        )}
-                      </Card>
-                    </div>
-                  );
-                })}
+              <div className="hidden md:flex items-center gap-4">
+                 <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Current Phase</span>
+                 </div>
+                 <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-white/10" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/20">Locked Phase</span>
+                 </div>
               </div>
             </div>
-          )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              {roadmapPhases.map((phase) => {
+                const phaseLessons = sortedLessons.filter(l => l.stage === phase.stage);
+                const isCompleted = phaseLessons.length > 0 && phaseLessons.every(l => progress.completedLessons.includes(l.id));
+                const currentLessonInPhase = phaseLessons.find(l => !progress.completedLessons.includes(l.id));
+                const isCurrent = !!currentLessonInPhase && nextLessonId === currentLessonInPhase.id;
+                
+                // A phase is locked if any lesson in a previous phase is not completed
+                const previousPhases = roadmapPhases.filter(p => p.id < phase.id);
+                const isLocked = !isAdminLockDisabled && previousPhases.some(p => {
+                  const pLessons = sortedLessons.filter(l => l.stage === p.stage);
+                  return pLessons.length > 0 && !pLessons.every(l => progress.completedLessons.includes(l.id));
+                });
+
+                return (
+                  <div key={phase.id} className="group/phase relative">
+                    {isCurrent && (
+                      <div className="absolute -inset-0.5 bg-gradient-to-b from-emerald-500 to-emerald-800 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition" />
+                    )}
+                    <Card 
+                      className={`h-full p-8 rounded-[2.5rem] border-white/[0.08] relative overflow-hidden transition-all duration-700 ${
+                        isCurrent 
+                          ? 'bg-[#0A0A0B]/80 backdrop-blur-3xl border-emerald-500/40' 
+                          : isLocked 
+                            ? 'bg-white/[0.01] border-white/[0.02] opacity-50 grayscale' 
+                            : isCompleted
+                              ? 'bg-emerald-500/[0.05] border-emerald-500/20'
+                              : 'bg-white/[0.02] border-white/[0.05]'
+                      }`}
+                    >
+                      <div className="space-y-6 relative z-10">
+                        <div className="flex justify-between items-start">
+                          <div className={`p-3 rounded-2xl ${isCurrent ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/30' : 'bg-white/5 text-white/40'}`}>
+                            {phase.icon}
+                          </div>
+                          {isCompleted ? (
+                            <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                              <CheckCircle2 size={18} />
+                            </div>
+                          ) : isLocked ? (
+                            <Lock size={16} className="text-white/10" />
+                          ) : isCurrent ? (
+                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                          ) : null}
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className={`text-lg font-black tracking-tight leading-tight ${isCurrent ? 'text-white' : 'text-white/60'}`}>{phase.title}</h4>
+                          <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">{phase.stage}</p>
+                        </div>
+
+                        {phaseLessons.length > 0 && (
+                          <div className="space-y-3">
+                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-white/20">
+                              <span>Progress</span>
+                              <span>{Math.round((phaseLessons.filter(l => progress.completedLessons.includes(l.id)).length / phaseLessons.length) * 100)}%</span>
+                            </div>
+                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-emerald-500 transition-all duration-1000" 
+                                style={{ width: `${(phaseLessons.filter(l => progress.completedLessons.includes(l.id)).length / phaseLessons.length) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Recommended Next Card */}
           <div className="grid grid-cols-1 gap-10">
@@ -734,6 +997,35 @@ export const DashboardPage: React.FC = () => {
                 <div className="absolute top-1/2 right-24 -translate-y-1/2 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full group-hover:bg-emerald-500/20 transition-all duration-1000" />
               </Card>
             )}
+
+            {/* Row 4: Trending Paths */}
+            <DashboardRow 
+              title="Trending Paths" 
+              subtitle="Most popular specializations this week"
+              items={allSkills.filter(s => s.status === 'active').slice(0, 6)}
+              renderItem={(path) => <PathCard path={path} />}
+            />
+
+            {/* Row 5: Projects To Build */}
+            <DashboardRow 
+              title="Projects To Build" 
+              subtitle="Practical labs for your level"
+              items={dynamicProjects}
+              renderItem={(project) => <ProjectCard project={project} />}
+            />
+
+            {/* Row 6: Quizzes To Practice */}
+            <DashboardRow 
+              title="Quizzes To Practice" 
+              subtitle="Strengthen your weak areas"
+              items={allQuizzes}
+              renderItem={(quiz) => <QuizCard quiz={quiz} />}
+            />
+
+            {/* Row 9: AI Tutor Quick Help */}
+            <div className="pt-8">
+              <AITutorWidget />
+            </div>
 
             {/* Value Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -1439,6 +1731,13 @@ export const DashboardPage: React.FC = () => {
               </div>
             </Card>
           </div>
+          
+          <ResetProgressModal 
+            isOpen={isResetModalOpen}
+            onClose={() => setIsResetModalOpen(false)}
+            onConfirm={handleResetProgress}
+            pathName={progress.selectedPath || 'Current Path'}
+          />
         </div>
       </main>
       <MentorChat />

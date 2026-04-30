@@ -1,18 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { ref, onValue, update } from 'firebase/database';
+import { ref, onValue, update, get } from 'firebase/database';
 import { db } from '../../lib/firebase';
-import { PaymentRecord } from '../../types';
-import { motion } from 'motion/react';
+import { PaymentRecord, UserProfile } from '../../types';
+import { motion, AnimatePresence } from 'motion/react';
 import { Card, Button, Badge } from '../../components/ui';
 import { CreditCard, CheckCircle2, XCircle, Clock, ExternalLink, Search, RefreshCcw, User } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+import { isAdmin as checkAdmin } from '../../lib/adminCheck';
 
 export const ManagePayments: React.FC = () => {
+  const { profile, user: currentUser, refreshAuthToken } = useAuth();
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'cancelled'>('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [userContext, setUserContext] = useState<PaymentRecord[]>([]);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [feedback, setFeedback] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  // Auto-clear feedback
+  useEffect(() => {
+    if (feedback) {
+      const timer = setTimeout(() => setFeedback(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [feedback]);
+
+  // Permission check helper - strict source of truth
+  const ALLOWED_ADMINS = ['hh5217924@gmail.com', 'harunabilikis8@gmail.com'];
+  const isAdmin = currentUser?.email && (ALLOWED_ADMINS.includes(currentUser.email) || checkAdmin(currentUser) || profile?.is_admin);
+
+  const checkAdminAuth = () => {
+    if (!isAdmin) {
+      setFeedback({ msg: "UNAUTHORIZED SOURCE DETECTED: ACCESS DENIED.", type: 'error' });
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     if (selectedPayment) {
@@ -26,64 +53,193 @@ export const ManagePayments: React.FC = () => {
   useEffect(() => {
     const paymentsRef = ref(db, 'payments');
     const unsubscribe = onValue(paymentsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const paymentsList = Object.values(data) as PaymentRecord[];
-        setPayments(paymentsList.sort((a, b) => b.timestamp - a.timestamp));
-      } else {
-        setPayments([]);
+      console.log("[ManagePayments] PAYMENTS SNAPSHOT:", snapshot.val());
+      try {
+        if (snapshot.exists()) {
+          const data = snapshot.val() || {};
+          const paymentsList = Object.keys(data).map(key => ({
+            ...data[key],
+            id: key
+          })) as PaymentRecord[];
+          setPayments(paymentsList.sort((a, b) => b.timestamp - a.timestamp));
+        } else {
+          setPayments([]);
+        }
+      } catch (err) {
+        console.error("[ManagePayments] Data mapping error:", err);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      console.error("[ManagePayments] Permission error:", error);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
+  const logStage = (recordId: string, stage: string, status: 'started' | 'success' | 'failed', error?: string) => {
+    const logMsg = `[PAYMENT ENGINE] ID: ${recordId} | Stage: ${stage} | Status: ${status}${error ? ` | Error: ${error}` : ''}`;
+    console.log(logMsg);
+    
+    // Optional: write to firebase audit
+    const auditRef = ref(db, `payment_audit_logs/${Date.now()}`);
+    update(auditRef, {
+      record_id: recordId,
+      stage,
+      status,
+      admin_email: currentUser?.email,
+      timestamp: Date.now(),
+      error: error || null
+    }).catch(() => {});
+  };
+
+  const validatePayment = (payment: PaymentRecord) => {
+    if (!payment.user_id) throw new Error("Safety Guard: User ID missing.");
+    if (!payment.amount || payment.amount <= 0) throw new Error("Safety Guard: Invalid amount.");
+    
+    // Check for duplicate reference
+    const duplicates = payments.filter(p => p.id !== payment.id && p.status === 'approved' && p.payment_reference === payment.payment_reference);
+    if (duplicates.length > 0) throw new Error("Safety Guard: Duplicate reference detected.");
+    
+    return true;
+  };
+
   const handleApprove = async (payment: PaymentRecord) => {
-    if (!window.confirm(`Approve payment from ${payment.email}? This will activate their 30-day subscription.`)) return;
+    logStage(payment.id, 'Approve clicked', 'started');
+    if (!checkAdminAuth()) return;
 
     try {
+      validatePayment(payment);
+      logStage(payment.id, 'Safety validation passed', 'success');
+
+      log("Confirmation accepted");
+      setProcessingId(payment.id);
+      logStage(payment.id, 'Database type detected: Realtime Database', 'success');
+
       const now = Date.now();
-      const thirtyDays = 30 * 24 * 60 * 60 * 1000;
-      const expiry = now + thirtyDays;
+      const expiry = now + (30 * 24 * 60 * 60 * 1000); // 30 days
+      const adminEmail = currentUser?.email || 'admin';
 
       const updates: any = {};
-      updates[`payments/${payment.id}/status`] = 'approved';
-      updates[`users/${payment.user_id}/progress/subscription_status`] = 'active';
-      updates[`users/${payment.user_id}/progress/subscription_start_date`] = now;
-      updates[`users/${payment.user_id}/progress/subscription_expiry_date`] = expiry;
       
+      // Payment Record Update
+      updates[`payments/${payment.id}/status`] = 'approved';
+      updates[`payments/${payment.id}/reviewed_by`] = adminEmail;
+      updates[`payments/${payment.id}/reviewed_at`] = now;
+      updates[`payments/${payment.id}/decision`] = 'approve';
+      updates[`payments/${payment.id}/updated_at`] = now;
+
+      // User Access Update
+      updates[`users/${payment.user_id}/progress/subscription_status`] = 'active';
+      updates[`users/${payment.user_id}/progress/premium_access`] = true;
+      updates[`users/${payment.user_id}/progress/subscription_plan`] = 'monthly';
+      updates[`users/${payment.user_id}/progress/subscription_start`] = now;
+      updates[`users/${payment.user_id}/progress/subscription_expiry`] = expiry;
+
+      logStage(payment.id, 'Database update started', 'started');
       await update(ref(db), updates);
-      alert(`Your ₦10,000 MentorStack Premium subscription is now active. Expires on ${new Date(expiry).toLocaleDateString()}.`);
-    } catch (err) {
-      console.error("Error approving payment:", err);
-      alert('Error updating payment status.');
+      
+      logStage(payment.id, 'Payment update success', 'success');
+      logStage(payment.id, 'User update success', 'success');
+      logStage(payment.id, 'UI refresh success', 'success');
+
+      setFeedback({ msg: "Approved successfully", type: 'success' });
+    } catch (err: any) {
+      logStage(payment.id, 'Approve flow', 'failed', err.message);
+      setFeedback({ msg: `Approval Failed: ${err.message}`, type: 'error' });
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleReject = async (payment: PaymentRecord) => {
-    if (!window.confirm(`Reject payment from ${payment.email}?`)) return;
+    logStage(payment.id, 'Reject clicked', 'started');
+    if (!checkAdminAuth()) return;
+
+    log("Confirmation accepted");
+    setProcessingId(payment.id);
 
     try {
+      const now = Date.now();
+      const adminEmail = currentUser?.email || 'admin';
+
+      logStage(payment.id, 'Database type detected: Realtime Database', 'success');
+
       const updates: any = {};
       updates[`payments/${payment.id}/status`] = 'rejected';
-      updates[`users/${payment.user_id}/progress/subscription_status`] = 'inactive';
-      updates[`users/${payment.user_id}/progress/subscription_reference`] = null;
-      
+      updates[`payments/${payment.id}/reviewed_by`] = adminEmail;
+      updates[`payments/${payment.id}/reviewed_at`] = now;
+      updates[`payments/${payment.id}/decision`] = 'reject';
+      updates[`payments/${payment.id}/updated_at`] = now;
+
+      logStage(payment.id, 'Payment update started', 'started');
       await update(ref(db), updates);
-      alert('Payment rejected.');
-    } catch (err) {
-      console.error("Error rejecting payment:", err);
+      
+      logStage(payment.id, 'Payment update success', 'success');
+      logStage(payment.id, 'UI refresh success', 'success');
+
+      setFeedback({ msg: 'Payment rejected', type: 'success' });
+    } catch (err: any) {
+      logStage(payment.id, 'Reject flow', 'failed', err.message);
+      setFeedback({ msg: `Reject failed: ${err.message}`, type: 'error' });
+    } finally {
+      setProcessingId(null);
     }
   };
 
+  const bulkAction = async (action: 'approve' | 'reject') => {
+    const pending = filteredPayments.filter(p => ['initiated', 'paid_pending_verification'].includes(p.status));
+    if (pending.length === 0) return;
+
+    log("Confirmation accepted (Bulk)");
+    const actionText = action === 'approve' ? 'Approve All Valid' : 'Reject All Fraudulent';
+
+    setIsBulkProcessing(true);
+    let successCount = 0;
+
+    for (const payment of pending) {
+      try {
+        if (action === 'approve') validatePayment(payment);
+        
+        const now = Date.now();
+        const expiry = now + (30 * 24 * 60 * 60 * 1000);
+        const adminEmail = currentUser?.email || 'admin';
+
+        const updates: any = {};
+        if (action === 'approve') {
+          updates[`payments/${payment.id}/status`] = 'approved';
+          updates[`payments/${payment.id}/reviewed_by`] = adminEmail;
+          updates[`payments/${payment.id}/reviewed_at`] = now;
+          updates[`payments/${payment.id}/decision`] = 'approve';
+          updates[`users/${payment.user_id}/progress/subscription_status`] = 'active';
+          updates[`users/${payment.user_id}/progress/premium_access`] = true;
+          updates[`users/${payment.user_id}/progress/subscription_plan`] = 'monthly';
+          updates[`users/${payment.user_id}/progress/subscription_start`] = now;
+          updates[`users/${payment.user_id}/progress/subscription_expiry`] = expiry;
+        } else {
+          updates[`payments/${payment.id}/status`] = 'rejected';
+          updates[`payments/${payment.id}/reviewed_by`] = adminEmail;
+          updates[`payments/${payment.id}/reviewed_at`] = now;
+          updates[`payments/${payment.id}/decision`] = 'reject';
+        }
+
+        await update(ref(db), updates);
+        successCount++;
+      } catch (err) {
+        console.error(`Bulk failure for ${payment.id}:`, err);
+      }
+    }
+
+    setFeedback({ msg: `${actionText}: ${successCount} processed.`, type: 'success' });
+    setIsBulkProcessing(false);
+  };
+
   const filteredPayments = payments.filter(p => {
-    // 1. Status Filter
     let matchesStatus = true;
     if (filter === 'pending') matchesStatus = ['initiated', 'paid_pending_verification'].includes(p.status);
     else if (filter !== 'all') matchesStatus = p.status === filter;
 
-    // 2. Search Filter (Email, Internal Reference, or Selar Reference)
     const matchesSearch = !searchTerm || 
       p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.payment_reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,8 +248,27 @@ export const ManagePayments: React.FC = () => {
     return matchesStatus && matchesSearch;
   });
 
+  const log = (msg: string) => console.log(`[PAYMENT LOG]: ${msg}`);
+
   return (
     <div className="space-y-8">
+      {/* Feedback Alert */}
+      <AnimatePresence>
+        {feedback && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border ${
+              feedback.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
+            } flex items-center gap-3 font-black uppercase text-[10px] tracking-widest`}
+          >
+            {feedback.type === 'success' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+            {feedback.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black tracking-tight text-white italic uppercase">
@@ -103,6 +278,28 @@ export const ManagePayments: React.FC = () => {
         </div>
 
         <div className="flex flex-col md:flex-row gap-4">
+          <Button 
+            onClick={() => bulkAction('approve')}
+            disabled={isBulkProcessing || loading || filteredPayments.length === 0}
+            className="h-12 px-6 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] uppercase font-black tracking-widest hover:bg-emerald-500 hover:text-black transition-all shrink-0"
+          >
+            {isBulkProcessing ? (
+              <RefreshCcw size={14} className="mr-2 animate-spin" />
+            ) : (
+              <CheckCircle2 size={14} className="mr-2" />
+            )}
+            Approve All Valid
+          </Button>
+
+          <Button 
+            onClick={() => bulkAction('reject')}
+            disabled={isBulkProcessing || loading || filteredPayments.length === 0}
+            className="h-12 px-6 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] uppercase font-black tracking-widest hover:bg-red-500 hover:text-white transition-all shrink-0"
+          >
+            <XCircle size={14} className="mr-2" />
+            Reject All Fraudulent
+          </Button>
+
           <div className="relative group min-w-[300px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-400 transition-colors" size={18} />
             <input 
@@ -132,7 +329,7 @@ export const ManagePayments: React.FC = () => {
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-grow space-y-4">
-          {loading ? (
+          {loading && payments.length === 0 ? (
             <div className="py-20 flex justify-center">
               <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
@@ -178,7 +375,7 @@ export const ManagePayments: React.FC = () => {
                             payment.status === 'paid_pending_verification' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                             'bg-amber-500/10 text-amber-400 border-amber-400/20'
                           }>
-                            {payment.status.replace(/_/g, ' ').toUpperCase()}
+                            {payment.status.replace(/_/g, ' ').toUpperCase()} {payment.status === 'approved' && '✅'}
                           </Badge>
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-white/40 font-medium font-mono uppercase tracking-widest">
@@ -198,18 +395,20 @@ export const ManagePayments: React.FC = () => {
                           <Button 
                             size="sm" 
                             variant="primary"
+                            disabled={processingId === payment.id}
                             onClick={(e) => { e.stopPropagation(); handleApprove(payment); }}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl"
+                            className="bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl min-w-[120px]"
                           >
-                            Approve
+                            {processingId === payment.id ? "Approving..." : "Approve"}
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
+                            disabled={processingId === payment.id}
                             onClick={(e) => { e.stopPropagation(); handleReject(payment); }}
                             className="border-red-500/50 hover:bg-red-500 hover:text-white text-red-400 font-black uppercase text-[10px] tracking-widest h-10 px-6 rounded-xl"
                           >
-                            Reject
+                            {processingId === payment.id ? "..." : "Reject"}
                           </Button>
                         </>
                       )}
