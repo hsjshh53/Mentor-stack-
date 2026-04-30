@@ -55,6 +55,10 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 export default function App() {
+  React.useEffect(() => {
+    document.title = "MentorStack – Become Unstoppable in Tech";
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
