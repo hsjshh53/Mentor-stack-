@@ -319,7 +319,7 @@ export const SubscriptionPage: React.FC = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-4 backdrop-blur-sm">
             <Crown size={14} />
-            <span className="text-[10px] font-black uppercase tracking-widest">MentorStack Premium</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">OLYNQ Stack Premium</span>
           </div>
           <h1 className="text-4xl lg:text-6xl font-black tracking-tight text-white leading-tight">
             Level Up Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">Career Mastery</span>
@@ -344,7 +344,7 @@ export const SubscriptionPage: React.FC = () => {
             <div className="space-y-2">
               <h3 className="text-3xl font-black text-white">Premium Access Active</h3>
               <p className="text-slate-400 font-medium">
-                Your subscription is active. Welcome to the elite tier of MentorStack members.
+                Your subscription is active. Welcome to the elite tier of OLYNQ Stack members.
               </p>
             </div>
             <Button onClick={() => navigate('/dashboard')} fullWidth size="lg" className="rounded-2xl h-16 bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20 border-none font-bold text-lg">
@@ -402,7 +402,7 @@ export const SubscriptionPage: React.FC = () => {
                 <div className="relative z-10 space-y-6">
                   <div>
                     <h2 className="text-sm font-black uppercase tracking-[0.2em] text-blue-100/60 mb-2">Selected Plan</h2>
-                    <p className="text-3xl font-black text-white">MentorStack Monthly Premium</p>
+                    <p className="text-3xl font-black text-white">OLYNQ Stack Monthly Premium</p>
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-6xl font-black tracking-tighter text-white">₦10,000</span>
@@ -627,7 +627,7 @@ export const SubscriptionPage: React.FC = () => {
         )}
 
         <div className="mt-20 text-center opacity-30">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white">MentorStack Academic Excellence</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white">OLYNQ Stack Academic Excellence</p>
         </div>
       </div>
     </div>

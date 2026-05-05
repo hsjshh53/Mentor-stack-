@@ -498,7 +498,7 @@ export const DashboardPage: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
               <Zap size={20} fill="currentColor" />
             </div>
-            <span className="font-black text-2xl tracking-tighter text-gradient">MentorStack</span>
+            <span className="font-black text-2xl tracking-tighter text-gradient">OLYNQ Stack</span>
           </div>
         </div>
 
@@ -596,7 +596,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
                     <Zap size={20} fill="currentColor" />
                   </div>
-                  <span className="text-2xl font-black tracking-tighter">MentorStack</span>
+                  <span className="text-2xl font-black tracking-tighter">OLYNQ Stack</span>
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
@@ -945,7 +945,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-2xl font-black tracking-tight">Ready to start your journey?</h3>
-                  <p className="text-white/40 max-w-sm mx-auto font-medium">Select a path and start your professional training in the MentorStack Academy.</p>
+                  <p className="text-white/40 max-w-sm mx-auto font-medium">Select a path and start your professional training in the OLYNQ Stack Academy.</p>
                 </div>
                 <Button onClick={() => setIsPathSwitcherOpen(true)} className="h-14 px-8 rounded-2xl">
                   Explore Academy Paths

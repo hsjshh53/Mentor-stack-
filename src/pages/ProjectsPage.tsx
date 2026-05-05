@@ -289,7 +289,7 @@ export const ProjectsPage: React.FC = () => {
           isOpen={showPaywall} 
           onClose={() => setShowPaywall(false)}
           title="Unlock Premium Projects"
-          description="Build real-world applications and create a portfolio that gets you hired with MentorStack Pro."
+          description="Build real-world applications and create a portfolio that gets you hired with OLYNQ Stack Pro."
         />
       </div>
     );

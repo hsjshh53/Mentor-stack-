@@ -1909,7 +1909,7 @@ app.post('/login', (req, res) => {
 const fs = require('fs');
 
 // Writing to a file
-fs.writeFileSync('hello.txt', 'Hello from MentorStack!');
+fs.writeFileSync('hello.txt', 'Hello from OLYNQ Stack!');
 
 // Reading from a file
 const content = fs.readFileSync('hello.txt', 'utf8');
@@ -1950,7 +1950,7 @@ const app = express();
 const port = 3000;
 
 app.get('/', (req, res) => {
-  res.send('Welcome to MentorStack Academy!');
+  res.send('Welcome to OLYNQ Stack Academy!');
 });
 
 app.listen(port, () => {
@@ -2073,7 +2073,7 @@ SELECT * FROM users WHERE name = 'Alex';`,
     codeExample: `// MongoDB Document Example
 {
   "_id": "507f1f77bcf86cd799439011",
-  "name": "MentorStack",
+  "name": "OLYNQ Stack",
   "courses": ["Frontend", "Backend"],
   "active": true,
   "metadata": {
@@ -2896,7 +2896,7 @@ print(report)`,
     whyItMatters: 'NLP powers everything from Google Translate to Siri and Alexa.',
     explanation: 'NLP combines AI and linguistics to process text and speech. Key tasks include tokenization (splitting text into words), sentiment analysis, and machine translation.',
     analogy: 'It\'s like teaching a computer to read, write, and speak our language.',
-    codeExample: 'from textblob import TextBlob\n\ntext = "MentorStack is amazing!"\nsentiment = TextBlob(text).sentiment.polarity',
+    codeExample: 'from textblob import TextBlob\n\ntext = "OLYNQ Stack is amazing!"\nsentiment = TextBlob(text).sentiment.polarity',
     lineByLine: 'We use a simple NLP library to analyze a sentence and get a "sentiment score" (positive or negative).',
     commonMistakes: ['Ignoring the context of words', 'Not handling slang or sarcasm', 'Using poor quality training data'],
     practice: 'Use a pre-trained model to perform sentiment analysis on a few tweets.',

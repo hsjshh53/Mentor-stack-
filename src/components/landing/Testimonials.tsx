@@ -6,7 +6,7 @@ const TESTIMONIALS = [
   {
     name: "Lateefat Abdullahi",
     role: "University Student, Ilorin",
-    content: "I used to be confused about where to start with Web Development, but MentorStack broke everything down for me. Now I can build simple website layouts with HTML and CSS confidently.",
+    content: "I used to be confused about where to start with Web Development, but OLYNQ Stack broke everything down for me. Now I can build simple website layouts with HTML and CSS confidently.",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=lateefat",
     stats: "Frontend Foundations"
   },
@@ -20,7 +20,7 @@ const TESTIMONIALS = [
   {
     name: "Samuel Adebayo",
     role: "Secondary School Graduate, Ilorin",
-    content: "I wanted to learn a skill before heading to Uni, and MentorStack has been so helpful. The step-by-step approach helped me stay consistent with my practice every single day.",
+    content: "I wanted to learn a skill before heading to Uni, and OLYNQ Stack has been so helpful. The step-by-step approach helped me stay consistent with my practice every single day.",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=samuel",
     stats: "Pre-Degree Mastery"
   }
@@ -106,7 +106,7 @@ export const Testimonials: React.FC = () => {
           whileInView={{ opacity: 1 }}
           className="mt-20 text-center text-[10px] font-medium uppercase tracking-[0.2em] text-white/10 max-w-2xl mx-auto"
         >
-          Community-reported member experiences. Results vary based on individual effort, prior background, and professional focus. Portfolio and project verification outcomes are reflective of personal dedication to the MentorStack curriculum.
+          Community-reported member experiences. Results vary based on individual effort, prior background, and professional focus. Portfolio and project verification outcomes are reflective of personal dedication to the OLYNQ Stack curriculum.
         </motion.p>
       </div>
     </section>

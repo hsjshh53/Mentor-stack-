@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 async function runReset() {
-  console.log("🚀 MENTORSTACK SYSTEM RESET INITIATED...");
+  console.log("🚀 OLYNQ STACK SYSTEM RESET INITIATED...");
   
   try {
     // 1. Get all users

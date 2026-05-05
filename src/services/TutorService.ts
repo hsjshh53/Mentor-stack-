@@ -4,7 +4,7 @@ import { UserProgress, CurriculumLesson } from '../types';
 export const TutorService = {
   async getResponse(query: string, userProgress: UserProgress, currentLesson?: CurriculumLesson) {
     const systemPrompt = `
-      You are the "MentorStack AI Tutor", a world-class engineering mentor. 
+      You are the "OLYNQ Stack AI Tutor", a world-class engineering mentor. 
       Your mission is to help students learn software engineering from absolute scratch.
       
       USER CONTEXT:

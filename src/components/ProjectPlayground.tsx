@@ -24,7 +24,7 @@ export const ProjectPlayground: React.FC<ProjectPlaygroundProps> = ({
   projectId,
   projectTitle,
   initialCode = {
-    html: '<!DOCTYPE html>\n<html>\n<body>\n  <h1>Hello MentorStack!</h1>\n</body>\n</html>',
+    html: '<!DOCTYPE html>\n<html>\n<body>\n  <h1>Hello OLYNQ Stack!</h1>\n</body>\n</html>',
     css: 'body { font-family: sans-serif; text-align: center; padding-top: 50px; color: #F27D26; }',
     js: 'console.log("Welcome to the Playground!");'
   },

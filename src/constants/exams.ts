@@ -175,9 +175,9 @@ export const FINAL_EXAMS: FinalExam[] = [
       }
     ],
     codingTask: {
-      prompt: 'Create a simple Express route that returns a "Hello, MentorStack!" message when a GET request is made to the "/" path.',
+      prompt: 'Create a simple Express route that returns a "Hello, OLYNQ Stack!" message when a GET request is made to the "/" path.',
       starterCode: 'const express = require("express");\nconst app = express();\n\n// Write your code here\n\napp.listen(3000);',
-      solution: 'app.get("/", (req, res) => {\n  res.send("Hello, MentorStack!");\n});'
+      solution: 'app.get("/", (req, res) => {\n  res.send("Hello, OLYNQ Stack!");\n});'
     },
     xpReward: 1200
   },

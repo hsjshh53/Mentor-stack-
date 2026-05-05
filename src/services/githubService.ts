@@ -120,7 +120,7 @@ export const githubService = {
         username: connection.username,
         files,
         accessToken: connection.accessToken,
-        commitMessage: `Update from MentorStack Playground - ${new Date().toLocaleString()}`
+        commitMessage: `Update from OLYNQ Stack Playground - ${new Date().toLocaleString()}`
       })
     });
 

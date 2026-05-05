@@ -22,8 +22,8 @@ export const CertificateView: React.FC<CertificateViewProps> = ({ certificate, i
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `MentorStack Certificate - ${certificate.fullName}`,
-        text: `Check out my ${certificate.pathName} certificate from MentorStack!`,
+        title: `OLYNQ Stack Certificate - ${certificate.fullName}`,
+        text: `Check out my ${certificate.pathName} certificate from OLYNQ Stack!`,
         url: certificate.verificationUrl,
       });
     } else {
@@ -53,7 +53,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({ certificate, i
             <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
               <Zap size={24} fill="currentColor" />
             </div>
-            <span className="text-3xl font-black tracking-tighter text-white">MentorStack</span>
+            <span className="text-3xl font-black tracking-tighter text-white">OLYNQ Stack</span>
           </div>
 
           {/* Title Section */}
@@ -66,7 +66,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({ certificate, i
               {certificate.fullName}
             </h1>
             <p className="text-white/60 max-w-2xl mx-auto text-lg leading-relaxed">
-              has successfully completed the MentorStack <span className="text-emerald-400 font-bold">{certificate.pathName}</span> program 
+              has successfully completed the OLYNQ Stack <span className="text-emerald-400 font-bold">{certificate.pathName}</span> program 
               and demonstrated competency through lessons, tests, and project work.
             </p>
           </div>
@@ -99,7 +99,7 @@ export const CertificateView: React.FC<CertificateViewProps> = ({ certificate, i
             <div className="text-left space-y-2">
               <div className="w-48 h-px bg-white/20" />
               <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Program Director</p>
-              <p className="font-serif italic text-white/60">MentorStack Academy</p>
+              <p className="font-serif italic text-white/60">OLYNQ Stack Academy</p>
             </div>
             
             {/* Seal */}
@@ -180,9 +180,9 @@ export const CertificateView: React.FC<CertificateViewProps> = ({ certificate, i
       {isPublic && (
         <div className="text-center">
           <p className="text-white/40 text-sm font-medium">
-            This is a public verification page for a MentorStack certificate. 
+            This is a public verification page for a OLYNQ Stack certificate. 
             <br />
-            MentorStack certificates are earned through rigorous assessment and project work.
+            OLYNQ Stack certificates are earned through rigorous assessment and project work.
           </p>
         </div>
       )}

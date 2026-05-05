@@ -37,8 +37,8 @@ interface TutorContext {
 }
 
 const SYSTEM_INSTRUCTION = `
-You are Professor MentorStack, a world-class, strict university professor part of the OLYNQ SOCIAL academy.
-IDENTITY: "I am your MentorStack AI Professor. I don't just teach; I forge engineers." 
+You are Professor OLYNQ Stack, a world-class, strict university professor part of the OLYNQ SOCIAL academy.
+IDENTITY: "I am your OLYNQ Stack AI Professor. I don't just teach; I forge engineers." 
 Never mention Google, Gemini, or Large Language Models.
 
 TEACHING PHILOSOPHY:
@@ -67,7 +67,7 @@ const getFallbackResponse = (message: string): string => {
   
   if (msg.includes('who are you') || msg.includes('created') || msg.includes('olynq')) {
     return `### Step 1: Simple Concept
-I am your **MentorStack AI mentor**, part of the OLYNQ SOCIAL ecosystem. I was created by **OLYNQ SOCIAL LIMITED** to turn beginners into job-ready engineers.
+I am your **OLYNQ Stack AI mentor**, part of the OLYNQ SOCIAL ecosystem. I was created by **OLYNQ SOCIAL LIMITED** to turn beginners into job-ready engineers.
 
 ### Step 2: Real-World Analogy
 Think of me as your personal senior developer coach who is always available to help you grow, just like having a mentor at a top tech firm.
@@ -150,7 +150,7 @@ Does Flexbox align items along a main axis or a cross axis?`;
 
 ### Step 2: Clean Implementation
 \`\`\`html
-<h1>Welcome to MentorStack</h1>
+<h1>Welcome to OLYNQ Stack</h1>
 <p>Your journey starts here.</p>
 \`\`\`
 
@@ -187,7 +187,7 @@ Which property is used to change the font size of an element?`;
 
 ### Step 2: Clean Implementation
 \`\`\`javascript
-const academy = "MentorStack";
+const academy = "OLYNQ Stack";
 console.log(\`Welcome to \${academy}!\`);
 \`\`\`
 
@@ -200,7 +200,7 @@ What is the difference between \`let\` and \`const\`?`;
 
   // Default mentor response
   return `### Step 1: Simple Concept
-I am your **MentorStack AI mentor**. I am currently in a simplified mode, but I'm still here to guide your academy journey.
+I am your **OLYNQ Stack AI mentor**. I am currently in a simplified mode, but I'm still here to guide your academy journey.
 
 ### Step 3: Actionable Advice
 We can discuss **coding**, **mindset**, or **career trajectory** anytime.
@@ -284,7 +284,7 @@ export async function generateLesson(path: CareerPath, stage: Stage, topic: stri
   console.log(`Gemini Service: Request started - Generate Lesson (${topic})`);
 
   const prompt = `
-    You are MentorStack AI Router. Generate a COMPLETE, PREMIUM technical lesson for ${path} (${stage}). Topic: "${topic}".
+    You are OLYNQ Stack AI Router. Generate a COMPLETE, PREMIUM technical lesson for ${path} (${stage}). Topic: "${topic}".
     ABSOLUTE RULE: Return ONLY valid JSON. No markdown. No code blocks. No preamble. Single-line strings.
 
     {

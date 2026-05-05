@@ -82,7 +82,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </div>
             <div>
               <h2 className="font-black text-lg tracking-tight">Admin Panel</h2>
-              <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">MentorStack</p>
+              <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">OLYNQ Stack</p>
             </div>
           </div>
 

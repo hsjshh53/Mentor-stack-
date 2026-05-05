@@ -24,7 +24,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-3xl font-display font-black tracking-[-0.05em] uppercase text-white leading-none">
-                  MentorStack<span className="text-emerald-500">.</span>
+                  OLYNQ Stack<span className="text-emerald-500">.</span>
                 </span>
                 <span className="text-[9px] font-black uppercase tracking-[0.4em] text-emerald-500/50 mt-1">Global Academy v4.0</span>
               </div>
@@ -103,7 +103,7 @@ export const Footer: React.FC = () => {
 
         <div className="pt-20 border-t border-white/5 flex flex-col lg:flex-row justify-between items-center gap-12 text-[10px] font-display font-black uppercase tracking-[0.5em] text-white/10">
           <div className="flex flex-col lg:flex-row items-center gap-12">
-            <p>© 2026 MENTORSTACK ULTRA — THE PREEMINENT ENGINEERING ACCELERATOR</p>
+            <p>© 2026 OLYNQ STACK ULTRA — THE PREEMINENT ENGINEERING ACCELERATOR</p>
             <div className="flex items-center gap-6">
                <span className="hover:text-white/40 cursor-pointer transition-colors">Global Presence</span>
                <span className="w-1 h-1 rounded-full bg-white/10" />

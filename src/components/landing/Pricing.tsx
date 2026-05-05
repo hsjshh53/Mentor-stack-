@@ -7,7 +7,7 @@ import { AnimatedText } from '../ui/AnimatedText';
 
 const PLANS = [
   {
-    name: "MentorStack Pro",
+    name: "OLYNQ Stack Pro",
     price: "₦10,000",
     period: "Monthly",
     desc: "One plan. Full access. No hidden tiers. Premium engineering education for the ambitious.",

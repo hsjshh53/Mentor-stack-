@@ -7,7 +7,7 @@ const CODE_STEPS = [
   {
     lang: "typescript",
     name: "engine.ts",
-    code: `import { NeuralSync } from "@mentorstack/core";
+    code: `import { NeuralSync } from "@olynqstack/core";
 
 const engine = new NeuralSync({
   latency: "ULTRA_LOW",

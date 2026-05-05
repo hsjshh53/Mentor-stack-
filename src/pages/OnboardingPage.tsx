@@ -185,7 +185,7 @@ export const OnboardingPage: React.FC = () => {
             
             <div className="space-y-6">
               <h1 className="text-6xl md:text-8xl font-black tracking-tight text-gradient leading-tight">
-                Welcome to <br /> <span className="text-emerald-400">MentorStack</span>
+                Welcome to <br /> <span className="text-emerald-400">OLYNQ Stack</span>
               </h1>
               <p className="text-white/40 text-xl md:text-2xl font-medium max-w-xl mx-auto leading-relaxed">
                 Your AI mentor will guide you from beginner to job-ready developer.

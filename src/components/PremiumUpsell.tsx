@@ -26,12 +26,12 @@ export const PremiumUpsell: React.FC<PremiumUpsellProps> = ({ onUpgrade, classNa
       
       <div className="relative z-10 flex flex-col lg:flex-row gap-12 items-center">
         <div className="flex-grow space-y-6">
-          <Badge className="bg-emerald-500 text-black border-none font-black">MentorStack Pro</Badge>
+          <Badge className="bg-emerald-500 text-black border-none font-black">OLYNQ Stack Pro</Badge>
           <h2 className="text-4xl font-black tracking-tight leading-tight">
             Accelerate your career <br /> with <span className="text-emerald-400">Pro Access</span>
           </h2>
           <p className="text-white/40 text-lg max-w-xl font-medium">
-            Go beyond the basics. Build real-world projects, earn verified certificates, and get the complete MentorStack experience.
+            Go beyond the basics. Build real-world projects, earn verified certificates, and get the complete OLYNQ Stack experience.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">

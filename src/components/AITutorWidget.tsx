@@ -38,7 +38,7 @@ export const AITutorWidget: React.FC = () => {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask MentorStack AI (e.g. 'How do React hooks work?')"
+            placeholder="Ask OLYNQ Stack AI (e.g. 'How do React hooks work?')"
             className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl pl-6 pr-16 text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-white/20"
           />
           <button 

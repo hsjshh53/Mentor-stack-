@@ -90,7 +90,7 @@ export const generateCertificate = async (
     projects: certProjects,
     verificationUrl: `${window.location.origin}/verify/${certId}`,
     isValid: true,
-    issuedBy: "MentorStack AI by OLYNQ SOCIAL"
+    issuedBy: "OLYNQ Stack AI by OLYNQ SOCIAL"
   };
 
   await set(newCertRef, certificate);

@@ -50,7 +50,7 @@ export const HowItWorks: React.FC = () => {
             </h2>
             
             <p className="text-xl md:text-2xl font-medium leading-relaxed text-white/40 max-w-xl">
-              MentorStack focuses on the core principles of software engineering, providing a structured path for continuous growth.
+              OLYNQ Stack focuses on the core principles of software engineering, providing a structured path for continuous growth.
             </p>
           </div>
 

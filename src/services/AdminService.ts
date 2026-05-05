@@ -4,7 +4,7 @@ import { db } from "../lib/firebase";
 import { UserProgress } from "../types";
 
 export const performFullSystemReset = async () => {
-  console.log("🚀 MENTORSTACK SYSTEM RESET INITIATED (ADMIN CONTEXT)...");
+  console.log("🚀 OLYNQ STACK SYSTEM RESET INITIATED (ADMIN CONTEXT)...");
   
   try {
     const usersRef = ref(db, "users");

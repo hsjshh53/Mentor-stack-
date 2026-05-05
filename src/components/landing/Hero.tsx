@@ -111,7 +111,7 @@ export const Hero: React.FC = () => {
               <br/> <AnimatedText text="With AI." delay={0.4} />
             </h1>
             <p className="max-w-xl mx-auto lg:mx-0 text-xl font-medium leading-relaxed text-white/40">
-              MentorStack builds your path, tracks your progress, and mentors you in real time. Experience engineering education reinvented.
+              OLYNQ Stack builds your path, tracks your progress, and mentors you in real time. Experience engineering education reinvented.
             </p>
           </motion.div>
 

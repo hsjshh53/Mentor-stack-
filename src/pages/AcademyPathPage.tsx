@@ -217,7 +217,7 @@ export const AcademyPathPage: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
               <Zap size={20} fill="currentColor" />
             </div>
-            <span className="font-black text-2xl tracking-tighter">MentorStack Academy</span>
+            <span className="font-black text-2xl tracking-tighter">OLYNQ Stack Academy</span>
           </div>
         </div>
       </header>
@@ -421,7 +421,7 @@ export const AcademyPathPage: React.FC = () => {
               <div className="space-y-4 max-w-xl mx-auto">
                 <h2 className="text-4xl font-black tracking-tight">Academy Graduation</h2>
                 <p className="text-white/40 font-medium text-lg leading-relaxed">
-                  Complete all stages, master the weekly modules, and pass the final professional exam to earn your <span className="text-purple-400 font-black">MentorStack Academy Certificate</span>.
+                  Complete all stages, master the weekly modules, and pass the final professional exam to earn your <span className="text-purple-400 font-black">OLYNQ Stack Academy Certificate</span>.
                 </p>
               </div>
               <div className="flex justify-center gap-8 pt-6">

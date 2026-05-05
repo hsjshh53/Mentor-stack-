@@ -10,7 +10,7 @@ const TRADITIONAL = [
   "Fragmented curriculum"
 ];
 
-const MENTORSTACK = [
+const OLYNQ_STACK = [
   "24/7 AI Synapse Mentoring",
   "Cinematic Career Pathing",
   "Global Peer Network",
@@ -38,7 +38,7 @@ export const Comparison: React.FC = () => {
             Engineered for <br/> <span className="text-emerald-500 italic">Excellence.</span>
           </h2>
           <p className="text-white/40 text-xl font-medium max-w-2xl mx-auto">
-            Traditional methods focus on consumption. MentorStack focuses on total cognitive acceleration.
+            Traditional methods focus on consumption. OLYNQ Stack focuses on total cognitive acceleration.
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export const Comparison: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* MentorStack Card */}
+          {/* OLYNQ Stack Card */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -91,7 +91,7 @@ export const Comparison: React.FC = () => {
                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-2">
                     Active Protocol
                  </div>
-                 <h3 className="text-4xl md:text-5xl font-display font-black uppercase text-white">MentorStack Ultra</h3>
+                 <h3 className="text-4xl md:text-5xl font-display font-black uppercase text-white">OLYNQ Stack Ultra</h3>
                </div>
                <div className="w-20 h-20 rounded-[2.5rem] bg-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)] flex items-center justify-center text-black">
                   <Sparkles size={36} fill="currentColor" />
@@ -99,7 +99,7 @@ export const Comparison: React.FC = () => {
             </div>
             
             <ul className="space-y-8">
-              {MENTORSTACK.map((item, i) => (
+              {OLYNQ_STACK.map((item, i) => (
                 <motion.li 
                   key={i} 
                   initial={{ opacity: 0, x: 10 }}

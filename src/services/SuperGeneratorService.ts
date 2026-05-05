@@ -7,7 +7,7 @@ import { ACADEMY_CATALOG, PathConfig } from "../constants/curriculumCatalog";
 import { ModerationService } from "./ModerationService";
 
 /**
- * MENTORSTACK SUPER GENERATOR V4
+ * OLYNQ STACK SUPER GENERATOR V4
  * Orchestrates the massive 7,500+ lesson expansion.
  */
 
@@ -22,7 +22,7 @@ export const SuperGeneratorService = {
     onProgress(`Architecting Master Structure for ${path.title}...`);
     
     const prompt = `
-      You are the Master Curriculum Architect for MentorStack.
+      You are the Master Curriculum Architect for OLYNQ Stack.
       Generate a deep, professional 4-stage Career Roadmap for: "${path.title}".
       
       TOTAL REQUIREMENTS:

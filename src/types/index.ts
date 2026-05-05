@@ -170,7 +170,7 @@ export interface Certificate {
   }[];
   verificationUrl: string;
   isValid: boolean;
-  issuedBy: string; // "MentorStack AI by OLYNQ SOCIAL"
+  issuedBy: string; // "OLYNQ Stack AI by OLYNQ SOCIAL"
 }
 
 export interface ProjectSubmission {
@@ -563,7 +563,7 @@ export interface PaymentRecord {
   payment_source: string;
   timestamp: number;
   reference_id: string; // Selar External Ref
-  payment_reference: string; // MentorStack Internal Ref
+  payment_reference: string; // OLYNQ Stack Internal Ref
   cancelled_at?: number;
 }
 

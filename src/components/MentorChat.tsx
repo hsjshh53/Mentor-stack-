@@ -146,7 +146,7 @@ export const MentorChat: React.FC = () => {
                       <Sparkles size={32} />
                     </div>
                     <p className="text-white/40 text-sm max-w-[200px] mx-auto leading-relaxed">
-                      "I am your MentorStack AI mentor, part of the OLYNQ SOCIAL ecosystem, built to guide you step-by-step."
+                      "I am your OLYNQ Stack AI mentor, part of the OLYNQ SOCIAL ecosystem, built to guide you step-by-step."
                     </p>
                   </div>
                 )}

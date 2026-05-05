@@ -80,7 +80,7 @@ export const BentoFeatures: React.FC = () => {
           Architected for <br/> <span className="text-emerald-500 italic">Technical</span> Mastery
         </h2>
         <p className="max-w-2xl mx-auto text-white/40 text-xl font-medium">
-          MentorStack is more than a tutorial. It is a structured learning environment designed to build professional-grade developers from the ground up.
+          OLYNQ Stack is more than a tutorial. It is a structured learning environment designed to build professional-grade developers from the ground up.
         </p>
       </div>
 

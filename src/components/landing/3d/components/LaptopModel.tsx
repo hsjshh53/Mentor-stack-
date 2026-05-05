@@ -19,7 +19,7 @@ export const LaptopModel = memo(() => {
   });
 
   const codeSnippets = useMemo(() => [
-    'import { Intelligence } from "@mentorstack/core";',
+    'import { Intelligence } from "@olynqstack/core";',
     'const brain = Intelligence.bootstrap();',
     'brain.on("complex_logic", (ast) => {',
     '  return brain.optimize(ast, { target: "BILLION_USERS" });',

@@ -30,7 +30,7 @@ export const Navbar: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-display font-black tracking-[-0.05em] uppercase text-white leading-none">
-              MentorStack<span className="text-emerald-500">.</span>
+              OLYNQ Stack<span className="text-emerald-500">.</span>
             </span>
             <span className="text-[8px] font-black uppercase tracking-[0.4em] text-emerald-500/50 mt-1">Ultra Protocol</span>
           </div>

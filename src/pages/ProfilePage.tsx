@@ -175,7 +175,7 @@ export const ProfilePage: React.FC = () => {
                     <Sparkles size={12} fill="currentColor" />
                     Unlock Your Potential
                   </div>
-                  <h3 className="text-2xl font-black tracking-tight">Upgrade to MentorStack <span className="text-emerald-400">Pro</span></h3>
+                  <h3 className="text-2xl font-black tracking-tight">Upgrade to OLYNQ Stack <span className="text-emerald-400">Pro</span></h3>
                   <p className="text-white/40 font-medium max-w-md">Get unlimited access to all 26+ career paths, AI-powered code reviews, and verified professional certificates.</p>
                 </div>
                 <Button 
@@ -344,7 +344,7 @@ export const ProfilePage: React.FC = () => {
               className="w-full h-16 rounded-3xl border border-red-500/20 bg-red-500/5 text-red-400 font-bold flex items-center justify-center gap-3 hover:bg-red-500/10 transition-all active:scale-[0.98]"
             >
               <LogOut size={20} />
-              Sign Out from MentorStack
+              Sign Out from OLYNQ Stack
             </button>
           </div>
 
@@ -450,7 +450,7 @@ export const ProfilePage: React.FC = () => {
         isOpen={showPaywall} 
         onClose={() => setShowPaywall(false)}
         title="Verified Certificates"
-        description="Earn credentials that employers trust. Unlock professional certificates with MentorStack Pro."
+        description="Earn credentials that employers trust. Unlock professional certificates with OLYNQ Stack Pro."
       />
     </div>
   );

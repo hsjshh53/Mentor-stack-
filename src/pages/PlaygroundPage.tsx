@@ -30,7 +30,7 @@ export const PlaygroundPage: React.FC = () => {
   
   const [activeTab, setActiveTab] = useState<TabType>('html');
   const [files, setFiles] = useState<ProjectStarterCode>({
-    html: '<!-- index.html -->\n<div id="app">\n  <h1>Hello MentorStack!</h1>\n  <p>Start coding to see the magic.</p>\n</div>',
+    html: '<!-- index.html -->\n<div id="app">\n  <h1>Hello OLYNQ Stack!</h1>\n  <p>Start coding to see the magic.</p>\n</div>',
     css: '/* style.css */\nbody {\n  font-family: system-ui, sans-serif;\n  background: #0A0A0B;\n  color: white;\n  display: grid;\n  place-items: center;\n  min-height: 100vh;\n  margin: 0;\n}\n\n#app {\n  text-align: center;\n  padding: 2rem;\n  background: rgba(255, 255, 255, 0.05);\n  border-radius: 1rem;\n  border: 1px solid rgba(255, 255, 255, 0.1);\n  backdrop-filter: blur(10px);\n}',
     js: '// script.js\nconsole.log("Playground ready!");\n\nconst title = document.querySelector("h1");\ntitle.style.color = "#10b981";'
   });
@@ -175,7 +175,7 @@ export const PlaygroundPage: React.FC = () => {
         setFiles(projectData.starterCode);
       } else {
         setFiles({
-          html: '<!-- index.html -->\n<div id="app">\n  <h1>Hello MentorStack!</h1>\n</div>',
+          html: '<!-- index.html -->\n<div id="app">\n  <h1>Hello OLYNQ Stack!</h1>\n</div>',
           css: '/* style.css */\nbody { background: #0A0A0B; color: white; }',
           js: '// script.js\nconsole.log("Reset complete");'
         });

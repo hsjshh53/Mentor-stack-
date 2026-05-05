@@ -7,7 +7,7 @@ import { generateSlug } from "./aiGeneratorService";
 import { ModerationService } from "./ModerationService";
 
 /**
- * MENTORSTACK CURRICULUM ENGINE V5
+ * OLYNQ STACK CURRICULUM ENGINE V5
  * Implements BEGINNER-FIRST (Phase 0) logic, sequential generation, 
  * and multi-model fallback with OpenRouter.
  */

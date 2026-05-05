@@ -1,5 +1,5 @@
 /**
- * MENTORSTACK AI GENERATOR V3 (ELITE EDITION)
+ * OLYNQ STACK AI GENERATOR V3 (ELITE EDITION)
  * Focus: High-density technical knowledge, Career Readiness, and Premium Content.
  * Provider: Gemini 1.5 Pro (Exclusive)
  */
@@ -22,10 +22,10 @@ export const generateSlug = (title: string): string => {
 // -- ELITE PROMPTS --
 
 const CURRICULUM_PROMPT = (skillTitle: string) => `
-You are MentorStack AI Router. Generate a compact career Learning Path for: "${skillTitle}".
+You are OLYNQ Stack AI Router. Generate a compact career Learning Path for: "${skillTitle}".
 ABSOLUTE RULE: Return ONLY valid JSON. No markdown. No code blocks. No preamble. Single-line strings.
 
-MENTORSTACK STAGES (Mandatory Order):
+OLYNQ STACK STAGES (Mandatory Order):
 1. Foundations (Absolute Beginner)
 2. Core Concepts (Foundations)
 3. Practical Skills (Core Principles)
@@ -73,7 +73,7 @@ MENTORSTACK STAGES (Mandatory Order):
 `;
 
 export const LESSON_PROMPT = (skillTitle: string, path: string, difficulty: string, topic: string) => `
-You are an expert curriculum designer for MentorStack AI Academy.
+You are an expert curriculum designer for OLYNQ Stack AI Academy.
 Generate a structured lesson for:
 Topic: "${topic}"
 Path: "${path}"

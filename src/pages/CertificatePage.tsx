@@ -66,7 +66,7 @@ export const CertificatePage: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
               <Zap size={20} fill="currentColor" />
             </div>
-            <span className="font-black text-2xl tracking-tighter text-gradient">MentorStack</span>
+            <span className="font-black text-2xl tracking-tighter text-gradient">OLYNQ Stack</span>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -142,7 +142,7 @@ export const CertificatePage: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-white/[0.05] py-12 text-center text-white/20">
-        <p className="text-sm font-medium">© 2026 MentorStack Academy. All rights reserved.</p>
+        <p className="text-sm font-medium">© 2026 OLYNQ Stack Academy. All rights reserved.</p>
         <p className="text-[10px] font-black uppercase tracking-widest mt-2">Verified Skill Proof System</p>
       </footer>
     </div>

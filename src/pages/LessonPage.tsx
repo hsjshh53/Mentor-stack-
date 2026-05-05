@@ -252,7 +252,7 @@ export const LessonPage: React.FC = () => {
           >
             <ArrowLeft size={24} />
           </button>
-          <span className="font-bold text-lg tracking-tight">MentorStack</span>
+          <span className="font-bold text-lg tracking-tight">OLYNQ Stack</span>
         </div>
 
         <div className="flex items-center gap-4">

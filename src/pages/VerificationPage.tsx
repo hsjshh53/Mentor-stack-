@@ -52,7 +52,7 @@ export const VerificationPage: React.FC = () => {
           <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-black shadow-lg shadow-emerald-500/20">
             <Zap size={20} fill="currentColor" />
           </div>
-          <span className="font-black text-2xl tracking-tighter text-gradient">MentorStack</span>
+          <span className="font-black text-2xl tracking-tighter text-gradient">OLYNQ Stack</span>
         </div>
         <div className="flex items-center gap-2 text-emerald-500">
           <ShieldCheck size={20} />
@@ -82,7 +82,7 @@ export const VerificationPage: React.FC = () => {
               className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black hover:bg-white/10 transition-all mx-auto"
             >
               <ArrowLeft size={20} />
-              Return to MentorStack
+              Return to OLYNQ Stack
             </button>
           </motion.div>
         ) : certificate ? (
@@ -104,7 +104,7 @@ export const VerificationPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-white/[0.05] py-12 text-center text-white/20">
-        <p className="text-sm font-medium">© 2026 MentorStack Academy. All rights reserved.</p>
+        <p className="text-sm font-medium">© 2026 OLYNQ Stack Academy. All rights reserved.</p>
         <p className="text-[10px] font-black uppercase tracking-widest mt-2">Verified Skill Proof System</p>
       </footer>
     </div>

@@ -476,7 +476,7 @@ export const ManageCurriculum: React.FC = () => {
             </div>
             <div className="space-y-3">
               <h3 className="text-2xl font-black tracking-tight">No curriculum created yet for this program</h3>
-              <p className="text-white/40 max-w-sm mx-auto font-medium">MentorStack Academy needs a deep structured roadmap to guide students. Generate one now using AI.</p>
+              <p className="text-white/40 max-w-sm mx-auto font-medium">OLYNQ Stack Academy needs a deep structured roadmap to guide students. Generate one now using AI.</p>
               <div className="pt-6">
                 <Button 
                   size="lg"

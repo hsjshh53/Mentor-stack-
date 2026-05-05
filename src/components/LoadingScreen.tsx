@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Zap } from 'lucide-react';
 
-export const LoadingScreen: React.FC<{ message?: string }> = ({ message = "LOADING MENTORSTACK" }) => {
+export const LoadingScreen: React.FC<{ message?: string }> = ({ message = "LOADING OLYNQ STACK" }) => {
   return (
     <div className="fixed inset-0 bg-[#0A0A0B] z-[100] flex flex-col items-center justify-center">
       <motion.div 

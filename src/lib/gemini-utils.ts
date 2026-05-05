@@ -422,7 +422,7 @@ export async function ultraFastGenerate(prompt: string, modelOverride?: string):
         headers: {
           "Authorization": `Bearer ${OPENROUTER_KEY}`,
           "HTTP-Referer": window.location.origin,
-          "X-Title": "MentorStack Academy High-Speed",
+          "X-Title": "OLYNQ Stack Academy High-Speed",
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -474,7 +474,7 @@ export async function smartGenerate(prompt: string, onProgress?: (msg: string) =
           headers: {
             "Authorization": `Bearer ${OPENROUTER_KEY}`,
             "HTTP-Referer": window.location.origin,
-            "X-Title": "MentorStack Academy",
+            "X-Title": "OLYNQ Stack Academy",
             "Content-Type": "application/json"
           },
           body: JSON.stringify({

@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
             </div>
           </ScrollSection>
 
-          {/* Section 3: Solution (MentorStack AI Engine) */}
+          {/* Section 3: Solution (OLYNQ Stack AI Engine) */}
           <ScrollSection id="features">
              <BentoFeatures />
           </ScrollSection>
@@ -113,7 +113,7 @@ export const LandingPage: React.FC = () => {
                 </div>
                 <div className="pt-20 border-t border-white/5 text-center px-6">
                   <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-white/10 max-w-3xl mx-auto leading-loose italic">
-                    * MentorStack focuses on deep engineering mastery. Our early growth stage allows us to maintain extreme focus on each learner's progress.
+                    * OLYNQ Stack focuses on deep engineering mastery. Our early growth stage allows us to maintain extreme focus on each learner's progress.
                   </p>
                 </div>
              </div>

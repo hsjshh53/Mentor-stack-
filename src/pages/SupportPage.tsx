@@ -124,7 +124,7 @@ export const SupportPage: React.FC = () => {
             <h1 className="text-4xl font-black tracking-tight italic uppercase italic">
               Help & <span className="text-emerald-400">Support</span>
             </h1>
-            <p className="text-white/40 font-medium">Resolution hub for MentorStack members.</p>
+            <p className="text-white/40 font-medium">Resolution hub for OLYNQ Stack members.</p>
           </div>
           <Button 
             onClick={() => setIsCreating(true)}

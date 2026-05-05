@@ -52,7 +52,7 @@ export const handler: Handler = async (event, context) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message: commitMessage || `Update ${file.path} from MentorStack`,
+          message: commitMessage || `Update ${file.path} from OLYNQ Stack`,
           content: Buffer.from(file.content).toString("base64"),
           sha,
         }),

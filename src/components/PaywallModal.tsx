@@ -18,7 +18,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
   isOpen, 
   onClose,
   title = "Unlock Your Full Potential",
-  description = "Get unlimited access to everything MentorStack has to offer."
+  description = "Get unlimited access to everything OLYNQ Stack has to offer."
 }) => {
   const benefits = [
     { icon: <Rocket className="text-emerald-400" />, title: "Full Career Paths", desc: "Access all 26+ structured learning paths from zero to hired." },
@@ -57,7 +57,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({
               <div className="space-y-4 max-w-md">
                 <Badge className="bg-emerald-500 text-black border-none px-3 py-1 rounded-lg font-black uppercase text-[10px] tracking-widest">
                   <Sparkles size={12} className="mr-2" fill="currentColor" />
-                  MentorStack Pro
+                  OLYNQ Stack Pro
                 </Badge>
                 <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-[0.9]">{title}</h2>
                 <p className="text-white/40 font-medium">{description}</p>
